@@ -137,25 +137,25 @@ class Board extends React.Component<IProps, IState> {
         return (
             <defs key="defs">
                 <pattern id="grid" x={0} y={0} width={80} height={80} viewBox="0 0 80 80" patternUnits="userSpaceOnUse">
-                    <path className="grid" d="M 0 0 L 0 80" strokeWidth="2"></path>
-                    <path className="grid" d="M 10 0 L 10 80" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 20 0 L 20 80" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 30 0 L 30 80" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 40 0 L 40 80" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 50 0 L 50 80" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 60 0 L 60 80" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 70 0 L 70 80" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 80 0 L 80 80" strokeWidth="2"></path>
+                    <path className="grid" d="M 0 0 L 0 80" strokeWidth="2"/>
+                    <path className="grid" d="M 10 0 L 10 80" strokeWidth="0.5"/>
+                    <path className="grid" d="M 20 0 L 20 80" strokeWidth="0.5"/>
+                    <path className="grid" d="M 30 0 L 30 80" strokeWidth="0.5"/>
+                    <path className="grid" d="M 40 0 L 40 80" strokeWidth="0.5"/>
+                    <path className="grid" d="M 50 0 L 50 80" strokeWidth="0.5"/>
+                    <path className="grid" d="M 60 0 L 60 80" strokeWidth="0.5"/>
+                    <path className="grid" d="M 70 0 L 70 80" strokeWidth="0.5"/>
+                    <path className="grid" d="M 80 0 L 80 80" strokeWidth="2"/>
 
-                    <path className="grid" d="M 0 0 L 80 0" strokeWidth="2"></path>
-                    <path className="grid" d="M 0 10 L 80 10" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 0 20 L 80 20" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 0 30 L 80 30" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 0 40 L 80 40" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 0 50 L 80 50" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 0 60 L 80 60" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 0 70 L 80 70" strokeWidth="0.5"></path>
-                    <path className="grid" d="M 0 80 L 80 80" strokeWidth="2"></path>
+                    <path className="grid" d="M 0 0 L 80 0" strokeWidth="2"/>
+                    <path className="grid" d="M 0 10 L 80 10" strokeWidth="0.5"/>
+                    <path className="grid" d="M 0 20 L 80 20" strokeWidth="0.5"/>
+                    <path className="grid" d="M 0 30 L 80 30" strokeWidth="0.5"/>
+                    <path className="grid" d="M 0 40 L 80 40" strokeWidth="0.5"/>
+                    <path className="grid" d="M 0 50 L 80 50" strokeWidth="0.5"/>
+                    <path className="grid" d="M 0 60 L 80 60" strokeWidth="0.5"/>
+                    <path className="grid" d="M 0 70 L 80 70" strokeWidth="0.5"/>
+                    <path className="grid" d="M 0 80 L 80 80" strokeWidth="2"/>
                 </pattern>
 
                 <pattern id="bus" x={0} y={0} width={3} height={3} viewBox="0 0 3 3" patternUnits="userSpaceOnUse">
@@ -350,7 +350,7 @@ class Board extends React.Component<IProps, IState> {
         this.setState({pan: false, drag: false});
     }
 
-    handleMouseExit(e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
+    handleMouseExit(_e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
 
         if (this.select) {
             this.select.remove()
@@ -461,11 +461,7 @@ class Board extends React.Component<IProps, IState> {
             })
 
             for (let pin of pins) {
-                if (!sc && this.isSelected(pin)) {
-                    pin.selected = true;
-                } else {
-                    pin.selected = false;
-                }
+                pin.selected = !sc && this.isSelected(pin);
             }
 
             this.setState({});
