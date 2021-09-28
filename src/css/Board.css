@@ -1,0 +1,112 @@
+.board-wrapper {
+    width: 100%;
+    height: 100%;
+    background-color: lightgray
+}
+
+path.select {
+    stroke: #0068D7;
+    fill: #0064C846;
+}
+
+path.grid {
+    stroke: gray;
+    fill: none;
+}
+
+.connection {
+    stroke-width: 1px;
+    stroke: black;
+    fill: green;
+}
+
+.connection-inner {
+    stroke-width: 4px;
+    stroke-linecap: round;
+    stroke: white;
+    fill: none;
+}
+
+.connection-outer {
+    stroke-width: 6px;
+    stroke: black;
+    fill: none;
+}
+
+.bus {
+    stroke: url(#bus)
+}
+
+.on {
+    stroke: blue;
+}
+
+.off {
+    stroke: white;
+}
+
+.error {
+    stroke: red;
+}
+
+.component {
+    stroke-width: 1px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke: black;
+    fill: white;
+}
+
+.component.selected {
+    stroke: #003C6E;
+    fill: #007ADD80;
+}
+
+.component :focus, .component:focus {
+    stroke-width: 3px;
+}
+
+.pin.selected {
+    stroke: #800000;
+    fill: #FF000080;
+}
+
+.selected {
+    border-style: dotted;
+    stroke-dasharray: 2 2;
+}
+
+.anchor {
+    stroke: rgba(0, 0, 0, 0);
+    fill: rgba(0,0,0,0);
+    transition: fill 0.6s ease-in-out;
+}
+
+.pin:hover .anchor {
+    fill: white;
+    transition: fill 0.3s ease-out;
+}
+
+.pin.selected:hover .anchor {
+    fill: #FF000080;
+}
+
+.component.selected .pin:hover .anchor {
+    fill: #007ADD80;
+}
+
+.bulb-glow {
+    fill: url("#bulb-glow");
+    stroke: none;
+    pointer-events: none;
+    mix-blend-mode: color-burn;
+}
+
+text {
+    stroke: none;
+    fill: black;
+}
+
+.origin {
+    /*mix-blend-mode: color-dodge;*/
+}
