@@ -45,7 +45,7 @@ class LogicState {
   }
 
   /**
-   * Negates the logical state while keeping only the specified number bits
+   * Returns a new negated the logical state while keeping only the specified number bits
    *
    * @example
    * // Creates logical state '01xz1'
@@ -53,12 +53,17 @@ class LogicState {
    * // Negates logical state to '10xz1'
    * state.negate(5)
    * */
-  negate(numBits: number) {
+  negated(numBits: number) {
     // (2^n) - 1 will result in a mask with the lower n bits set.
     let mask = (1 << numBits) - 1
 
     // Bits with corresponding errors should be masked out
-    this.v = ~this.v & ~this.x & ~this.z & mask;
+    let v = ~this.v & ~this.x & ~this.z & mask;
+    return new LogicState({
+      v: v,
+      x: this.x,
+      z: this.z
+    });
   }
 }
 

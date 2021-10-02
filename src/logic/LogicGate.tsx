@@ -116,8 +116,7 @@ class LogicGate extends LogicComponent {
 
   opNand(): LogicState {
     let state = this.opAnd();
-    state.negate(this.width);
-    return state;
+    return state.negated(this.width);
   }
 
   opOr(): LogicState{
@@ -146,8 +145,7 @@ class LogicGate extends LogicComponent {
 
   opNor(): LogicState {
     let state = this.opOr();
-    state.negate(this.width);
-    return state;
+    return state.negated(this.width);
   }
 
   opXor(): LogicState {
@@ -173,8 +171,7 @@ class LogicGate extends LogicComponent {
 
   opXnor(): LogicState {
     let state = this.opXor();
-    state.negate(this.width);
-    return state;
+    return state.negated(this.width);
   }
 
   opBuf(): LogicState {
