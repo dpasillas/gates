@@ -33,6 +33,7 @@ class App extends React.Component<IProps , IState>{
                 new Part({type: PartType.GATE, subtype: GateType.BUF, label:"BUF"}),
                 new Part({type: PartType.GATE, subtype: GateType.NOT, label:"NOT"}),
                 new Part({type: PartType.OUTPUT, subtype: 0, label:"Bulb"}),
+                new Part({type: PartType.INPUT, subtype: 0, label: "Clock"}),
               ]}/>
             }/>
             {this.board.render()}

@@ -5,6 +5,7 @@ import PartType from "../enums/PartType";
 import {GLOBAL_SCOPE} from "../Constants";
 import LogicBoard from "../logic/LogicBoard";
 import Bulb from "../logic/Bulb";
+import Clock from "../logic/Clock";
 
 interface PartParams {
   type: PartType,
@@ -36,6 +37,8 @@ class Part {
         return new LogicGate({subtype: this.subtype, scope: scope, board: board});
       case PartType.OUTPUT:
         return new Bulb({subtype: 0, board: board, scope: scope})
+      case PartType.INPUT:
+        return new Clock({board: board, scope: scope, subtype: 0})
       default:
         throw Error("Unsupported Part Type");
     }

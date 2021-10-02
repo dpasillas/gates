@@ -5,7 +5,6 @@ import '../css/Board.css';
 import Part from "./Part";
 import LogicComponent from "../logic/LogicComponent";
 import {GateEventHandlers} from "./Component";
-import {ComponentMouseEventHandler} from "../util/Types";
 import LogicPin, {PinType} from "../logic/LogicPin";
 import LogicBoard from "../logic/LogicBoard";
 
@@ -190,7 +189,7 @@ class Board extends React.Component<IProps, IState> {
 
         let selectionBox = (this.select?.exportSVG() as SVGElement)?.getAttribute('d');
 
-        let handlers: GateEventHandlers<ComponentMouseEventHandler> = {
+        let handlers: GateEventHandlers = {
             onGateMouseDown: this.handleGateMouseDown.bind(this),
             onGateMouseUp: this.handleGateMouseUp.bind(this),
             onGateContextMenu: this.handleGateContextMenu.bind(this),
