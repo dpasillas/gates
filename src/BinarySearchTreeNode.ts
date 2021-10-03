@@ -1,10 +1,7 @@
 
+/** Functional interface that returns 0 when values are equal, <0 when a < b, and >0 when a > b **/
 interface Comparator<T> {
   (a: T, b: T): number;
-}
-
-interface Predicate<T> {
-  (t: T): boolean
 }
 
 interface NodeParams<T> {
@@ -87,19 +84,19 @@ class BinarySearchTreeNode<T> {
     }
   }
 
-  insert(t: T, comp: Comparator<T>): [BinarySearchTreeNode<T>, boolean] {
-    let result = comp(t, this.data)
+  insert(t: T, cmp: Comparator<T>): [BinarySearchTreeNode<T>, boolean] {
+    let result = cmp(t, this.data)
     let added: boolean = false;
     if (result < 0) {
       if (this.left) {
-        [this.left, added] = this.left.insert(t, comp)
+        [this.left, added] = this.left.insert(t, cmp)
       } else {
         this.left = new BinarySearchTreeNode<T>({data: t});
         added = true;
       }
     } else if (result > 0) {
       if (this.right) {
-        [this.right, added] = this.right.insert(t, comp);
+        [this.right, added] = this.right.insert(t, cmp);
       } else {
         this.right = new BinarySearchTreeNode<T>({data: t});
         added = true;
@@ -118,12 +115,12 @@ class BinarySearchTreeNode<T> {
     return [ret, added];
   }
 
-  find(t: T, comp: Comparator<T>): T | null {
-    let result = comp(t, this.data)
+  find(t: T, cmp: Comparator<T>): T | null {
+    let result = cmp(t, this.data)
     if (result < 0) {
-      return this.left && this.left.find(t, comp);
+      return this.left && this.left.find(t, cmp);
     } else if (result > 0) {
-      return this.right && this.right.find(t, comp);
+      return this.right && this.right.find(t, cmp);
     } else {
       return this.data;
     }
@@ -157,19 +154,19 @@ class BinarySearchTreeNode<T> {
     }
   }
 
-  remove(t: T, comp: Comparator<T>): [BinarySearchTreeNode<T> | null, boolean] {
-    let result = comp(t, this.data)
+  remove(t: T, cmp: Comparator<T>): [BinarySearchTreeNode<T> | null, boolean] {
+    let result = cmp(t, this.data)
     let removed: boolean;
     let ret: BinarySearchTreeNode<T> | null = this;
     if (result < 0) {
       if (this.left) {
-        [this.left, removed] = this.left.remove(t, comp)
+        [this.left, removed] = this.left.remove(t, cmp)
       } else {
         removed = false;
       }
     } else if (result > 0) {
       if (this.right) {
-        [this.right, removed] = this.right.remove(t, comp);
+        [this.right, removed] = this.right.remove(t, cmp);
       } else {
         removed = false;
       }
@@ -190,6 +187,18 @@ class BinarySearchTreeNode<T> {
       ret = this.balance();
     }
     return [ret, removed];
+  }
+
+  clear() {
+    if (this.left) {
+      this.left.clear();
+      this.left = null;
+    }
+    if (this.right) {
+      this.right.clear();
+      this.right = null;
+    }
+
   }
 
 }

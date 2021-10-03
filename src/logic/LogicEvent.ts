@@ -27,6 +27,14 @@ class LogicEvent {
     this.pin.setLogicState(this.state);
   }
 
+  cmp(other: LogicEvent): number {
+    if (this.time === other.time) {
+      return this.pin.uuid.localeCompare(other.pin.uuid);
+    } else {
+      return other.time - this.time
+    }
+  }
+
   // TODO: add comparators
 }
 
