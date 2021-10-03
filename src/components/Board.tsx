@@ -362,16 +362,16 @@ class Board extends React.Component<IProps, IState> {
     isSelected(item: paper.Item): boolean {
         const select = this.select as paper.Item;
         const selectionRect = select.bounds;
-        let clone = item.clone();
-        clone.transform(item.parent.matrix)
-        let isSelected = clone.intersects(select) || clone.isInside(selectionRect) || clone.contains(selectionRect.center)
-        clone.remove()
+        // let clone = item.clone();
+        // clone.transform(item.parent.matrix)
+        // let isSelected = clone.intersects(select) || clone.isInside(selectionRect) || clone.contains(selectionRect.center)
+        // clone.remove()
 
-        // let matrix = item.parent.matrix;
-        // let imatrix = matrix.inverted();
-        // item.transform(matrix)
-        // let isSelected = item.intersects(select) || item.isInside(selectionRect) || item.contains(selectionRect.center)
-        // item.transform(imatrix)
+        let matrix = item.parent.matrix;
+        let imatrix = matrix.inverted();
+        item.transform(matrix)
+        let isSelected = item.intersects(select) || item.isInside(selectionRect) || item.contains(selectionRect.center)
+        item.transform(imatrix)
         return isSelected
     }
 

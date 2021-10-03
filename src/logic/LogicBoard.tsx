@@ -7,6 +7,8 @@ import paper from "paper/dist/paper-core";
 import {makeAndSetupScope} from "../util/PaperHelp";
 import LogicState from "./LogicState";
 import LogicPin from "./LogicPin";
+import BinarySearchTree from "../BinarySearchTree";
+import LogicEvent from "./LogicEvent";
 
 /**
  *
@@ -18,6 +20,15 @@ class LogicBoard {
   connections: Map<string, LogicConnection> = new Map();
   /** Paper scope for this board used to compute geometry, and intersections */
   scope: paper.PaperScope = makeAndSetupScope();
+  /** All pending logical events on the board **/
+  simulation: BinarySearchTree<LogicEvent> = new BinarySearchTree<LogicEvent>({cmp: LogicEvent.prototype.cmp});
+  simulationTimerId: number = -1;
+  simulationCurrentTime: number = 0;
+  /** Controls how frequently the simulation is updated **/
+  simulationIntervalMs: number = 25;
+  /** Controls how many time units pass per simulation interval **/
+  simulationStepSize: number = 1;
+  updateFunc: Function = () => {};
 
   render(): React.ReactElement {
     return (
@@ -34,6 +45,54 @@ class LogicBoard {
    */
   postEvent(state: LogicState, pin: LogicPin, delay: number) {
 
+  }
+
+  startSimulation() {
+    if (this.simulationTimerId === -1) {
+      // @ts-ignore
+      this.simulationTimerId = setInterval(this.advanceSimulation.bind(this), this.simulationIntervalMs);
+    }
+  }
+
+  stopSimulation() {
+    if (this.simulationTimerId !== -1) {
+      clearInterval(this.simulationTimerId);
+      this.simulationTimerId = -1;
+      this.simulation.clear();
+      this.simulationCurrentTime = 0;
+      this.components.forEach(c => c.reset());
+      this.components.forEach(c => c.operate());
+    }
+  }
+
+  pauseSimulation() {
+    if (this.simulationTimerId !== -1) {
+      clearInterval(this.simulationTimerId);
+      this.simulationTimerId = -1;
+    }
+  }
+
+  advanceSimulation() {
+    let current = this.simulationCurrentTime;
+    let target = current + this.simulationStepSize;
+    // TODO(dpasillas): Modify Binary Tree to remove need to check first on every loop.
+    while (this.simulation.size() && this.simulation.first()!.time <= target) {
+      this.simulation.popFirst()!.apply();
+    }
+    this.simulationCurrentTime = target;
+    this.updateFunc();
+  }
+
+  get simulationRunning() {
+    return this.simulationTimerId !== -1;
+  }
+
+  get simulationPaused() {
+    return !this.simulationRunning && this.simulationCurrentTime !== 0;
+  }
+
+  get simulationStopped() {
+    return !this.simulationRunning && this.simulationCurrentTime === 0;
   }
 
   /** Tracks a component to be rendered */

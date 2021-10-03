@@ -1,0 +1,54 @@
+
+.toolbar {
+    display: flex;
+    flex-direction: row;
+    border: 0 solid transparent;
+    border-radius: 5px;
+    padding: 0 3px 0 3px;
+    height: 36px;
+    width: 100%;
+    background-color: #e9e9f0;
+}
+
+.toolbar .group {
+    display: flex;
+    flex-direction: row;
+}
+
+.toolbar button {
+    margin: 3px 0 3px 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+}
+
+.toolbar button > * {
+    opacity: 1;
+
+    transition: opacity 0.1s linear;
+}
+
+.toolbar button:hover {
+    background: #d0d0d7;
+}
+
+.toolbar button:active, .toolbar button.pressed {
+    background: #80BCF580;
+}
+
+.toolbar button:disabled {
+    background: rgba(0,0,0,0);
+}
+
+.toolbar button.pressed > .default {
+    opacity: 0;
+}
+
+.toolbar button:not(.pressed) > .active {
+    opacity: 0;
+}
+
+/* Visually group elements in a .group */
+.toolbar .group:not(:first-child) {
+    margin-left: 1em;
+}

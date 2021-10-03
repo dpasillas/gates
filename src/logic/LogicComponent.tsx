@@ -92,6 +92,8 @@ abstract class LogicComponent {
     this.board = params.board;
 
     this.fieldWidth = params.fieldWidth ?? 0;
+
+    this.reset();
   }
 
   /** Handler for updating this component's body and pins in response to property updates */
@@ -272,6 +274,8 @@ abstract class LogicComponent {
   abstract setUpBody(fieldWidth: number): paper.Item
   /** Performs a logical operation */
   abstract operate(): void
+  /** Returns the component to its initial state at power up */
+  abstract reset(): void
 }
 
 export default LogicComponent;

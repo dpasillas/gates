@@ -4,6 +4,10 @@
     background-color: lightgray
 }
 
+.part-image {
+    pointer-events: none;
+}
+
 path.select {
     stroke: #0068D7;
     fill: #0064C846;
@@ -129,12 +133,17 @@ text {
     fill: chartreuse;
 }
 
+.switch.on:active {
+    fill: #6fd000;
+}
+
 .switch:active {
-    fill: chartreuse;
+    fill: #6fd000;
 }
 
 .center {
     dominant-baseline: middle;
     align-self: center;
     text-anchor: middle;
+    pointer-events: none;
 }
