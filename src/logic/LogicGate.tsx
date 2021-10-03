@@ -23,7 +23,7 @@ function pathFromGateType(type: GateType) {
     case GateType.NOT:
       return Constants.BUF_PATH;
     default:
-      throw Error("Unsupported Gate Type")
+      throw new Error("Unsupported Gate Type")
   }
 }
 
@@ -41,7 +41,24 @@ function isNot(type: GateType) {
     case GateType.BUF:
       return false;
     default:
-      throw Error("Unsupported Gate Type")
+      throw new Error(`Unsupported Gate Type(${type})`)
+  }
+}
+
+function maxPins(type: GateType): number {
+  switch (type) {
+    case GateType.AND:
+    case GateType.NAND:
+    case GateType.OR:
+    case GateType.NOR:
+    case GateType.XOR:
+    case GateType.XNOR:
+      return 4;
+    case GateType.BUF:
+    case GateType.NOT:
+      return 1;
+    default:
+      throw new Error(`Unsupported Gate Type(${type})`)
   }
 }
 
@@ -64,7 +81,7 @@ class LogicGate extends LogicComponent {
   private readonly opFunc: () => LogicState;
 
   constructor(params: IParams) {
-    super({flags: 0, type: PartType.GATE, fieldWidth: 2, ...params});
+    super({flags: 0, type: PartType.GATE, fieldWidth: Math.min(2, maxPins(params.subtype)), ...params});
     this.opFunc = LogicGate.opFuncs[this.subtype].bind(this)
   }
 
@@ -210,9 +227,10 @@ class LogicGate extends LogicComponent {
     }
 
     let offset =
-        fieldWidth === 2 ? 32 / 3 :
-            fieldWidth === 3 ? 6 :
-                2;
+        fieldWidth === 1 ? 16 :
+            fieldWidth === 2 ? 32 / 3 :
+                fieldWidth === 3 ? 6 :
+                    2;
     let spacing =
         fieldWidth === 2 ? 32 / 3 :
             fieldWidth === 3 ? 10 :
@@ -239,6 +257,11 @@ class LogicGate extends LogicComponent {
     pin.updateGeometry(new paper.Point(32, 16))
 
     return [pin];
+  }
+
+  reset() {
+    let [output] = this.outputPins;
+    output.setLogicState(new LogicState({x: this.bitMask()}))
   }
 }
 

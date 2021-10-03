@@ -1,9 +1,7 @@
-import React from 'react';
-import { render, screen } from '@testing-library/react';
 import BinarySearchTree from "./BinarySearchTree";
 
 test('renders learn react link', () => {
-  let bst = new BinarySearchTree<number>({comp: (a, b) =>  a - b});
+  let bst = new BinarySearchTree<number>({cmp: (a, b) =>  a - b});
 
   for (let i = 1; i <= 16; ++i) {
     bst.insert(i);

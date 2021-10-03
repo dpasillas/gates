@@ -52,7 +52,7 @@ class Part {
       case 0:
         return new Clock({board: board, scope: scope, subtype: 0})
       case 1:
-        return new Switch({subtype: 1, board: board, scope: scope, width: 2})
+        return new Switch({subtype: 1, board: board, scope: scope})
       default:
         throw Error("Unsupported Part Type");
     }
