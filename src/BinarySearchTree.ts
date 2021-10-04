@@ -5,22 +5,22 @@ interface Comparator<T> {
 }
 
 interface IParams<T> {
-    comp: Comparator<T>;
+    cmp: Comparator<T>;
 }
 
 class BinarySearchTree<T extends Object> {
-    private readonly comp: Comparator<T>;
+    private readonly cmp: Comparator<T>;
     root: BinarySearchTreeNode<T> | null = null;
 
     constructor(params: IParams<T>) {
-        this.comp = params.comp;
+        this.cmp = params.cmp;
     }
 
     insert(t: T) {
         if (!this.root) {
             this.root = new BinarySearchTreeNode<T>({data: t})
         } else {
-            [this.root, ] = this.root.insert(t, this.comp);
+            [this.root, ] = this.root.insert(t, this.cmp);
         }
     }
 
@@ -30,17 +30,27 @@ class BinarySearchTree<T extends Object> {
         }
 
         let ret;
-        [this.root, ret] = this.root.remove(t, this.comp) ;
+        [this.root, ret] = this.root.remove(t, this.cmp);
         return ret;
     }
 
-    find(t: T, comp: Comparator<T> | null = null): T | null {
-        comp = comp || this.comp
+    /** Removes all elements **/
+    clear(): void {
+        if (!this.root) {
+            return;
+        }
+
+        this.root.clear();
+        this.root = null;
+    }
+
+    find(t: T, cmp: Comparator<T> | null = null): T | null {
+        cmp = cmp || this.cmp
         if (!this.root) {
             return null;
         }
 
-        return this.root.find(t, comp) || null;
+        return this.root.find(t, cmp) || null;
     }
 
     first(): T | null {
@@ -54,6 +64,16 @@ class BinarySearchTree<T extends Object> {
         }
 
         return node.data;
+    }
+
+    popFirst(): T | null {
+        if (!this.root) {
+            return null;
+        }
+
+        let [node, val] = this.root.popFirst();
+        this.root = node;
+        return val;
     }
 
     size(): number {

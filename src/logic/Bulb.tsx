@@ -47,6 +47,9 @@ class Bulb extends LogicComponent {
     return [pin];
   }
 
+  /** No-op */
+  reset() {
+  }
 
 }
 

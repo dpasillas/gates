@@ -71,6 +71,9 @@ class Switch extends LogicComponent {
             v: v
         }))
     }
+
+    /** Intentionally no-op */
+    reset(): void { }
 }
 
 export default Switch;
