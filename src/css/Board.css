@@ -110,3 +110,31 @@ text {
 .origin {
     /*mix-blend-mode: color-dodge;*/
 }
+
+.switch {
+    stroke-width: 0.5px;
+    transition: all 0.3s;
+}
+
+.switch.on {
+    fill: chartreuse;
+}
+
+.switch:hover {
+    fill: #D0D0D0;
+    stroke-width: 1px;
+}
+
+.switch.on:hover {
+    fill: chartreuse;
+}
+
+.switch:active {
+    fill: chartreuse;
+}
+
+.center {
+    dominant-baseline: middle;
+    align-self: center;
+    text-anchor: middle;
+}
