@@ -6,6 +6,8 @@ import {GLOBAL_SCOPE} from "../Constants";
 import LogicBoard from "../logic/LogicBoard";
 import Bulb from "../logic/Bulb";
 import Clock from "../logic/Clock";
+import Switch from "../logic/Switch";
+import * as paper from "paper";
 
 interface PartParams {
   type: PartType,
@@ -38,7 +40,19 @@ class Part {
       case PartType.OUTPUT:
         return new Bulb({subtype: 0, board: board, scope: scope})
       case PartType.INPUT:
+        return this.makeInput(this.subtype, scope, board)
+
+      default:
+        throw new Error("Unsupported Part Type");
+    }
+  }
+
+  makeInput(subtype: number, scope: paper.PaperScope, board?: LogicBoard) {
+    switch (subtype){
+      case 0:
         return new Clock({board: board, scope: scope, subtype: 0})
+      case 1:
+        return new Switch({subtype: 1, board: board, scope: scope, width: 2})
       default:
         throw Error("Unsupported Part Type");
     }
