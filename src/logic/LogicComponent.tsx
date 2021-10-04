@@ -45,6 +45,13 @@ export interface LogicComponentParams {
   fieldWidth?: number;
   /** The number of bits of data handled on a single pin, excluding control pins. */
   width?: number;
+  /**
+   * The propagation delay of this component
+   *
+   * More specifically, the amount of time it takes for a change in one or more of the inputs of this component to be
+   * reflected in the outputs.
+   * */
+  delay?: number;
   /** The logical board where rendering and interaction are done, and where logical events will be handled. */
   board?: LogicBoard;
 }
@@ -86,7 +93,7 @@ abstract class LogicComponent {
     this.flags = params.flags;
     this.type = params.type;
     this.subtype = params.subtype;
-    this.delay = 1;
+    this.delay = params.delay ?? 1;
     this.__width = params.width ?? 1;
 
     this.board = params.board;
