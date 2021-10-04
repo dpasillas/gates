@@ -21,7 +21,7 @@ class LogicBoard {
   /** Paper scope for this board used to compute geometry, and intersections */
   scope: paper.PaperScope = makeAndSetupScope();
   /** All pending logical events on the board **/
-  simulation: BinarySearchTree<LogicEvent> = new BinarySearchTree<LogicEvent>({cmp: LogicEvent.prototype.cmp});
+  simulation: BinarySearchTree<LogicEvent> = new BinarySearchTree<LogicEvent>({cmp: (a, b) => a.cmp(b)});
   simulationTimerId: number = -1;
   simulationCurrentTime: number = 0;
   /** Controls how frequently the simulation is updated **/
@@ -44,7 +44,12 @@ class LogicBoard {
    * @param delay - The amount of time from the current time before the pin's state should be updated.
    */
   postEvent(state: LogicState, pin: LogicPin, delay: number) {
-
+    let event = new LogicEvent({
+      pin: pin,
+      time: this.simulationCurrentTime + delay,
+      state: state
+    });
+    this.simulation.insert(event);
   }
 
   startSimulation() {
@@ -75,9 +80,12 @@ class LogicBoard {
   advanceSimulation() {
     let current = this.simulationCurrentTime;
     let target = current + this.simulationStepSize;
-    // TODO(dpasillas): Modify Binary Tree to remove need to check first on every loop.
+    // TODO(dpasillas): Modify Binary Tree to remove need to check first() on every loop.
     while (this.simulation.size() && this.simulation.first()!.time <= target) {
-      this.simulation.popFirst()!.apply();
+      let event = this.simulation.popFirst()!;
+      // Update the time so that operations triggered by this event use the correct reference time.
+      this.simulationCurrentTime = event.time;
+      event.apply();
     }
     this.simulationCurrentTime = target;
     this.updateFunc();

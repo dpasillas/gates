@@ -31,7 +31,7 @@ class LogicEvent {
     if (this.time === other.time) {
       return this.pin.uuid.localeCompare(other.pin.uuid);
     } else {
-      return other.time - this.time
+      return this.time - other.time;
     }
   }
 

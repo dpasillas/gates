@@ -94,6 +94,8 @@ class LogicPin {
       if (this.state.ne(inputPin.state)) {
         inputPin.setLogicState(this.state)
       }
+      // This ensures that self referencing components (such as Clock) operates appropriately
+      inputPin.parent.operate();
     }
   }
 

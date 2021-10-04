@@ -1,5 +1,6 @@
 import React from "react";
 import LogicConnection from "../logic/LogicConnection";
+import LogicState from "../logic/LogicState";
 
 interface Point {
   x: number,
@@ -8,6 +9,8 @@ interface Point {
 
 interface IProps {
   connection: LogicConnection;
+  state: LogicState;
+  width: number;
   /** The first endpoint of this connection */
   i: Point;
   /** The second endpoint of this connection */
@@ -47,6 +50,18 @@ class Connection extends React.Component<IProps, IState> {
     // The path of a connection is both endpoints drawn as circles, connected by a bezier curve.
     let d = `${end1_1} ${end1_2} M ${ix} ${iy} C ${icx} ${icy} ${ocx} ${ocy} ${ox} ${oy} ${end2_1} ${end2_2}`;
 
+    let fillClass;
+    let state = this.props.state;
+    if (state.x) {
+      fillClass = "error"
+    } else if (state.z) {
+      fillClass = "error"
+    } else if (state.v) {
+      fillClass = "on";
+    } else {
+      fillClass = "off"
+    }
+
     /*
     The connection is drawn twice with different stroke widths:
 
@@ -60,9 +75,9 @@ class Connection extends React.Component<IProps, IState> {
         <g>
           <path className="connection-outer" d={d}/>
           <path fillRule="nonzero"
-              className="connection-inner error" d={d}/>
-          <path fillRule="nonzero"
-              className="connection-inner bus" d={d}/>
+              className={`connection-inner ${fillClass}`} d={d}/>
+          { this.props.width > 1 &&
+            <path fillRule="nonzero" className="connection-inner bus" d={d}/>}
         </g>
     );
   }
