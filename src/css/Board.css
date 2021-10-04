@@ -4,7 +4,7 @@
     background-color: lightgray
 }
 
-.part-image {
+.part-image, .decoration {
     pointer-events: none;
 }
 
@@ -103,7 +103,7 @@ path.grid {
     fill: url("#bulb-glow");
     stroke: none;
     pointer-events: none;
-    mix-blend-mode: color-burn;
+    mix-blend-mode: color-dodge;
 }
 
 text {

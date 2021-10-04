@@ -50,7 +50,15 @@ class LogicConnection {
     let oc = oanchor.add(odir.multiply(d));
 
     return (
-        <Connection key={this.uuid} connection={this} i={ianchor} o={oanchor} ic={ic} oc={oc}/>
+        <Connection key={this.uuid}
+                    connection={this}
+                    state={this.source.state}
+                    width={this.source.width}
+                    i={ianchor}
+                    o={oanchor}
+                    ic={ic}
+                    oc={oc}
+        />
     );
 
   }
