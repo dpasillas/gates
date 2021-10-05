@@ -18,12 +18,6 @@ path.grid {
     fill: none;
 }
 
-.connection {
-    stroke-width: 1px;
-    stroke: black;
-    fill: green;
-}
-
 .connection-inner {
     stroke-width: 4px;
     stroke-linecap: round;
@@ -37,20 +31,20 @@ path.grid {
     fill: none;
 }
 
-.bus {
-    stroke: url(#bus)
+.connection .on {
+    stroke: #4080FF;
 }
 
-.on {
-    stroke: blue;
-}
-
-.off {
+.connection .off {
     stroke: white;
 }
 
-.error {
-    stroke: red;
+.connection .error {
+    stroke: #FF4040;
+}
+
+.bus {
+    stroke: url(#bus)
 }
 
 .component {
@@ -83,12 +77,12 @@ path.grid {
 .anchor {
     stroke: rgba(0, 0, 0, 0);
     fill: rgba(0,0,0,0);
-    transition: fill 0.6s ease-in-out;
+    transition: fill 0.4s ease-in-out;
 }
 
 .pin:hover .anchor {
     fill: white;
-    transition: fill 0.3s ease-out;
+    transition: fill 0.15s ease-out;
 }
 
 .pin.selected:hover .anchor {
@@ -117,7 +111,7 @@ text {
 
 .switch {
     stroke-width: 0.5px;
-    transition: all 0.3s;
+    transition: all 0.1s;
 }
 
 .switch.on {
@@ -141,9 +135,44 @@ text {
     fill: #6fd000;
 }
 
-.center {
-    dominant-baseline: middle;
-    align-self: center;
-    text-anchor: middle;
+.component text {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 10px;
     pointer-events: none;
+}
+
+.component text > tspan {
+    font-size: 5px;
+    baseline-shift: sub;
+}
+
+text.center {
+    font-size: 15px;
+    dominant-baseline: middle;
+    text-anchor: middle;
+    transform: translateY(1px);
+}
+
+.top {
+    dominant-baseline: hanging;
+    text-anchor: middle;
+    transform: translateY(1px);
+}
+
+.bottom {
+    dominant-baseline: auto;
+    text-anchor: middle;
+    transform: translateY(-2px);
+}
+
+.left {
+    dominant-baseline: middle;
+    text-anchor: start;
+    transform: translateX(2px);
+}
+
+.right {
+    dominant-baseline: middle;
+    text-anchor: end;
+    transform: translateX(-2px);
 }

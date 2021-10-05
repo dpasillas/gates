@@ -72,7 +72,7 @@ class Connection extends React.Component<IProps, IState> {
     The alternative is to compute the path offset curve, which is difficult to compute.
     */
     return (
-        <g>
+        <g className="connection">
           <path className="connection-outer" d={d}/>
           <path fillRule="nonzero"
               className={`connection-inner ${fillClass}`} d={d}/>

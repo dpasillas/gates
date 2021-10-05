@@ -1,3 +1,5 @@
+import React from "react";
+
 import LogicComponent, {LogicComponentParams} from "./LogicComponent";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
@@ -34,7 +36,7 @@ class Switch extends LogicComponent {
 
     extraRender(): React.ReactElement[] {
         let [pin] = this.outputPins
-        let switches = []
+        let extras = []
         for (let i = 0; i < this.width; i++) {
             let classnames = ["switch"]
             let stateString = "0"
@@ -46,7 +48,7 @@ class Switch extends LogicComponent {
             let x = 16 + 32 * (this.width - i - 1);
             let y = 16;
 
-            switches.push(
+            extras.push(
                 <circle key={i}
                         className={classnames.join(' ')}
                         cx={x}
@@ -54,13 +56,13 @@ class Switch extends LogicComponent {
                         r={12}
                         onClick={this.handleClick.bind(this, i)}/>
             )
-            switches.push(
+            extras.push(
                 <text className="center" color="red" x={x} y={y}>
                     {stateString}
                 </text>
             )
         }
-        return switches
+        return extras
 
     }
 
