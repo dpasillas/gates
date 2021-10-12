@@ -8,6 +8,10 @@ import {
   faStepForward,
 } from "@fortawesome/free-solid-svg-icons";
 import LogicBoard from "../logic/LogicBoard";
+import {IconButton} from "@mui/material";
+import {Brightness4, Brightness7} from "@mui/icons-material";
+import ThemeContext from "../ThemeContext";
+import {DarkTheme, LightTheme} from "../Themes";
 
 interface IProps {
   board: LogicBoard;
@@ -20,23 +24,32 @@ class Toolbar extends React.Component<IProps, IState> {
     let running = this.props.board.simulationRunning;
     let stopped = !running && this.props.board.simulationStopped;
     return (
-        <div className="toolbar" role="toolbar">
-          <div className="group">
-            <button className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
-              <FontAwesomeIcon className="default" icon={faPlay} style={{position: "fixed"}}/>
-              <FontAwesomeIcon className="active" icon={faPause}/>
-            </button>
-            <button onClick={this.onStop.bind(this)} {...{disabled: stopped}}>
-              <FontAwesomeIcon icon={faStop}/>
-            </button>
-            <button onClick={this.onStep.bind(this)} {...{disabled: running}}>
-              <FontAwesomeIcon icon={faStepForward}/>
-            </button>
-            <div>
-              {this.props.board.simulationCurrentTime}
-            </div>
-          </div>
-        </div>
+        <ThemeContext.Consumer>
+          {({theme, setTheme}) => (
+              <div className="toolbar" role="toolbar">
+                <div className="group">
+                  <button className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
+                    <FontAwesomeIcon className="default" icon={faPlay} style={{position: "fixed"}}/>
+                    <FontAwesomeIcon className="active" icon={faPause}/>
+                  </button>
+                  <button onClick={this.onStop.bind(this)} {...{disabled: stopped}}>
+                    <FontAwesomeIcon icon={faStop}/>
+                  </button>
+                  <button onClick={this.onStep.bind(this)} {...{disabled: running}}>
+                    <FontAwesomeIcon icon={faStepForward}/>
+                  </button>
+                  <div>
+                    {this.props.board.simulationCurrentTime}
+                  </div>
+                </div>
+                <div className="group">
+                  <IconButton sx={{ ml: 1 }} onClick={() => setTheme(theme.palette.mode === 'dark' ? LightTheme : DarkTheme)} color="inherit">
+                    {theme.palette.mode === 'dark' ? <Brightness7/> : <Brightness4/>}
+                  </IconButton>
+                </div>
+              </div>
+          )}
+        </ThemeContext.Consumer>
     );
   }
 

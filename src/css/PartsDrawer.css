@@ -6,16 +6,26 @@
     align-content: flex-start;
 }
 
-.drawer-division {
-    display: flex;
-    flex-direction: column;
-    width: 50%;
+.drawer-handle-icon-container {
+    padding-right: 10px;
+}
+
+.drawer-handle-icon {
+    transition: transform 0.3s ease-out;
+}
+
+.drawer-contents {
     height: 100%;
+    display: flex;
     overflow: hidden;
-    justify-content: center;
-    align-content: center;
-    border: 2px solid yellowgreen;
-    background-color: lightgray;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex-grow: 1;
+    gap: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    justify-content: space-around;
+    align-content: flex-end;
 }
 
 .part {
@@ -26,7 +36,6 @@
 }
 
 .part-image-container {
-    border: 2px solid yellow;
     display: flex;
     flex-direction: column;
     align-content: center;

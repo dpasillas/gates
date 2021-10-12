@@ -4,12 +4,14 @@
     left: 0;
     display: flex;
     position: absolute;
-    /*border: 1px solid green;*/
     transition: left 0.67s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .sidebar-content {
-    width: 100%
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .divider {

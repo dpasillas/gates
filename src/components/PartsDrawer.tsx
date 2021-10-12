@@ -1,11 +1,17 @@
 import React from "react";
 import "../css/PartsDrawer.css"
 import Part from "./Part";
+import {Button, Collapse, Divider, ListItem, Paper} from "@mui/material";
+import {faChevronRight} from "@fortawesome/free-solid-svg-icons/faChevronRight";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 interface IProps {
+  label?: string,
   parts: Array<Part>,
 }
-interface IState {}
+interface IState {
+  collapsed: boolean,
+}
 
 /**
  * A container which renders multiple parts together, and enables parts to be dragged and dropped onto a board
@@ -13,6 +19,12 @@ interface IState {}
  * For organizational purposes, a full suite of components may consist of multiple drawers.
  * */
 class PartsDrawer extends React.Component<IProps, IState> {
+  constructor(props: IProps) {
+    super(props);
+    this.state = {
+      collapsed: true,
+    }
+  }
 
   renderPart(part: Part) {
     let component = part.component;
@@ -26,11 +38,13 @@ class PartsDrawer extends React.Component<IProps, IState> {
 
     let id = label.replace(' ', '_');
     return (
-        <div className="part"
-             key={component.uuid}
-             draggable
-             onDragStart={this.handleDragStart.bind(this, id, part)}
-             onDragEnd={this.handleDragEnd.bind(this)}
+        <Paper
+            elevation={3}
+            classes={{root: 'part'}}
+            key={component.uuid}
+            draggable
+            onDragStart={this.handleDragStart.bind(this, id, part)}
+            onDragEnd={this.handleDragEnd.bind(this)}
         >
           <div className="part-image-container">
             <svg className="part-image" id={id} viewBox={`${left} ${top} ${width} ${height}`} width={width} height={height}>
@@ -38,7 +52,7 @@ class PartsDrawer extends React.Component<IProps, IState> {
             </svg>
           </div>
           <div className="part-label">{label}</div>
-        </div>
+        </Paper>
     )
   }
 
@@ -60,12 +74,36 @@ class PartsDrawer extends React.Component<IProps, IState> {
 
   render() {
     return (
-        <div className="drawer">
-          {this.props.parts.map(this.renderPart.bind(this))}
-        </div>
-    )
+        <>
+          <ListItem dense>
+            <Button sx={{width: '100%', borderRadius: '10px'}}
+                    variant={'contained'}
+                    classes={{endIcon: 'drawer-handle-icon-container'}}
+                    onClick={this.handleClick.bind(this)}
+                    endIcon={
+                      <FontAwesomeIcon className={'drawer-handle-icon'}
+                                       icon={faChevronRight}
+                                       rotation={!this.state.collapsed ? 90 : undefined}/>
+                    }>
+              <span style={{flexGrow: 1}}>{this.props.label}</span>
+            </Button>
+          </ListItem>
+
+          <Collapse classes={{wrapperInner: "drawer-contents"}} in={!this.state.collapsed} timeout="auto">
+            {this.props.parts.map(this.renderPart.bind(this))}
+          </Collapse>
+          <Divider/>
+        </>
+  )
   }
 
+  handleClick() {
+    this.setState((state) => {
+      return {
+        collapsed: !state.collapsed,
+      }
+    })
+  }
 }
 
 export default PartsDrawer;
