@@ -32,6 +32,7 @@ class Component extends React.Component<GateProps, IState> {
         super(props);
 
         this.state = {};
+        this.props.logicComponent.updateSelf = () => this.setState({});
     }
 
     /**

@@ -1,12 +1,17 @@
 import React from "react";
-import "../css/PartsDrawer.css"
-import Part from "./Part";
-import {Button, Collapse, Divider, ListItem, Paper} from "@mui/material";
+import Button from "@mui/material/Button"
+import Collapse from "@mui/material/Collapse"
+import Divider from "@mui/material/Divider"
+import ListItem from "@mui/material/ListItem"
+import Paper from "@mui/material/Paper"
 import {faChevronRight} from "@fortawesome/free-solid-svg-icons/faChevronRight";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import Part from "./Part";
+import "../css/PartsDrawer.css"
+
 interface IProps {
-  label?: string,
+  label: string,
   parts: Array<Part>,
 }
 interface IState {

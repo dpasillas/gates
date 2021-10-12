@@ -31,6 +31,13 @@ interface IState {}
  * user interactions.
  * */
 class Connection extends React.Component<IProps, IState> {
+  constructor(props: IProps) {
+    super(props);
+    this.state = {}
+
+    this.props.connection.updateSelf = () => this.setState({});
+  }
+
   render() {
 
     let {x: ix, y: iy} = this.props.i;

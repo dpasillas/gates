@@ -1,17 +1,18 @@
 import React from "react";
-import "../css/Toolbar.css";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {
-  faPause,
-  faStop,
-  faPlay,
-  faStepForward,
-} from "@fortawesome/free-solid-svg-icons";
+import {faPause, faStop, faPlay, faStepForward} from "@fortawesome/free-solid-svg-icons";
+import Box from "@mui/material/Box"
+import MuiDivider from "@mui/material/Divider"
+import Stack from "@mui/material/Stack"
+import {styled} from "@mui/material/styles";
+
 import LogicBoard from "../logic/LogicBoard";
-import {IconButton} from "@mui/material";
-import {Brightness4, Brightness7} from "@mui/icons-material";
-import ThemeContext from "../ThemeContext";
-import {DarkTheme, LightTheme} from "../Themes";
+import ToggleThemeButton from "./ToggleThemeButton";
+import "../css/Toolbar.css";
+
+const Divider = styled(MuiDivider)({
+  height: "75%",
+});
 
 interface IProps {
   board: LogicBoard;
@@ -24,32 +25,29 @@ class Toolbar extends React.Component<IProps, IState> {
     let running = this.props.board.simulationRunning;
     let stopped = !running && this.props.board.simulationStopped;
     return (
-        <ThemeContext.Consumer>
-          {({theme, setTheme}) => (
-              <div className="toolbar" role="toolbar">
-                <div className="group">
-                  <button className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
-                    <FontAwesomeIcon className="default" icon={faPlay} style={{position: "fixed"}}/>
-                    <FontAwesomeIcon className="active" icon={faPause}/>
-                  </button>
-                  <button onClick={this.onStop.bind(this)} {...{disabled: stopped}}>
-                    <FontAwesomeIcon icon={faStop}/>
-                  </button>
-                  <button onClick={this.onStep.bind(this)} {...{disabled: running}}>
-                    <FontAwesomeIcon icon={faStepForward}/>
-                  </button>
-                  <div>
-                    {this.props.board.simulationCurrentTime}
-                  </div>
-                </div>
-                <div className="group">
-                  <IconButton sx={{ ml: 1 }} onClick={() => setTheme(theme.palette.mode === 'dark' ? LightTheme : DarkTheme)} color="inherit">
-                    {theme.palette.mode === 'dark' ? <Brightness7/> : <Brightness4/>}
-                  </IconButton>
-                </div>
-              </div>
-          )}
-        </ThemeContext.Consumer>
+        <Stack className="toolbar" spacing={1} direction="row">
+          <Divider orientation="vertical"/>
+          <Box flexDirection="row">
+            <button className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
+              <FontAwesomeIcon className="default" icon={faPlay} style={{position: "fixed"}}/>
+              <FontAwesomeIcon className="active" icon={faPause}/>
+            </button>
+            <button onClick={this.onStop.bind(this)} {...{disabled: stopped}}>
+              <FontAwesomeIcon icon={faStop}/>
+            </button>
+            <button onClick={this.onStep.bind(this)} {...{disabled: running}}>
+              <FontAwesomeIcon icon={faStepForward}/>
+            </button>
+            <span>
+              {this.props.board.simulationCurrentTime}
+            </span>
+          </Box>
+          <Divider orientation="vertical"/>
+          <Box>
+            <ToggleThemeButton/>
+          </Box>
+          <Divider orientation="vertical"/>
+        </Stack>
     );
   }
 

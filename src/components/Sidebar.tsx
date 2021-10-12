@@ -1,8 +1,14 @@
 import React from "react";
-import "../css/Sidebar.css"
-import {Box, List, ListSubheader, Paper, Tab, Tabs} from "@mui/material";
+import Box from "@mui/material/Box"
+import List from "@mui/material/List"
+import ListSubheader from "@mui/material/ListSubheader"
+import Paper from "@mui/material/Paper"
+import Tab from "@mui/material/Tab"
+import Tabs from "@mui/material/Tabs"
 import Part from "./Part";
+
 import PartsDrawer from "./PartsDrawer";
+import "../css/Sidebar.css"
 
 
 function a11yProps(index: number) {
@@ -60,9 +66,9 @@ class Sidebar extends React.Component<IProps, IState> {
             <List
                 subheader={<ListSubheader>Parts</ListSubheader>}
             >
-              <PartsDrawer label="Input" parts={this.props.parts.get("Input")!}/>
-              <PartsDrawer label="Output" parts={this.props.parts.get("Output")!}/>
-              <PartsDrawer label="Gates" parts={this.props.parts.get("Gates")!}/>
+              {[...this.props.parts.entries()].map(([label, parts]) => (
+                <PartsDrawer key={label} label={label} parts={parts}/>
+                ))}
             </List>
           </Paper>
         </Box>

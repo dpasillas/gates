@@ -85,6 +85,10 @@ abstract class LogicComponent {
   geometry!: paper.Item;
   inputPins: LogicPin[] = [];
   outputPins: LogicPin[] = [];
+  /**
+   * Callback which triggers a re-render on the rendered object
+   */
+  updateSelf?: () => void;
 
   protected constructor(params: LogicComponentParams) {
 
@@ -256,6 +260,11 @@ abstract class LogicComponent {
             key={this.uuid}
             {...this.getRenderParams(handlers)}/>
     );
+  }
+
+  /** Triggers a re-render */
+  update() {
+    this.updateSelf && this.updateSelf();
   }
 
   /** Specifies required properties for rendering */

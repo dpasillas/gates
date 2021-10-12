@@ -67,11 +67,12 @@ class Switch extends LogicComponent {
     }
 
     handleClick(i: number) {
-        let [pin] = this.outputPins
-        let v = (pin.state.v ^ (1 << i))
+        let [pin] = this.outputPins;
+        let v = (pin.state.v ^ (1 << i));
         pin.setLogicState(new LogicState({
             v: v
-        }))
+        }));
+        this.update();
     }
 
     /** Intentionally no-op */
