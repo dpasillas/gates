@@ -28,6 +28,8 @@ class App extends React.Component<IProps , IState>{
     new Part({type: PartType.OUTPUT, subtype: 0, label:"Bulb"}),
     new Part({type: PartType.INPUT, subtype: 0, label: "Clock"}),
     new Part({type: PartType.INPUT, subtype: 1, label:"Switch"}),
+    new Part({type: PartType.COMPOSITE_BUILT_IN, subtype: 0, label: "Half-Adder"}),
+    new Part({type: PartType.COMPOSITE_BUILT_IN, subtype: 1, label: "Adder"}),
   ]
 
   componentDidMount() {
