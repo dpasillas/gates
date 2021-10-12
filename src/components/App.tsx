@@ -1,14 +1,17 @@
 import React from 'react';
-import '../css/App.css';
+import Box from "@mui/material/Box"
+import {Theme} from "@mui/material/styles"
+import {ThemeProvider} from "@mui/material/styles"
+
 import Sidebar from "./Sidebar";
 import Part from "./Part";
 import PartType from "../enums/PartType";
 import GateType from "../enums/GateType";
 import LogicBoard from "../logic/LogicBoard";
 import Toolbar from "./Toolbar";
-import {Box, Theme, ThemeProvider} from "@mui/material";
 import {LightTheme} from "../Themes";
 import ThemeContext from "../ThemeContext";
+import '../css/App.css';
 
 interface IProps {}
 interface IState {

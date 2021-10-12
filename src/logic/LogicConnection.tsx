@@ -22,6 +22,10 @@ class LogicConnection {
   sink: LogicPin;
   hidden: boolean;
   board?: LogicBoard;
+  /**
+   * Callback which triggers a re-render on the rendered object
+   */
+  updateSelf?: () => void;
 
   constructor(params: IParams) {
     this.uuid = params.uuid ?? uuidv4();
@@ -61,6 +65,11 @@ class LogicConnection {
         />
     );
 
+  }
+
+  /** Triggers a re-render */
+  update() {
+    this.updateSelf && this.updateSelf();
   }
 }
 
