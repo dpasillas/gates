@@ -1,3 +1,5 @@
+import React from "react"
+
 import LogicComponent, {LogicComponentParams} from "./LogicComponent";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
@@ -33,15 +35,15 @@ class Ground extends LogicComponent {
         return [pin];
     }
 
-    extraRender(): React.ReactElement[] {
-        return [
+    extraRender(): React.ReactElement {
+        return (
              <path d="
-                M16,6.5 v12
-                M10,19.5 h12
+                M16,6.5 v13
+                M9.5,19.5 h13
                 M12,22.5 h8
-                M14,25.5 h4
+                M14.5,25.5 h3
             "/>
-        ];
+        );
     }
 }
 
