@@ -72,6 +72,7 @@ class Component extends React.Component<GateProps, IState> {
                       onMouseMove={this.props.handlers.onGateMouseMove}
                       onContextMenu={this.props.handlers.onGateContextMenu}
                 />
+                {this.props.logicComponent.pins().map(p => p.renderLabel())}
                 {gate.extraRender()}
                 {pins}
             </g>

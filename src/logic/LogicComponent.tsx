@@ -249,8 +249,8 @@ abstract class LogicComponent {
    *
    * For example, this may be used to draw pin labels, light from activated bulbs, or the interactive part of a button.
    * */
-  extraRender(): React.ReactElement[] {
-    return [];
+  extraRender(): React.ReactElement {
+    return <></>;
   }
 
   /** Maps this logical component to a React Component */
@@ -291,7 +291,11 @@ abstract class LogicComponent {
   /** Performs a logical operation */
   abstract operate(): void
   /** Returns the component to its initial state at power up */
-  abstract reset(): void
+  reset() {
+    for (let pin of this.pins()) {
+      pin.reset();
+    }
+  }
 }
 
 export default LogicComponent;

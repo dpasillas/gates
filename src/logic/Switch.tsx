@@ -12,8 +12,8 @@ class Switch extends LogicComponent {
         super({...params, type: PartType.INPUT, flags: 0});
     }
 
-    operate(): void {
-    }
+    /** Intentionally no-op */
+    operate(): void {}
 
     setUpBody(fieldWidth: number): paper.Item {
         let {Path, Point, Size} = this.scope;
@@ -34,7 +34,7 @@ class Switch extends LogicComponent {
         return [pin];
     }
 
-    extraRender(): React.ReactElement[] {
+    extraRender(): React.ReactElement {
         let [pin] = this.outputPins
         let extras = []
         for (let i = 0; i < this.width; i++) {
@@ -48,8 +48,9 @@ class Switch extends LogicComponent {
             let x = 16 + 32 * (this.width - i - 1);
             let y = 16;
 
+            // TODO: Pass mouse events over the button to the parent element
             extras.push(
-                <circle key={i}
+                <circle key={2*i}
                         className={classnames.join(' ')}
                         cx={x}
                         cy={y}
@@ -57,12 +58,12 @@ class Switch extends LogicComponent {
                         onClick={this.handleClick.bind(this, i)}/>
             )
             extras.push(
-                <text className="center" color="red" x={x} y={y}>
+                <text key={2*i + 1} className="center" x={x} y={y}>
                     {stateString}
                 </text>
             )
         }
-        return extras
+        return <>{extras}</>
 
     }
 
@@ -75,8 +76,13 @@ class Switch extends LogicComponent {
         this.update();
     }
 
-    /** Intentionally no-op */
-    reset(): void { }
+    /** Reset but keep prior state */
+    reset(): void {
+        let [output] = this.outputPins;
+        let s = output.state;
+        super.reset();
+        output.setLogicState(s);
+    }
 }
 
 export default Switch;

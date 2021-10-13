@@ -9,6 +9,7 @@ import Part from "./Part";
 
 import PartsDrawer from "./PartsDrawer";
 import "../css/Sidebar.css"
+import Divider from "@mui/material/Divider";
 
 
 function a11yProps(index: number) {
@@ -98,7 +99,7 @@ class Sidebar extends React.Component<IProps, IState> {
         textOrientation: "mixed",
         transform: "rotate(180deg)"}}>{label}</Box>}
          value={label} {...a11yProps(index)}
-         sx={{minWidth: "48px"}}
+         sx={{minWidth: "48px", minHeight: "100px"}}
          onClick={this.handleTabClick.bind(this, label)}/>
     );
   }
@@ -115,8 +116,11 @@ class Sidebar extends React.Component<IProps, IState> {
               sx={{ borderRight: 1, borderColor: 'divider', flexShrink: 0, minWidth: '48px'}}
           >
             {this.renderTab("Project", 0)}
+            <Divider/>
             {this.renderTab("Parts", 1)}
+            <Divider/>
           </Tabs>
+          <Divider orientation="vertical" sx={{zIndex: 'drawer'}}/>
           <div style={{position: "absolute", left: "50px", width: "100%", height: "100%", overflow: "hidden", pointerEvents: "none"}}>
             {this.renderUnderlay()}
             {this.renderProjectView()}
