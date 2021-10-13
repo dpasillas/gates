@@ -41,15 +41,16 @@ class Clock extends LogicComponent {
     return [pin];
   }
 
-  extraRender(): React.ReactElement[] {
-    return [
-      <path className="decoration" key={0} d={Clock.clockPath} fill="none"/>
-    ];
+  extraRender(): React.ReactElement {
+    return (
+      <path className="decoration" d={Clock.clockPath} fill="none"/>
+    );
   }
 
   reset() {
     let [output] = this.outputPins;
     output.setLogicState(new LogicState({v: 0}));
+    output.updateNext(true);
     this.operate();
   }
 }

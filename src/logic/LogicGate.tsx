@@ -201,6 +201,9 @@ class LogicGate extends LogicComponent {
   }
 
   operate(): void {
+    if (!this.opFunc) {
+      return;
+    }
     let logicState = this.opFunc();
     this.postEvent(logicState, this.outputPins[0])
   }
@@ -257,11 +260,6 @@ class LogicGate extends LogicComponent {
     pin.updateGeometry(new paper.Point(32, 16))
 
     return [pin];
-  }
-
-  reset() {
-    let [output] = this.outputPins;
-    output.setLogicState(new LogicState({x: this.bitMask()}))
   }
 }
 

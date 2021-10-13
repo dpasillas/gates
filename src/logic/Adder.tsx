@@ -71,14 +71,16 @@ class Adder extends LogicComponent {
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.UP,
             board: this.board,
-            width: this.width
+            width: this.width,
+            label: 'S',
         });
 
         let cout = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.LEFT,
-            board: this.board
+            board: this.board,
+            label: "C__out",
         });
 
         sum.updateGeometry(new this.scope.Point(24, 0));
@@ -93,7 +95,8 @@ class Adder extends LogicComponent {
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
             board: this.board,
-            width: this.width
+            width: this.width,
+            label: 'A',
         });
         a.updateGeometry(new this.scope.Point(16, 32));
 
@@ -102,7 +105,8 @@ class Adder extends LogicComponent {
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
             board: this.board,
-            width: this.width
+            width: this.width,
+            label: 'B',
         });
         b.updateGeometry(new this.scope.Point(32, 32));
 
@@ -115,26 +119,12 @@ class Adder extends LogicComponent {
             parent: this,
             pinType: PinType.INPUT,
             orientation: PinOrientation.RIGHT,
-            board: this.board
+            board: this.board,
+            label: "C__in",
         });
         cin.updateGeometry(new this.scope.Point(48, 16));
 
         return [a, b, cin];
-    }
-
-    extraRender(): React.ReactElement[] {
-        return [
-            <>
-                <text className="top" x={24} y={0}>S</text>
-                <text className="left" x={0} y={16}>C<tspan>out</tspan></text>
-                <text className="bottom" x={16} y={32}>A</text>
-                <text className="bottom" x={32} y={32}>B</text>
-                {this.subtype === 1 && <text className="right" x={48} y={16}>C<tspan>in</tspan></text>}
-            </>
-        ];
-    }
-
-    reset() {
     }
 }
 

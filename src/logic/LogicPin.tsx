@@ -36,6 +36,7 @@ interface IParams {
   orientation?: PinOrientation,
   /** The board which processes events, and optionally renders this pin */
   board?: LogicBoard,
+  label?: string,
 }
 
 /**
@@ -54,6 +55,7 @@ class LogicPin {
   orientation: PinOrientation;
   pinType: PinType;
   state: LogicState;
+  label?: string;
   connections: Map<string /* UUID of connected pin */, LogicConnection> = new Map<string, LogicConnection>();
 
   constructor(params: IParams) {
@@ -65,6 +67,7 @@ class LogicPin {
     this.not = params.not ?? false;
     this.state = new LogicState({});
     this.board = params.board;
+    this.label = params.label;
   }
 
   /** Helper function which causes logic states to propagate */
@@ -83,15 +86,16 @@ class LogicPin {
   }
 
   /** Updates all pins with connections leading from this pin */
-  updateNext() {
+  updateNext(force: boolean = false) {
     if (this.pinType !== PinType.OUTPUT) {
       throw new Error();
     }
 
     for (let connection of this.connections.values()) {
+      connection.update();
       let inputPin = connection.sink;
       // No need to simulate events which won't affect the output
-      if (this.state.ne(inputPin.state)) {
+      if (force || this.state.ne(inputPin.state)) {
         inputPin.setLogicState(this.state)
       }
       // This ensures that self referencing components (such as Clock) operates appropriately
@@ -152,6 +156,38 @@ class LogicPin {
     this.disconnect()
     this.geometry?.remove();
     delete this.geometry?.data.logic
+  }
+
+  renderLabel(): React.ReactElement | undefined {
+    if (!this.label) {
+      return undefined;
+    }
+
+    let textClass: string;
+    switch (this.orientation) {
+      case PinOrientation.UP:
+        textClass = "top";
+        break;
+      case PinOrientation.DOWN:
+        textClass = "bottom";
+        break;
+      case PinOrientation.LEFT:
+        textClass = "left";
+        break;
+      case PinOrientation.RIGHT:
+        textClass = "right";
+        break;
+      default:
+        textClass = "";
+    }
+
+    let [text, subscript] = this.label.split("__");
+    return (
+        <text className={textClass} x={this.pos.x} y={this.pos.y}>
+          {text}
+          {subscript && <tspan>{subscript}</tspan>}
+        </text>
+    );
   }
 
   render(handlers?: PinEventHandlers): React.ReactElement {
@@ -238,6 +274,32 @@ class LogicPin {
     return [
       this.pos.add(this.connectionAnchor!),
       this.connectionAnchor!.rotate(this.rotation, new this.parent.scope.Point(0, 0)).divide(18)]
+  }
+
+  /**
+   * Creates a bitmask of the specified width
+   *
+   * If no width is specified, defaults to this component's width.
+   * */
+  bitMask(numBits?: number): number {
+    numBits = numBits ?? this.width;
+    return (1 << numBits) - 1;
+  }
+
+  /** Returns a pin to its default state */
+  reset() {
+    // If a connection to an input pin already exists, it will be handled by the output pin.
+    if (this.pinType === PinType.INPUT && this.connections.size !== 0) {
+        return
+    }
+
+    if (this.pinType === PinType.INPUT) {
+      this.setLogicState(new LogicState({z: this.bitMask()}))
+      this.parent.operate();
+    } else {
+      this.setLogicState(new LogicState({x: this.bitMask()}))
+      this.updateNext(true);
+    }
   }
 }
 

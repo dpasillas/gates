@@ -56,8 +56,6 @@ class LogicConnection {
     return (
         <Connection key={this.uuid}
                     connection={this}
-                    state={this.source.state}
-                    width={this.source.width}
                     i={ianchor}
                     o={oanchor}
                     ic={ic}

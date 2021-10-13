@@ -18,16 +18,17 @@ class Bulb extends LogicComponent {
 
   operate(): void {
     this.on = this.inputPins[0].state.v === 1;
+    this.update();
   }
 
   /** Renders the glow of the bulb if the bulb is in the on state */
-  extraRender(): React.ReactElement[] {
+  extraRender(): React.ReactElement {
     // TODO: Render the glow on top of all other components.
     //   SVG renders elements in document order.
     let display = this.on ? "auto" : "none"
-    return [
-        <circle key={0} className={"bulb-glow"} cx={16} cy={16} r={32} display={display}/>
-    ];
+    return (
+        <circle className={"bulb-glow"} cx={16} cy={16} r={32} display={display}/>
+    );
   }
 
   setUpBody(): paper.Item {
@@ -46,11 +47,6 @@ class Bulb extends LogicComponent {
     pin.updateGeometry(new paper.Point(16, bottom));
     return [pin];
   }
-
-  /** No-op */
-  reset() {
-  }
-
 }
 
 export default Bulb;

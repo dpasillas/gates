@@ -60,14 +60,10 @@ class LogicBoard {
   }
 
   stopSimulation() {
-    if (this.simulationTimerId !== -1) {
-      clearInterval(this.simulationTimerId);
-      this.simulationTimerId = -1;
-      this.simulation.clear();
-      this.simulationCurrentTime = 0;
-      this.components.forEach(c => c.reset());
-      this.components.forEach(c => c.operate());
-    }
+    this.pauseSimulation();
+    this.simulation.clear();
+    this.components.forEach(c => c.reset());
+    this.simulationCurrentTime = 0;
   }
 
   pauseSimulation() {
@@ -88,6 +84,10 @@ class LogicBoard {
       event.apply();
     }
     this.simulationCurrentTime = target;
+    // TODO(dpasillas): Remove this call once we've identified where the simulation state may be referenced, and
+    //                  appropriate channels have been created to send the data where it's needed.
+    //
+    // This call re-renders the entire app, which may be needlessly expensive.
     this.updateFunc();
   }
 
