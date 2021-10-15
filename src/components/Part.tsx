@@ -9,6 +9,7 @@ import Clock from "../logic/Clock";
 import Switch from "../logic/Switch";
 import paper from "paper";
 import Adder from "../logic/Adder";
+import Ground from "../logic/Ground";
 
 interface PartParams {
   type: PartType,
@@ -56,6 +57,8 @@ class Part {
         return new Clock({board: board, scope: scope, subtype: 0})
       case 1:
         return new Switch({subtype: 1, board: board, scope: scope})
+      case 2:
+        return new Ground({subtype: 2, board: board, scope: scope})
       default:
         throw new Error("Unsupported Part Type");
     }
