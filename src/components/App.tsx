@@ -1,7 +1,6 @@
 import React from 'react';
 import Box from "@mui/material/Box"
-import {Theme} from "@mui/material/styles"
-import {ThemeProvider} from "@mui/material/styles"
+import {Theme, ThemeProvider} from "@mui/material/styles"
 
 import Sidebar from "./Sidebar";
 import Part from "./Part";
@@ -27,7 +26,8 @@ class App extends React.Component<IProps , IState>{
   private parts: Map<string, Part[]> = new Map([
       ["Input", [
         new Part({type: PartType.INPUT, subtype: 0, label: "Clock"}),
-        new Part({type: PartType.INPUT, subtype: 1, label:"Switch"}),
+        new Part({type: PartType.INPUT, subtype: 1, label: "Switch"}),
+        new Part({type: PartType.INPUT, subtype: 2, label: "Ground"}),
       ]],
       ["Output", [
         new Part({type: PartType.OUTPUT, subtype: 0, label:"Bulb"}),
