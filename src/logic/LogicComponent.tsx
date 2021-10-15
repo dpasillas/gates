@@ -27,10 +27,22 @@ enum LogicFlag {
   Bussed = 0x00000040,         // 1 << 6
 }
 
+/**
+ * Indicates how the component may be interacted with in the UI.
+ *
+ * Associated state for any of these parameters should be placed in LogicComponentParams.
+ * These fields are intended to be set
+ *  */
+export interface InteractionParams {
+  adjustableWidth?: boolean;
+  adjustableFieldWidth?: boolean;
+  minFieldWidth?: number;
+  maxFieldWidth?: number;
+  canMerge?: boolean;
+  isMux?: boolean;
+}
 
 export interface LogicComponentParams {
-  /** Rendering and interaction hints as specified by LogicFlag */
-  flags: number;
   /** The type of the component, required for serialization */
   type: PartType;
   /** The subtype of the component, required for serialization */
@@ -54,7 +66,12 @@ export interface LogicComponentParams {
   delay?: number;
   /** The logical board where rendering and interaction are done, and where logical events will be handled. */
   board?: LogicBoard;
+
+  /** Indicates if pins are merged.  This only has effect if the component can be merged. */
+  isMerged?: boolean;
 }
+
+interface LogicComponentFullParams extends InteractionParams, LogicComponentParams {}
 
 /**
  * Base class for all logical components which may or may not be rendered
@@ -65,7 +82,6 @@ abstract class LogicComponent {
   private __fieldWidth: number = 0;
   private __width: number;
   private __d: string = "";
-  private flags: number;
   /** The unique id of this component, used for rendering, and serialization */
   readonly uuid: string;
   readonly type: PartType;
@@ -79,6 +95,15 @@ abstract class LogicComponent {
    * reflected in the outputs.
    * */
   delay: number;
+
+  readonly adjustableWidth: boolean;
+  readonly adjustableFieldWidth: boolean;
+  readonly minFieldWidth: number;
+  readonly maxFieldWidth: number;
+  readonly canMerge: boolean;
+  isMerged: boolean;
+  readonly isMux: boolean;
+
   /** The shape of this component used for rendering and interactions */
   body!: paper.Item;
   /** A grouping of this component's body and pins which stores translation and rotation information. */
@@ -90,15 +115,22 @@ abstract class LogicComponent {
    */
   updateSelf?: () => void;
 
-  protected constructor(params: LogicComponentParams) {
+  protected constructor(params: LogicComponentFullParams) {
 
     this.uuid = uuidv4();
     this.scope = params.scope
-    this.flags = params.flags;
     this.type = params.type;
     this.subtype = params.subtype;
     this.delay = params.delay ?? 1;
     this.__width = params.width ?? 1;
+
+    this.adjustableWidth = params.adjustableWidth ?? false;
+    this.adjustableFieldWidth = params.adjustableFieldWidth ?? false;
+    this.minFieldWidth = params.minFieldWidth ?? 1;
+    this.maxFieldWidth = params.maxFieldWidth ?? 1;
+    this.canMerge = params.canMerge ?? false;
+    this.isMerged = (params.isMerged ?? false) && this.canMerge;
+    this.isMux = params.isMux ?? false;
 
     this.board = params.board;
 
@@ -132,21 +164,6 @@ abstract class LogicComponent {
       logic: this,
       geometry: this.geometry,
     }
-  }
-
-  /** Checks if a property indicated by a LogicFlag is set */
-  hasProperty(flag: LogicFlag): boolean {
-    return (this.flags & flag) !== 0;
-  }
-
-  /** Sets a property indicated by a LogicFlag */
-  setProperty(flag: LogicFlag): void {
-    this.flags |= flag;
-  }
-
-  /** Unsets a property indicated by a LogicFlag */
-  clearProperty(flag: LogicFlag): void {
-    this.flags &= this.bitMask(MAX_FLAGS) ^ flag;
   }
 
   /**
@@ -203,6 +220,19 @@ abstract class LogicComponent {
     return []
   }
 
+  collides(select: paper.Item): boolean {
+    const selectionRect = select.bounds;
+
+    let matrix = this.geometry.matrix;
+    let imatrix = matrix.inverted();
+    let body = this.body;
+    select.transform(imatrix)
+    // let isSelected = body.intersects(select) || body.isInside(selectionRect) || body.contains(selectionRect.center)
+    let isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
+    select.transform(matrix)
+    return isSelected
+  }
+
   set fieldWidth(fieldWidth: number) {
     this.updateGeometry(fieldWidth)
     this.__fieldWidth = fieldWidth
@@ -227,6 +257,14 @@ abstract class LogicComponent {
   /** Path description of the component's body */
   get d() {
     return this.__d;
+  }
+
+  get selected() {
+    return this.body.selected;
+  }
+
+  set selected(selected: boolean) {
+    this.body.selected = selected;
   }
 
   /** Sets the specified logical state on the specified pin after the propagation delay. */

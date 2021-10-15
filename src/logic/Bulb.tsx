@@ -6,14 +6,17 @@ import {BULB_PATH} from "../Constants";
 import PartType from "../enums/PartType";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 
-interface IParams extends Omit<LogicComponentParams, "flags" | "type"> {
+interface IParams extends Omit<LogicComponentParams, "type"> {
 }
 
 /** Light Bulb implementation */
 class Bulb extends LogicComponent {
   on: boolean = false;
   constructor(params: IParams) {
-    super({...params, type: PartType.OUTPUT, flags: 0});
+    super({
+      ...params,
+      type: PartType.OUTPUT,
+    });
   }
 
   operate(): void {

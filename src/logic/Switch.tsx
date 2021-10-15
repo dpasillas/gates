@@ -5,11 +5,15 @@ import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
 import LogicState from "./LogicState";
 
-interface IParams extends Omit<LogicComponentParams, "flags" | "type"> {}
+interface IParams extends Omit<LogicComponentParams, "type"> {}
 
 class Switch extends LogicComponent {
     constructor(params: IParams) {
-        super({...params, type: PartType.INPUT, flags: 0});
+        super({
+            ...params,
+            type: PartType.INPUT,
+            adjustableWidth: true,
+        });
     }
 
     /** Intentionally no-op */

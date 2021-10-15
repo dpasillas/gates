@@ -68,6 +68,8 @@ class LogicPin {
     this.state = new LogicState({});
     this.board = params.board;
     this.label = params.label;
+
+    this.board?.addPin(this);
   }
 
   /** Helper function which causes logic states to propagate */
@@ -156,9 +158,10 @@ class LogicPin {
     this.disconnect()
     this.geometry?.remove();
     delete this.geometry?.data.logic
+    this.board?.removePin(this.uuid);
   }
 
-  renderLabel(): React.ReactElement | undefined {
+  renderLabel(i: number): React.ReactElement | undefined {
     if (!this.label) {
       return undefined;
     }
@@ -183,7 +186,7 @@ class LogicPin {
 
     let [text, subscript] = this.label.split("__");
     return (
-        <text className={textClass} x={this.pos.x} y={this.pos.y}>
+        <text key={i} className={textClass} x={this.pos.x} y={this.pos.y}>
           {text}
           {subscript && <tspan>{subscript}</tspan>}
         </text>
@@ -265,6 +268,16 @@ class LogicPin {
     return this.geometry!.position
   }
 
+  get selected(): boolean {
+    return this.geometry?.selected ?? false;
+  }
+
+  set selected(selected) {
+    if (this.geometry) {
+      this.geometry.selected = selected
+    }
+  }
+
   /**
    * Returns a tuple containing a point near the end of the pin, and the direction the pin is pointing
    *
@@ -274,6 +287,16 @@ class LogicPin {
     return [
       this.pos.add(this.connectionAnchor!),
       this.connectionAnchor!.rotate(this.rotation, new this.parent.scope.Point(0, 0)).divide(18)]
+  }
+
+  collides(select: paper.Item): boolean {
+    let body = this.geometry!
+    let matrix = body.parent.matrix;
+    let imatrix = matrix.inverted();
+    select.transform(imatrix)
+    let isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
+    select.transform(matrix)
+    return isSelected;
   }
 
   /**

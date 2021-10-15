@@ -3,12 +3,15 @@ import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
 import LogicState from "./LogicState";
 
-interface IParams extends Omit<LogicComponentParams, "flags" | "type"> {}
+interface IParams extends Omit<LogicComponentParams, "type"> {}
 
 class Adder extends LogicComponent {
 
     constructor(params: IParams) {
-        super({...params, type: PartType.COMPOSITE_BUILT_IN, flags: 0, delay: 1});
+        super({
+            ...params,
+            type: PartType.COMPOSITE_BUILT_IN,
+            delay: 1});
     }
 
     operate(): void {

@@ -45,6 +45,23 @@ function isNot(type: GateType) {
   }
 }
 
+function minPins(type: GateType): number {
+  switch (type) {
+    case GateType.AND:
+    case GateType.NAND:
+    case GateType.OR:
+    case GateType.NOR:
+    case GateType.XOR:
+    case GateType.XNOR:
+      return 2;
+    case GateType.BUF:
+    case GateType.NOT:
+      return 1;
+    default:
+      throw new Error(`Unsupported Gate Type(${type})`)
+  }
+}
+
 function maxPins(type: GateType): number {
   switch (type) {
     case GateType.AND:
@@ -62,7 +79,7 @@ function maxPins(type: GateType): number {
   }
 }
 
-interface IParams extends Omit<LogicComponentParams, "flags" | "type"> {}
+interface IParams extends Omit<LogicComponentParams, "type"> {}
 
 /** Primitive Logic Gates */
 class LogicGate extends LogicComponent {
@@ -81,7 +98,15 @@ class LogicGate extends LogicComponent {
   private readonly opFunc: () => LogicState;
 
   constructor(params: IParams) {
-    super({flags: 0, type: PartType.GATE, fieldWidth: Math.min(2, maxPins(params.subtype)), ...params});
+    super({
+      ...params,
+      type: PartType.GATE,
+      fieldWidth: Math.min(2, maxPins(params.subtype)),
+      adjustableWidth: true,
+      adjustableFieldWidth: maxPins(params.subtype) > 1,
+      minFieldWidth: minPins(params.subtype),
+      maxFieldWidth: maxPins(params.subtype),
+    });
     this.opFunc = LogicGate.opFuncs[this.subtype].bind(this)
   }
 

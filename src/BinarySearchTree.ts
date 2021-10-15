@@ -37,11 +37,15 @@ class BinarySearchTree<T extends Object> {
     /** Removes all elements **/
     clear(): void {
         if (!this.root) {
+            console.log("No Root!")
             return;
         }
 
+        console.log("clearing root!")
         this.root.clear();
+        console.log("Nulling root!")
         this.root = null;
+        console.log("nulled root!")
     }
 
     find(t: T, cmp: Comparator<T> | null = null): T | null {

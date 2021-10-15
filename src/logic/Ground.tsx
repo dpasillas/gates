@@ -9,7 +9,10 @@ interface IParams extends Omit<LogicComponentParams, "flags" | "type" | "width">
 
 class Ground extends LogicComponent {
     constructor(params: IParams ) {
-        super({...params, flags: 0, type: PartType.INPUT});
+        super({
+            ...params,
+            type: PartType.INPUT,
+        });
     }
 
     operate(): void {
@@ -37,12 +40,12 @@ class Ground extends LogicComponent {
 
     extraRender(): React.ReactElement {
         return (
-             <path d="
-                M16,6.5 v13
-                M9.5,19.5 h13
-                M12,22.5 h8
-                M14.5,25.5 h3
-            "/>
+             <path className="decoration"
+                   d=" M16,6.5 v13
+                       M9.5,19.5 h13
+                       M12,22.5 h8
+                       M14.5,25.5 h3
+                     "/>
         );
     }
 }

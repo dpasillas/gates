@@ -2,17 +2,19 @@ import React from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPause, faStop, faPlay, faStepForward} from "@fortawesome/free-solid-svg-icons";
 import Box from "@mui/material/Box"
-import MuiDivider from "@mui/material/Divider"
+import Divider from "@mui/material/Divider"
+import IconButton from "@mui/material/IconButton"
 import Stack from "@mui/material/Stack"
-import {styled} from "@mui/material/styles";
+
+import PlayArrow from "@mui/icons-material/PlayArrow";
+import Pause from "@mui/icons-material/Pause";
+import SkipNext from "@mui/icons-material/SkipNext";
+import Stop from "@mui/icons-material/Stop";
+import Brightness4 from "@mui/icons-material/Brightness4";
 
 import LogicBoard from "../logic/LogicBoard";
 import ToggleThemeButton from "./ToggleThemeButton";
 import "../css/Toolbar.css";
-
-const Divider = styled(MuiDivider)({
-  height: "75%",
-});
 
 interface IProps {
   board: LogicBoard;
@@ -25,28 +27,36 @@ class Toolbar extends React.Component<IProps, IState> {
     let running = this.props.board.simulationRunning;
     let stopped = !running && this.props.board.simulationStopped;
     return (
-        <Stack className="toolbar" spacing={1} direction="row">
-          <Divider orientation="vertical"/>
+        <Stack className="toolbar"
+               sx={{
+                 backgroundColor: "background.default",
+                 border: (theme) => `1px solid ${theme.palette.divider}`
+               }}
+               spacing={1}
+               divider={<Divider orientation="vertical" variant="middle" flexItem/>}
+               direction="row">
           <Box flexDirection="row">
-            <button className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
-              <FontAwesomeIcon className="default" icon={faPlay} style={{position: "fixed"}}/>
-              <FontAwesomeIcon className="active" icon={faPause}/>
-            </button>
-            <button onClick={this.onStop.bind(this)} {...{disabled: stopped}}>
-              <FontAwesomeIcon icon={faStop}/>
-            </button>
-            <button onClick={this.onStep.bind(this)} {...{disabled: running}}>
-              <FontAwesomeIcon icon={faStepForward}/>
-            </button>
-            <span>
-              {this.props.board.simulationCurrentTime}
-            </span>
+            <IconButton className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
+              {/*<PlayArrow className="default" sx={{position:"fixed"}}/>*/}
+              {/*<Pause className="active"/>*/}
+              <FontAwesomeIcon className="default" size="xs" icon={faPlay} style={{position: "fixed"}}/>
+              <FontAwesomeIcon className="active" size="xs" icon={faPause}/>
+            </IconButton>
+            <IconButton onClick={this.onStop.bind(this)} disabled={stopped}>
+              {/*<Stop/>*/}
+              <FontAwesomeIcon size="xs" icon={faStop}/>
+            </IconButton>
+            <IconButton onClick={this.onStep.bind(this)} disabled={running}>
+              {/*<SkipNext/>*/}
+              <FontAwesomeIcon size="xs" icon={faStepForward}/>
+            </IconButton>
+            {/*<span>*/}
+            {/*  {this.props.board.simulationCurrentTime}*/}
+            {/*</span>*/}
           </Box>
-          <Divider orientation="vertical"/>
           <Box>
             <ToggleThemeButton/>
           </Box>
-          <Divider orientation="vertical"/>
         </Stack>
     );
   }

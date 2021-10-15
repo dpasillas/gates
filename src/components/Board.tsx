@@ -7,6 +7,7 @@ import LogicComponent from "../logic/LogicComponent";
 import {GateEventHandlers} from "./Component";
 import LogicPin, {PinType} from "../logic/LogicPin";
 import LogicBoard from "../logic/LogicBoard";
+import Properties from "./Properties";
 
 
 interface MouseEventMapping {
@@ -240,6 +241,7 @@ class Board extends React.Component<IProps, IState> {
                         }
                     </svg>
                 </svg>
+                <Properties board={this.props.board}/>
             </div>
         );
     }
@@ -259,11 +261,13 @@ class Board extends React.Component<IProps, IState> {
             w = rect.width,
             h = rect.height;
 
+
         const localX = e.pageX - l,
             localY = e.pageY - t;
 
-        const dLocalX = e.movementX,
-            dLocalY = e.movementY;
+        // Movement is computed using screen coordinates, not page coordinates, so it must be scaled
+        const dLocalX = e.movementX / window.devicePixelRatio,
+            dLocalY = e.movementY / window.devicePixelRatio;
 
         const viewWidth = this.state.viewBox.width,
             viewHeight = this.state.viewBox.height;
@@ -436,35 +440,35 @@ class Board extends React.Component<IProps, IState> {
 
             const {project} = this.props.board.scope;
 
-            let components = project.getItems({
-                data: {
-                    type: 'Component'
-                }
-            })
-
-            let sc = false;
+            let components = this.props.board.components.values();
+            let selectedComponents: LogicComponent[] = [];
 
             for (let component of components) {
-                if (this.isSelected(component)) {
-                    sc = true;
+                // if (this.isSelected(component)) {
+                if (component.collides(this.select)) {
                     component.selected = true;
+                    selectedComponents.push(component);
                 } else {
                     component.selected = false;
                 }
             }
 
-            let pins = project.getItems({
-                data: {
-                    type: 'Pin'
-                }
-            })
+            this.props.board.selectedComponents = selectedComponents;
 
-            for (let pin of pins) {
-                pin.selected = !sc && this.isSelected(pin);
+            let selectedPins: LogicPin[] = [];
+            if (selectedComponents.length === 0) {
+                let pins = this.props.board.pins.values();
+                for (let pin of pins) {
+                    if (pin.collides(this.select)) {
+                        pin.selected = true;
+                        selectedPins.push(pin)
+                    }
+                }
             }
 
+            this.props.board.selectedPins = selectedPins;
+
             this.setState({});
-            this.forceUpdate();
         }
 
         if (this.state.pan) {
