@@ -10,23 +10,6 @@ import LogicState from "./LogicState";
 import LogicBoard from "./LogicBoard";
 
 
-const MAX_FLAGS = 32
-
-/**
- * Bit flags indicating rendering hints and allowable user interactions
- *
- * This was imported from a previous logic simulator project, and may be subject to change.
- * */
-enum LogicFlag {
-  VariableShape = 0x00000001,  // 1 << 0
-  IBussable = 0x00000002,      // 1 << 1
-  OBussable = 0x00000004,      // 1 << 2
-  SingleOutput = 0x00000008,   // 1 << 3
-  MergingPins = 0x00000010,    // 1 << 4
-  Mux = 0x00000020,            // 1 << 5
-  Bussed = 0x00000040,         // 1 << 6
-}
-
 /**
  * Indicates how the component may be interacted with in the UI.
  *
@@ -40,6 +23,7 @@ export interface InteractionParams {
   maxFieldWidth?: number;
   canMerge?: boolean;
   isMux?: boolean;
+  hasDelay?: boolean;
 }
 
 export interface LogicComponentParams {
@@ -73,14 +57,20 @@ export interface LogicComponentParams {
 
 interface LogicComponentFullParams extends InteractionParams, LogicComponentParams {}
 
+export interface UpdateGeometryParams {
+  fieldWidth: number,
+  width: number,
+}
+
+
 /**
  * Base class for all logical components which may or may not be rendered
  *
  * A logical component is any object which may send or receive logical signals.
  * */
 abstract class LogicComponent {
-  private __fieldWidth: number = 0;
-  private __width: number;
+  private __fieldWidth: number = -1;
+  private __width: number = -1;
   private __d: string = "";
   /** The unique id of this component, used for rendering, and serialization */
   readonly uuid: string;
@@ -103,6 +93,7 @@ abstract class LogicComponent {
   readonly canMerge: boolean;
   isMerged: boolean;
   readonly isMux: boolean;
+  readonly hasDelay: boolean;
 
   /** The shape of this component used for rendering and interactions */
   body!: paper.Item;
@@ -122,7 +113,6 @@ abstract class LogicComponent {
     this.type = params.type;
     this.subtype = params.subtype;
     this.delay = params.delay ?? 1;
-    this.__width = params.width ?? 1;
 
     this.adjustableWidth = params.adjustableWidth ?? false;
     this.adjustableFieldWidth = params.adjustableFieldWidth ?? false;
@@ -131,21 +121,39 @@ abstract class LogicComponent {
     this.canMerge = params.canMerge ?? false;
     this.isMerged = (params.isMerged ?? false) && this.canMerge;
     this.isMux = params.isMux ?? false;
+    this.hasDelay = params.hasDelay ?? true;
 
     this.board = params.board;
 
-    this.fieldWidth = params.fieldWidth ?? 0;
+    let width = params.width ?? 1;
+    let fieldWidth = params.fieldWidth ?? 0;
+
+    this.updateGeometry({width, fieldWidth});
+
+    this.__fieldWidth = params.fieldWidth ?? 0;
+    this.__width = params.width ?? 1;
 
     this.reset();
   }
 
-  /** Handler for updating this component's body and pins in response to property updates */
-  updateGeometry(fieldWidth: number) {
-    let {Group, Point} = this.scope;
-    if (this.body) {
-      this.body.remove()
+  private makeUpdateGeometryParams(params: Partial<UpdateGeometryParams>): UpdateGeometryParams {
+    return {
+      fieldWidth: params.fieldWidth ?? this.fieldWidth,
+      width: params.width ?? this.width,
     }
-    this.body = this.setUpBody(fieldWidth);
+  }
+
+  /** Handler for updating this component's body and pins in response to property updates */
+  updateGeometry(params: Partial<UpdateGeometryParams>) {
+    let fullParams = this.makeUpdateGeometryParams(params);
+    let {Group, Point} = this.scope;
+    let selected = false;
+    if (this.body) {
+      this.body.remove();
+      selected = this.body.selected;
+    }
+    this.body = this.setUpBody(fullParams);
+    this.body.selected = selected;
 
     if (!this.geometry) {
       this.geometry = new Group();
@@ -153,7 +161,7 @@ abstract class LogicComponent {
       this.geometry.applyMatrix = false;
     }
 
-    this.setUpPins(fieldWidth);
+    this.setUpPins(fullParams);
     this.geometry.addChild(this.body);
     this.geometry.addChildren(this.pins().map(p => p.geometry as paper.Item));
 
@@ -200,42 +208,43 @@ abstract class LogicComponent {
   }
 
   /** Sets up all pins required for this component */
-  setUpPins(fieldWidth: number) {
-    this.inputPins = [...this.setUpInputPins(fieldWidth), ...this.setUpSelectorPins(fieldWidth)];
-    this.outputPins = this.setUpOutputPins(fieldWidth);
+  setUpPins(params: UpdateGeometryParams) {
+    this.inputPins = [...this.setUpInputPins(params), ...this.setUpSelectorPins(params)];
+    this.outputPins = this.setUpOutputPins(params);
   }
 
   /** Virtual method to set up input pins */
-  setUpInputPins(fieldWidth: number): LogicPin[] {
+  setUpInputPins(params: UpdateGeometryParams): LogicPin[] {
     return [];
   }
 
   /** Virtual method to set up output pins. */
-  setUpOutputPins(fieldWidth: number): LogicPin[] {
+  setUpOutputPins(params: UpdateGeometryParams): LogicPin[] {
     return [];
   }
 
   /** Virtual method to set up selector pins, as required for -plexer type ICs. */
-  setUpSelectorPins(fieldWidth: number): LogicPin[] {
+  setUpSelectorPins(params: UpdateGeometryParams): LogicPin[] {
     return []
   }
 
   collides(select: paper.Item): boolean {
-    const selectionRect = select.bounds;
-
     let matrix = this.geometry.matrix;
     let imatrix = matrix.inverted();
     let body = this.body;
     select.transform(imatrix)
-    // let isSelected = body.intersects(select) || body.isInside(selectionRect) || body.contains(selectionRect.center)
     let isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
     select.transform(matrix)
     return isSelected
   }
 
   set fieldWidth(fieldWidth: number) {
-    this.updateGeometry(fieldWidth)
+    if (this.__fieldWidth === fieldWidth) {
+      return;
+    }
+    this.updateGeometry({fieldWidth})
     this.__fieldWidth = fieldWidth
+    this.updateSelf && this.updateSelf();
   }
 
   get fieldWidth(): number {
@@ -243,11 +252,12 @@ abstract class LogicComponent {
   }
 
   set width(width: number) {
-    // TODO(dpasillas): update geometry in response to width changes.
     if (this.__width === width) {
       return;
     }
+    this.updateGeometry({width});
     this.__width = width;
+    this.updateSelf && this.updateSelf();
   }
 
   get width() {
@@ -265,6 +275,15 @@ abstract class LogicComponent {
 
   set selected(selected: boolean) {
     this.body.selected = selected;
+  }
+
+  translate(delta: paper.Point) {
+    console.log("translate")
+    this.geometry.translate(delta);
+    this.update();
+    this.pins()
+        .flatMap(pin => [...pin.connections.values()])
+        .forEach(connection => connection.update());
   }
 
   /** Sets the specified logical state on the specified pin after the propagation delay. */
@@ -325,7 +344,7 @@ abstract class LogicComponent {
   }
 
   /** Sets up the shape of this component */
-  abstract setUpBody(fieldWidth: number): paper.Item
+  abstract setUpBody(params: UpdateGeometryParams): paper.Item
   /** Performs a logical operation */
   abstract operate(): void
   /** Returns the component to its initial state at power up */

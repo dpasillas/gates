@@ -22,7 +22,7 @@ class Ground extends LogicComponent {
     reset(): void {
     }
 
-    setUpBody(fieldWidth: number): paper.Item {
+    setUpBody(): paper.Item {
         let {Path, Point, Size} = this.scope;
         return new Path.Rectangle(new Point(0, 0), new Size(32, 32));
     }

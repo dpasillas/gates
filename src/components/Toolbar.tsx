@@ -6,11 +6,10 @@ import Divider from "@mui/material/Divider"
 import IconButton from "@mui/material/IconButton"
 import Stack from "@mui/material/Stack"
 
-import PlayArrow from "@mui/icons-material/PlayArrow";
-import Pause from "@mui/icons-material/Pause";
-import SkipNext from "@mui/icons-material/SkipNext";
-import Stop from "@mui/icons-material/Stop";
-import Brightness4 from "@mui/icons-material/Brightness4";
+// import PlayArrow from "@mui/icons-material/PlayArrow";
+// import Pause from "@mui/icons-material/Pause";
+// import SkipNext from "@mui/icons-material/SkipNext";
+// import Stop from "@mui/icons-material/Stop";
 
 import LogicBoard from "../logic/LogicBoard";
 import ToggleThemeButton from "./ToggleThemeButton";

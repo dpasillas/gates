@@ -1,4 +1,4 @@
-import LogicComponent, {LogicComponentParams} from "./LogicComponent";
+import LogicComponent, {LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
 import LogicState from "./LogicState";
@@ -60,19 +60,19 @@ class Adder extends LogicComponent {
         }
     }
 
-    setUpBody(fieldWidth: number): paper.Item {
+    setUpBody(): paper.Item {
         let {Path, Point, Size} = this.scope;
         return new Path.Rectangle(new Point(0, 0), new Size(48, 32));
 
     }
 
-    setUpOutputPins(fieldWidth: number): LogicPin[] {
+    setUpOutputPins({width}: UpdateGeometryParams): LogicPin[] {
         let sum = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.UP,
             board: this.board,
-            width: this.width,
+            width: width,
             label: 'S',
         });
 
@@ -90,13 +90,13 @@ class Adder extends LogicComponent {
         return [sum, cout];
     }
 
-    setUpInputPins(fieldWidth: number): LogicPin[] {
+    setUpInputPins({width}: UpdateGeometryParams): LogicPin[] {
         let a = new LogicPin({
             parent: this,
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
             board: this.board,
-            width: this.width,
+            width: width,
             label: 'A',
         });
         a.updateGeometry(new this.scope.Point(16, 32));
@@ -106,7 +106,7 @@ class Adder extends LogicComponent {
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
             board: this.board,
-            width: this.width,
+            width: width,
             label: 'B',
         });
         b.updateGeometry(new this.scope.Point(32, 32));

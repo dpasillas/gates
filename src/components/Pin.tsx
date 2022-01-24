@@ -1,4 +1,6 @@
 import React from "react";
+import Tooltip from "@mui/material/Tooltip";
+
 import LogicPin, {PinType} from "../logic/LogicPin";
 import {MouseEventHandler, PinMouseEventHandler} from "../util/Types";
 
@@ -46,21 +48,24 @@ class Pin extends React.Component<PinProps, IState> {
         ];
 
         if (this.props.pin.geometry?.selected) {
-            classNames.push('selected')
+            classNames.push('selected');
         }
 
         let [anchor, ] = this.props.pin.anchor;
 
 
         return (
-            <g key={this.props.pin.uuid} className={classNames.join(' ')}
-               onMouseDown={this.props.handlers?.onPinMouseDown}
-               onMouseUp={this.props.handlers?.onPinMouseUp}
-               onContextMenu={() => console.log("context p!")}
-            >
-                <circle className="anchor" cx={anchor.x} cy={anchor.y} r={5}/>
-                <path {...pathAttributes}/>
-            </g>
+            <Tooltip title={`Width: ${this.props.pin.width}`}>
+                <g key={this.props.pin.uuid} className={classNames.join(' ')}
+                   onMouseDown={this.props.handlers?.onPinMouseDown}
+                   onMouseUp={this.props.handlers?.onPinMouseUp}
+                   onContextMenu={() => console.log("context p!")}
+                >
+                    <circle className="anchor" cx={anchor.x} cy={anchor.y} r={5}/>
+                    <path {...pathAttributes}/>
+                    {this.props.pin.width > 1 && <path className="wide" {...pathAttributes}/>}
+                </g>
+            </Tooltip>
         );
     }
 }

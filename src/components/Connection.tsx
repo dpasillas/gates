@@ -1,22 +1,8 @@
 import React from "react";
 import LogicConnection from "../logic/LogicConnection";
 
-interface Point {
-  x: number,
-  y: number
-}
-
 interface IProps {
   connection: LogicConnection;
-  /** The first endpoint of this connection */
-  i: Point;
-  /** The second endpoint of this connection */
-  o: Point;
-  /** The first control point, as required to render this connection as a bezier curve */
-  ic: Point;
-  /** The second control point, as required to render this connection as a bezier curve */
-  oc: Point;
-
 }
 
 interface IState {}
@@ -37,11 +23,26 @@ class Connection extends React.Component<IProps, IState> {
 
   render() {
 
-    let {x: ix, y: iy} = this.props.i;
-    let {x: ox, y: oy} = this.props.o;
+    let {source, sink} = this.props.connection;
 
-    let {x: icx, y: icy} = this.props.ic;
-    let {x: ocx, y: ocy} = this.props.oc;
+    let [ianchor, idir] = source.anchor;
+    let [oanchor, odir] = sink.anchor;
+
+    ianchor = source.transform(ianchor);
+    oanchor = sink.transform(oanchor);
+
+    let dist = Math.min(ianchor.getDistance(oanchor), 30)
+
+    let ic = ianchor.add(idir.multiply(dist));
+    let oc = oanchor.add(odir.multiply(dist));
+
+    let {x: ix, y: iy} = ianchor;
+    let {x: ox, y: oy} = oanchor;
+
+    console.log(`Connection (${ix}, ${iy}) - (${ox}, ${oy})`)
+
+    let {x: icx, y: icy} = ic;
+    let {x: ocx, y: ocy} = oc;
 
     let r = 1
     // Render each endpoint of the connection as a circle.

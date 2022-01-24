@@ -9,10 +9,17 @@ import Typography from "@mui/material/Typography";
 
 interface IProps {
   label: string;
-};
-interface IState {};
+  value?: number;
+  onChange: (value: number) => void;
+}
 
-class NumberInputWithSideControls extends React.Component<any, any> {
+interface IState {}
+
+class NumberInputWithSideControls extends React.Component<IProps, IState> {
+  constructor(props: Readonly<IProps>) {
+    super(props);
+  }
+
   render() {
     return (
         <Box>

@@ -28,13 +28,13 @@ class Clock extends LogicComponent {
     this.postEvent(s);
   }
 
-  setUpBody(fieldWidth: number): paper.Item {
+  setUpBody(): paper.Item {
     let {Path, Point, Size} = this.scope;
     return new Path.Rectangle(new Point(0, 0), new Size(32, 32));
 
   }
 
-  setUpOutputPins(fieldWidth: number): LogicPin[] {
+  setUpOutputPins(): LogicPin[] {
     let pin = new LogicPin({
       parent: this,
       pinType: PinType.OUTPUT,

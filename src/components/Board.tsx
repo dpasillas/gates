@@ -7,7 +7,7 @@ import LogicComponent from "../logic/LogicComponent";
 import {GateEventHandlers} from "./Component";
 import LogicPin, {PinType} from "../logic/LogicPin";
 import LogicBoard from "../logic/LogicBoard";
-import Properties from "./Properties";
+// import Properties from "./Properties";
 
 
 interface MouseEventMapping {
@@ -241,16 +241,14 @@ class Board extends React.Component<IProps, IState> {
                         }
                     </svg>
                 </svg>
-                <Properties board={this.props.board}/>
+                {/*<Properties board={this.props.board}/>*/}
             </div>
         );
     }
 
     /** Unselects all selected items */
     clearSelection() {
-        for(let item of this.scope.project.selectedItems) {
-            item.selected = false;
-        }
+        this.props.board.clearSelection();
     }
 
     /**  Maps a mouse event's position on the page to the viewBox coordinates */
@@ -385,21 +383,13 @@ class Board extends React.Component<IProps, IState> {
             e.stopPropagation();
             e.preventDefault();
 
-            let selected = this.props.board.scope.project.getItems({
-                selected: true,
-                data: {
-                    type: 'Component',
-                }
-            });
+            let selected = this.props.board.selectedComponents;
 
             for (let s of selected) {
                 let dp = new paper.Point(dx, dy);
-                s.parent.translate(dp)
-                // for (let c of s.parent.children) {
-                //     c.translate(dp)
-                // }
+                s.translate(dp)
             }
-            this.setState({});
+            // this.setState({});
 
         }
 
@@ -438,8 +428,6 @@ class Board extends React.Component<IProps, IState> {
                 select.segments[3].point.y = y
             }
 
-            const {project} = this.props.board.scope;
-
             let components = this.props.board.components.values();
             let selectedComponents: LogicComponent[] = [];
 
@@ -456,19 +444,22 @@ class Board extends React.Component<IProps, IState> {
             this.props.board.selectedComponents = selectedComponents;
 
             let selectedPins: LogicPin[] = [];
-            if (selectedComponents.length === 0) {
-                let pins = this.props.board.pins.values();
-                for (let pin of pins) {
-                    if (pin.collides(this.select)) {
-                        pin.selected = true;
-                        selectedPins.push(pin)
-                    }
+            let pins = this.props.board.pins.values();
+            for (let pin of pins) {
+                if (selectedComponents.length !== 0) {
+                    pin.selected = false;
+                    continue;
+                }
+                if (pin.collides(this.select)) {
+                    pin.selected = true;
+                    selectedPins.push(pin)
                 }
             }
 
             this.props.board.selectedPins = selectedPins;
 
             this.setState({});
+            this.props.board.updateProperties();
         }
 
         if (this.state.pan) {
@@ -520,17 +511,15 @@ class Board extends React.Component<IProps, IState> {
         e.stopPropagation();
 
         console.log("Gate Down");
-        let selected = this.props.board.scope.project.getItems({
-            selected: true,
-        })
+        // let selected = this.props.board.scope.project.getItems({
+        //     selected: true,
+        // })
+        let selected = this.props.board.selectedComponents;
 
-        let body = logicComponent.body as paper.Item;
-
-        if (!selected.includes(body)) {
-            for (let component of selected) {
-                component.selected = false;
-            }
-            body.selected = true;
+        if (!selected.includes(logicComponent)) {
+            this.props.board.clearSelection()
+            logicComponent.selected = true;
+            this.props.board.selectedComponents = [logicComponent]
         }
 
         this.setState({drag: true});
@@ -554,14 +543,8 @@ class Board extends React.Component<IProps, IState> {
         e.stopPropagation();
         e.preventDefault();
 
-        let {project} = this.props.board.scope;
+        let pins = this.props.board.selectedPins;
 
-        let pins = project.getItems({
-            selected: true,
-            data: {
-                type: 'Pin'
-            }
-        }).map(p => p.data.logical) as LogicPin[];
 
         let numOutputs = pins.filter(p => p.pinType === PinType.OUTPUT).length;
         console.log(`Num outputs: ${numOutputs}`)

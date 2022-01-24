@@ -1,6 +1,6 @@
 import React from "react";
 
-import LogicComponent, {LogicComponentParams} from "./LogicComponent";
+import LogicComponent, {LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
 import LogicState from "./LogicState";
@@ -13,27 +13,28 @@ class Switch extends LogicComponent {
             ...params,
             type: PartType.INPUT,
             adjustableWidth: true,
+            hasDelay: false,
         });
     }
 
     /** Intentionally no-op */
     operate(): void {}
 
-    setUpBody(fieldWidth: number): paper.Item {
+    setUpBody({width}: UpdateGeometryParams): paper.Item {
         let {Path, Point, Size} = this.scope;
-        return new Path.Rectangle(new Point(0, 0), new Size(32 * this.width, 32));
+        return new Path.Rectangle(new Point(0, 0), new Size(32 * width, 32));
     }
 
-    setUpOutputPins(fieldWidth: number): LogicPin[] {
+    setUpOutputPins({width}: UpdateGeometryParams): LogicPin[] {
         let pin = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.RIGHT,
             board: this.board,
-            width: this.width,
+            width: width,
         });
 
-        pin.updateGeometry(new this.scope.Point(32*this.width, 16));
+        pin.updateGeometry(new this.scope.Point(32 * width, 16));
 
         return [pin];
     }
@@ -78,6 +79,18 @@ class Switch extends LogicComponent {
             v: v
         }));
         this.update();
+    }
+
+    get width(): number {
+        return super.width
+    }
+
+    set width(width: number) {
+        let {Point} = this.scope;
+        console.log(width);
+        let diff = this.width - width;
+        this.translate(new Point(diff * 32, 0))
+        super.width = width;
     }
 
     /** Reset but keep prior state */

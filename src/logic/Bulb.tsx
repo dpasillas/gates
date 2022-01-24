@@ -16,6 +16,7 @@ class Bulb extends LogicComponent {
     super({
       ...params,
       type: PartType.OUTPUT,
+      hasDelay: false,
     });
   }
 
@@ -38,7 +39,7 @@ class Bulb extends LogicComponent {
     return new this.scope.Path(BULB_PATH);
   }
 
-  setUpInputPins(fieldWidth: number): LogicPin[] {
+  setUpInputPins(): LogicPin[] {
     let {bottom} = this.body.bounds;
     let pin = new LogicPin({
       parent: this,

@@ -56,7 +56,7 @@ class LogicBoard {
       time: this.simulationCurrentTime + delay,
       state: state
     });
-    console.log(`Posting event at time (${this.simulationCurrentTime}) for target time (${event.time})`)
+    // console.log(`Posting event at time (${this.simulationCurrentTime}) for target time (${event.time})`)
     this.simulation.insert(event);
   }
 
@@ -73,7 +73,7 @@ class LogicBoard {
     // Important that the simulation time is set to 0 before components are reset
     this.simulationCurrentTime = 0;
     this.components.forEach(c => c.reset());
-    console.log(this.simulation)
+    // console.log(this.simulation)
   }
 
   pauseSimulation() {
@@ -143,6 +143,17 @@ class LogicBoard {
     this.pins.delete(uuid);
   }
 
+  clearSelection() {
+    for (let c of this.selectedComponents) {
+      c.selected = false;
+    }
+    this.selectedComponents = [];
+
+    for (let p of this.selectedPins) {
+      p.selected = false;
+    }
+    this.selectedPins = [];
+  }
 }
 
 export default LogicBoard;
