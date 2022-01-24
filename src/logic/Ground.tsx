@@ -1,3 +1,5 @@
+import React from "react"
+
 import LogicComponent, {LogicComponentParams} from "./LogicComponent";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
@@ -7,7 +9,10 @@ interface IParams extends Omit<LogicComponentParams, "flags" | "type" | "width">
 
 class Ground extends LogicComponent {
     constructor(params: IParams ) {
-        super({...params, flags: 0, type: PartType.INPUT});
+        super({
+            ...params,
+            type: PartType.INPUT,
+        });
     }
 
     operate(): void {
@@ -17,7 +22,7 @@ class Ground extends LogicComponent {
     reset(): void {
     }
 
-    setUpBody(fieldWidth: number): paper.Item {
+    setUpBody(): paper.Item {
         let {Path, Point, Size} = this.scope;
         return new Path.Rectangle(new Point(0, 0), new Size(32, 32));
     }
@@ -33,15 +38,15 @@ class Ground extends LogicComponent {
         return [pin];
     }
 
-    extraRender(): React.ReactElement[] {
-        return [
-             <path d="
-                M16,6.5 v12
-                M10,19.5 h12
-                M12,22.5 h8
-                M14,25.5 h4
-            "/>
-        ];
+    extraRender(): React.ReactElement {
+        return (
+             <path className="decoration"
+                   d=" M16,6.5 v13
+                       M9.5,19.5 h13
+                       M12,22.5 h8
+                       M14.5,25.5 h3
+                     "/>
+        );
     }
 }
 

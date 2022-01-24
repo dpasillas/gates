@@ -18,6 +18,12 @@ class LogicBoard {
   components: Map<string, LogicComponent> = new Map();
   /** All connections which may be rendered */
   connections: Map<string, LogicConnection> = new Map();
+  /** All pins which may be rendered */
+  pins: Map<string, LogicPin> = new Map();
+
+  selectedComponents: LogicComponent[] = [];
+  selectedPins: LogicPin[] = [];
+
   /** Paper scope for this board used to compute geometry, and intersections */
   scope: paper.PaperScope = makeAndSetupScope();
   /** All pending logical events on the board **/
@@ -28,7 +34,8 @@ class LogicBoard {
   simulationIntervalMs: number = 25;
   /** Controls how many time units pass per simulation interval **/
   simulationStepSize: number = 1;
-  updateFunc: Function = () => {};
+  updateApp: Function = () => {};
+  updateProperties: () => void = () => {};
 
   render(): React.ReactElement {
     return (
@@ -49,6 +56,7 @@ class LogicBoard {
       time: this.simulationCurrentTime + delay,
       state: state
     });
+    // console.log(`Posting event at time (${this.simulationCurrentTime}) for target time (${event.time})`)
     this.simulation.insert(event);
   }
 
@@ -60,14 +68,12 @@ class LogicBoard {
   }
 
   stopSimulation() {
-    if (this.simulationTimerId !== -1) {
-      clearInterval(this.simulationTimerId);
-      this.simulationTimerId = -1;
-      this.simulation.clear();
-      this.simulationCurrentTime = 0;
-      this.components.forEach(c => c.reset());
-      this.components.forEach(c => c.operate());
-    }
+    this.pauseSimulation();
+    this.simulation.clear();
+    // Important that the simulation time is set to 0 before components are reset
+    this.simulationCurrentTime = 0;
+    this.components.forEach(c => c.reset());
+    // console.log(this.simulation)
   }
 
   pauseSimulation() {
@@ -88,7 +94,11 @@ class LogicBoard {
       event.apply();
     }
     this.simulationCurrentTime = target;
-    this.updateFunc();
+    // TODO(dpasillas): Remove this call once we've identified where the simulation state may be referenced, and
+    //                  appropriate channels have been created to send the data where it's needed.
+    //
+    // This call re-renders the entire app, which may be needlessly expensive.
+    this.updateApp();
   }
 
   get simulationRunning() {
@@ -113,6 +123,11 @@ class LogicBoard {
     this.connections.set(connection.uuid, connection)
   }
 
+  /** Tracks a pin to be rendered */
+  addPin(pin: LogicPin) {
+    this.pins.set(pin.uuid, pin);
+  }
+
   /** Removes a component from being tracked and rendered */
   removeComponent(uuid: string) {
     this.components.delete(uuid);
@@ -121,6 +136,23 @@ class LogicBoard {
   /** Removes a connection from being tracked and rendered */
   removeConnection(uuid: string) {
     this.connections.delete(uuid);
+  }
+
+  /** Removes a connection from being tracked and rendered */
+  removePin(uuid: string) {
+    this.pins.delete(uuid);
+  }
+
+  clearSelection() {
+    for (let c of this.selectedComponents) {
+      c.selected = false;
+    }
+    this.selectedComponents = [];
+
+    for (let p of this.selectedPins) {
+      p.selected = false;
+    }
+    this.selectedPins = [];
   }
 }
 

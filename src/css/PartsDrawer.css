@@ -21,7 +21,7 @@
     flex-direction: row;
     flex-wrap: wrap;
     flex-grow: 1;
-    gap: 10px;
+    row-gap: 10px;
     padding-top: 10px;
     padding-bottom: 10px;
     justify-content: space-around;

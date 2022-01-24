@@ -62,11 +62,11 @@ class App extends React.Component<IProps , IState>{
   }
 
   componentDidMount() {
-    this.board.updateFunc = () => this.setState({})
+    this.board.updateApp = () => this.setState({});
   }
 
   componentWillUnmount() {
-    this.board.updateFunc = () => {};
+    this.board.updateApp = () => {};
   }
 
   render()

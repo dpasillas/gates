@@ -69,7 +69,16 @@ path.grid {
     fill: #FF000080;
 }
 
-.selected {
+.pin .wide {
+    stroke: none;
+    fill: url(#bus);
+}
+
+.selected .wide {
+    opacity: .5;
+}
+
+.selected :not(.decoration) {
     border-style: dotted;
     stroke-dasharray: 2 2;
 }
@@ -102,7 +111,14 @@ path.grid {
 
 text {
     stroke: none;
+}
+
+.component:not(.selected) text {
     fill: black;
+}
+
+.component.selected text {
+    fill: #003C6E;
 }
 
 .origin {
@@ -111,7 +127,7 @@ text {
 
 .switch {
     stroke-width: 0.5px;
-    transition: all 0.1s;
+    transition: fill 0.1s, stroke-width 0.1s;
 }
 
 .switch.on {

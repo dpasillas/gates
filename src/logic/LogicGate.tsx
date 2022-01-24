@@ -1,6 +1,6 @@
 import paper from "paper";
 
-import LogicComponent, {LogicComponentParams} from "./LogicComponent";
+import LogicComponent, {LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
 import PartType from "../enums/PartType";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import GateType from "../enums/GateType";
@@ -45,6 +45,23 @@ function isNot(type: GateType) {
   }
 }
 
+function minPins(type: GateType): number {
+  switch (type) {
+    case GateType.AND:
+    case GateType.NAND:
+    case GateType.OR:
+    case GateType.NOR:
+    case GateType.XOR:
+    case GateType.XNOR:
+      return 2;
+    case GateType.BUF:
+    case GateType.NOT:
+      return 1;
+    default:
+      throw new Error(`Unsupported Gate Type(${type})`)
+  }
+}
+
 function maxPins(type: GateType): number {
   switch (type) {
     case GateType.AND:
@@ -62,7 +79,7 @@ function maxPins(type: GateType): number {
   }
 }
 
-interface IParams extends Omit<LogicComponentParams, "flags" | "type"> {}
+interface IParams extends Omit<LogicComponentParams, "type"> {}
 
 /** Primitive Logic Gates */
 class LogicGate extends LogicComponent {
@@ -81,7 +98,15 @@ class LogicGate extends LogicComponent {
   private readonly opFunc: () => LogicState;
 
   constructor(params: IParams) {
-    super({flags: 0, type: PartType.GATE, fieldWidth: Math.min(2, maxPins(params.subtype)), ...params});
+    super({
+      ...params,
+      type: PartType.GATE,
+      fieldWidth: Math.min(2, maxPins(params.subtype)),
+      adjustableWidth: true,
+      adjustableFieldWidth: maxPins(params.subtype) > 1,
+      minFieldWidth: minPins(params.subtype),
+      maxFieldWidth: maxPins(params.subtype),
+    });
     this.opFunc = LogicGate.opFuncs[this.subtype].bind(this)
   }
 
@@ -201,6 +226,9 @@ class LogicGate extends LogicComponent {
   }
 
   operate(): void {
+    if (!this.opFunc) {
+      return;
+    }
     let logicState = this.opFunc();
     this.postEvent(logicState, this.outputPins[0])
   }
@@ -211,19 +239,28 @@ class LogicGate extends LogicComponent {
     return new CompoundPath(pathFromGateType(this.subtype))
   }
 
-  setUpInputPins(fieldWidth: number): LogicPin[] {
+  setUpInputPins({fieldWidth, width}: UpdateGeometryParams): LogicPin[] {
     // Keep pins that fit within tne new field width to maintain old connections
+    console.log(`fieldWidth: ${fieldWidth}`)
     let inputPins = this.inputPins.slice(0, fieldWidth);
     let nuke = this.inputPins.slice(fieldWidth);
     nuke.forEach(p => p.remove());
 
-    for (let i = this.fieldWidth; i < fieldWidth; ++i) {
+    for (let i = Math.max(this.fieldWidth, 0); i < fieldWidth; ++i) {
       inputPins.push(new LogicPin({
         parent: this,
         pinType: PinType.INPUT,
         orientation: PinOrientation.LEFT,
         board: this.board,
+        width: width,
       }))
+    }
+
+    if (width !== this.width) {
+      inputPins.forEach(pin => {
+        pin.disconnect();
+        pin.width = width
+      })
     }
 
     let offset =
@@ -240,11 +277,16 @@ class LogicGate extends LogicComponent {
       inputPins[i].updateGeometry(new paper.Point(0, offset + i * spacing));
     }
 
+
+
     return inputPins;
   }
 
-  setUpOutputPins(): LogicPin[] {
+  setUpOutputPins({width}: UpdateGeometryParams): LogicPin[] {
     if (this.outputPins.length > 0) {
+      if (width != this.width) {
+        this.outputPins.forEach(pin => pin.width = width)
+      }
       return this.outputPins;
     }
     let pin = new LogicPin({
@@ -253,15 +295,11 @@ class LogicGate extends LogicComponent {
       orientation: PinOrientation.RIGHT,
       not: isNot(this.subtype),
       board: this.board,
+      width: width,
     })
     pin.updateGeometry(new paper.Point(32, 16))
 
     return [pin];
-  }
-
-  reset() {
-    let [output] = this.outputPins;
-    output.setLogicState(new LogicState({x: this.bitMask()}))
   }
 }
 

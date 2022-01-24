@@ -66,16 +66,25 @@ class Component extends React.Component<GateProps, IState> {
                data-uuid={gate.uuid}
                transform={this.getTransforms()}
             >
-                <path d={gate.d}
-                      onMouseDown={this.props.handlers.onGateMouseDown}
-                      onMouseUp={this.props.handlers.onGateMouseUp}
-                      onMouseMove={this.props.handlers.onGateMouseMove}
-                      onContextMenu={this.props.handlers.onGateContextMenu}
-                />
-                {gate.extraRender()}
+                <g
+                    onMouseDown={this.props.handlers.onGateMouseDown}
+                    onMouseUp={this.props.handlers.onGateMouseUp}
+                    onMouseMove={this.props.handlers.onGateMouseMove}
+                    onContextMenu={this.props.handlers.onGateContextMenu}
+                >
+                    <path d={gate.d}
+                    />
+                    {gate.extraRender()}
+                </g>
+                {this.props.logicComponent.pins().map((p, i) => p.renderLabel(i))}
                 {pins}
             </g>
         );
+    }
+
+    onDrag? = (...args: any[]): false | void => {
+        console.log(args)
+        return false;
     }
 }
 

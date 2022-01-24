@@ -13,7 +13,7 @@ class ToggleThemeButton extends React.Component<IProps, IState> {
     return (
     <ThemeContext.Consumer>
       {({theme, setTheme}) => (
-          <IconButton sx={{ ml: 1 }} onClick={() => setTheme(theme.palette.mode === 'dark' ? LightTheme : DarkTheme)} color="inherit">
+          <IconButton onClick={() => setTheme(theme.palette.mode === 'dark' ? LightTheme : DarkTheme)}>
             {theme.palette.mode === 'dark' ? <Brightness7/> : <Brightness4/>}
           </IconButton>
       )}

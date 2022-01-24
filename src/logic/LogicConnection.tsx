@@ -42,27 +42,8 @@ class LogicConnection {
   }
 
   render() {
-    let [ianchor, idir] = this.source.anchor;
-    let [oanchor, odir] = this.sink.anchor;
-
-    ianchor = this.source.transform(ianchor);
-    oanchor = this.sink.transform(oanchor);
-
-    let d = Math.min(ianchor.getDistance(oanchor), 30)
-
-    let ic = ianchor.add(idir.multiply(d));
-    let oc = oanchor.add(odir.multiply(d));
-
     return (
-        <Connection key={this.uuid}
-                    connection={this}
-                    state={this.source.state}
-                    width={this.source.width}
-                    i={ianchor}
-                    o={oanchor}
-                    ic={ic}
-                    oc={oc}
-        />
+        <Connection key={this.uuid} connection={this} />
     );
 
   }
@@ -70,6 +51,7 @@ class LogicConnection {
   /** Triggers a re-render */
   update() {
     this.updateSelf && this.updateSelf();
+    console.log(this.updateSelf ? "update yes" : "update no")
   }
 }
 

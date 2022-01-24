@@ -1,16 +1,17 @@
-import React from "react";
-
-import LogicComponent, {LogicComponentParams} from "./LogicComponent";
+import LogicComponent, {LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
 import LogicPin, {PinOrientation, PinType} from "./LogicPin";
 import PartType from "../enums/PartType";
 import LogicState from "./LogicState";
 
-interface IParams extends Omit<LogicComponentParams, "flags" | "type"> {}
+interface IParams extends Omit<LogicComponentParams, "type"> {}
 
 class Adder extends LogicComponent {
 
     constructor(params: IParams) {
-        super({...params, type: PartType.COMPOSITE_BUILT_IN, flags: 0, delay: 1});
+        super({
+            ...params,
+            type: PartType.COMPOSITE_BUILT_IN,
+            delay: 1});
     }
 
     operate(): void {
@@ -59,26 +60,28 @@ class Adder extends LogicComponent {
         }
     }
 
-    setUpBody(fieldWidth: number): paper.Item {
+    setUpBody(): paper.Item {
         let {Path, Point, Size} = this.scope;
         return new Path.Rectangle(new Point(0, 0), new Size(48, 32));
 
     }
 
-    setUpOutputPins(fieldWidth: number): LogicPin[] {
+    setUpOutputPins({width}: UpdateGeometryParams): LogicPin[] {
         let sum = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.UP,
             board: this.board,
-            width: this.width
+            width: width,
+            label: 'S',
         });
 
         let cout = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.LEFT,
-            board: this.board
+            board: this.board,
+            label: "C__out",
         });
 
         sum.updateGeometry(new this.scope.Point(24, 0));
@@ -87,13 +90,14 @@ class Adder extends LogicComponent {
         return [sum, cout];
     }
 
-    setUpInputPins(fieldWidth: number): LogicPin[] {
+    setUpInputPins({width}: UpdateGeometryParams): LogicPin[] {
         let a = new LogicPin({
             parent: this,
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
             board: this.board,
-            width: this.width
+            width: width,
+            label: 'A',
         });
         a.updateGeometry(new this.scope.Point(16, 32));
 
@@ -102,7 +106,8 @@ class Adder extends LogicComponent {
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
             board: this.board,
-            width: this.width
+            width: width,
+            label: 'B',
         });
         b.updateGeometry(new this.scope.Point(32, 32));
 
@@ -115,26 +120,12 @@ class Adder extends LogicComponent {
             parent: this,
             pinType: PinType.INPUT,
             orientation: PinOrientation.RIGHT,
-            board: this.board
+            board: this.board,
+            label: "C__in",
         });
         cin.updateGeometry(new this.scope.Point(48, 16));
 
         return [a, b, cin];
-    }
-
-    extraRender(): React.ReactElement[] {
-        return [
-            <>
-                <text className="top" x={24} y={0}>S</text>
-                <text className="left" x={0} y={16}>C<tspan>out</tspan></text>
-                <text className="bottom" x={16} y={32}>A</text>
-                <text className="bottom" x={32} y={32}>B</text>
-                {this.subtype === 1 && <text className="right" x={48} y={16}>C<tspan>in</tspan></text>}
-            </>
-        ];
-    }
-
-    reset() {
     }
 }
 
