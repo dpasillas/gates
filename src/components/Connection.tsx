@@ -39,7 +39,7 @@ class Connection extends React.Component<IProps, IState> {
     let {x: ix, y: iy} = ianchor;
     let {x: ox, y: oy} = oanchor;
 
-    console.log(`Connection (${ix}, ${iy}) - (${ox}, ${oy})`)
+    // console.log(`Connection (${ix}, ${iy}) - (${ox}, ${oy})`)
 
     let {x: icx, y: icy} = ic;
     let {x: ocx, y: ocy} = oc;

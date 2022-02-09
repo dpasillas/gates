@@ -9,11 +9,20 @@ import LogicState from "./LogicState";
 import LogicPin from "./LogicPin";
 import BinarySearchTree from "../BinarySearchTree";
 import LogicEvent from "./LogicEvent";
+import OperableSet from "../util/OperableSet";
+import {ViewBox} from "../util/Types";
 
 /**
  *
  */
 class LogicBoard {
+  private _viewBox: ViewBox = {
+    left: 0,
+    top: 0,
+    width: 800,
+    height: 600,
+  };
+
   /** All components which should be rendered on screen */
   components: Map<string, LogicComponent> = new Map();
   /** All connections which may be rendered */
@@ -21,8 +30,8 @@ class LogicBoard {
   /** All pins which may be rendered */
   pins: Map<string, LogicPin> = new Map();
 
-  selectedComponents: LogicComponent[] = [];
-  selectedPins: LogicPin[] = [];
+  readonly selectedComponents: OperableSet<LogicComponent> = new OperableSet();
+  readonly selectedPins: OperableSet<LogicPin> = new OperableSet();
 
   /** Paper scope for this board used to compute geometry, and intersections */
   scope: paper.PaperScope = makeAndSetupScope();
@@ -36,6 +45,15 @@ class LogicBoard {
   simulationStepSize: number = 1;
   updateApp: Function = () => {};
   updateProperties: () => void = () => {};
+  update: () => void = () => {};
+
+  get viewBox(): ViewBox {
+    return this._viewBox!
+  }
+
+  set viewBox(viewbox: ViewBox) {
+    this._viewBox = viewbox;
+  }
 
   render(): React.ReactElement {
     return (
@@ -62,7 +80,7 @@ class LogicBoard {
 
   startSimulation() {
     if (this.simulationTimerId === -1) {
-      // @ts-ignore
+      // @ts-ignore: Not using NodeJs.setInterval.  This is actually a number
       this.simulationTimerId = setInterval(this.advanceSimulation.bind(this), this.simulationIntervalMs);
     }
   }
@@ -147,12 +165,12 @@ class LogicBoard {
     for (let c of this.selectedComponents) {
       c.selected = false;
     }
-    this.selectedComponents = [];
+    this.selectedComponents.clear()
 
     for (let p of this.selectedPins) {
       p.selected = false;
     }
-    this.selectedPins = [];
+    this.selectedPins.clear()
   }
 }
 

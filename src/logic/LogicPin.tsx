@@ -57,6 +57,10 @@ class LogicPin {
   state: LogicState;
   label?: string;
   connections: Map<string /* UUID of connected pin */, LogicConnection> = new Map<string, LogicConnection>();
+  /**
+   * Callback which triggers a re-render on the rendered object
+   */
+  updateSelf?: () => void;
 
   constructor(params: IParams) {
     this.uuid = uuidv4();
@@ -255,6 +259,11 @@ class LogicPin {
     this.geometry.data.logical = this;
   }
 
+  /** Triggers a re-render */
+  update() {
+    this.updateSelf && this.updateSelf();
+  }
+
   /** Maps a point from local coordinates to svg coordinates */
   transform(p: paper.Point): paper.Point {
     return this.parent.geometry.matrix.transform(p);
@@ -273,8 +282,9 @@ class LogicPin {
   }
 
   set selected(selected) {
-    if (this.geometry) {
+    if (this.geometry && this.geometry.selected !== selected) {
       this.geometry.selected = selected
+      this.update()
     }
   }
 

@@ -81,11 +81,6 @@ class Component extends React.Component<GateProps, IState> {
             </g>
         );
     }
-
-    onDrag? = (...args: any[]): false | void => {
-        console.log(args)
-        return false;
-    }
 }
 
 export default Component;

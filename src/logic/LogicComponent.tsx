@@ -274,11 +274,13 @@ abstract class LogicComponent {
   }
 
   set selected(selected: boolean) {
-    this.body.selected = selected;
+    if (this.body.selected !== selected) {
+      this.body.selected = selected;
+      this.update()
+    }
   }
 
   translate(delta: paper.Point) {
-    console.log("translate")
     this.geometry.translate(delta);
     this.update();
     this.pins()
@@ -342,6 +344,8 @@ abstract class LogicComponent {
       }
     }
   }
+
+
 
   /** Sets up the shape of this component */
   abstract setUpBody(params: UpdateGeometryParams): paper.Item

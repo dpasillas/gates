@@ -241,7 +241,6 @@ class LogicGate extends LogicComponent {
 
   setUpInputPins({fieldWidth, width}: UpdateGeometryParams): LogicPin[] {
     // Keep pins that fit within tne new field width to maintain old connections
-    console.log(`fieldWidth: ${fieldWidth}`)
     let inputPins = this.inputPins.slice(0, fieldWidth);
     let nuke = this.inputPins.slice(fieldWidth);
     nuke.forEach(p => p.remove());
@@ -284,7 +283,7 @@ class LogicGate extends LogicComponent {
 
   setUpOutputPins({width}: UpdateGeometryParams): LogicPin[] {
     if (this.outputPins.length > 0) {
-      if (width != this.width) {
+      if (width !== this.width) {
         this.outputPins.forEach(pin => pin.width = width)
       }
       return this.outputPins;

@@ -32,6 +32,8 @@ class Pin extends React.Component<PinProps, IState> {
     constructor(props: PinProps) {
         super(props);
         this.state = {};
+
+        this.props.pin.updateSelf = () => this.setState({});
     }
     render() {
         let data = this.props.pin.geometry!.data;

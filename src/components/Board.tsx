@@ -5,8 +5,9 @@ import '../css/Board.css';
 import Part from "./Part";
 import LogicComponent from "../logic/LogicComponent";
 import {GateEventHandlers} from "./Component";
-import LogicPin, {PinType} from "../logic/LogicPin";
 import LogicBoard from "../logic/LogicBoard";
+import MouseManager from "../util/MouseManager";
+
 // import Properties from "./Properties";
 
 
@@ -38,13 +39,6 @@ interface IProps {
 }
 
 interface IState {
-    /** The size and offset of our view onto the board. */
-    viewBox: {
-        left: number,
-        top: number,
-        width: number,
-        height: number,
-    },
     /** The size on the page of the board */
     viewPort: {
         width: number,
@@ -62,26 +56,18 @@ interface IState {
  * user interactions.
  * */
 class Board extends React.Component<IProps, IState> {
+    private mouseManager: MouseManager = new MouseManager();
     private ref: React.RefObject<any>;
-    private resizeObserer?: ResizeObserver;
-    private sPoint: paper.Point | undefined;
-    private select: paper.Path | null;
+    private resizeObserver?: ResizeObserver;
 
     constructor(props: Readonly<IProps>) {
         super(props);
 
-        this.select = null;
         // @ts-ignore
         this.state = {
-            viewBox: {
-                left: 0,
-                top: 0,
-                width: 800,
-                height: 600,
-            },
             viewPort: {
-              width: 0,
-              height: 0,
+                width: 0,
+                height: 0,
             },
             scaleFactor: 1,
             pan: false,
@@ -94,18 +80,21 @@ class Board extends React.Component<IProps, IState> {
     /** Resize handler to make sure the board doesn't scale up when the window is resized */
     onResize(entries: ResizeObserverEntry[]) {
         let {width, height} = entries[0].contentRect;
+
+        let board = this.props.board;
         this.setState((state) => {
+            board.viewBox = {
+                left: board.viewBox.left,
+                top: board.viewBox.top,
+                width: width * state.scaleFactor,
+                height: height * state.scaleFactor,
+            }
+
             return {
                 viewPort: {
                     width: width,
                     height: height,
                 },
-                viewBox: {
-                    left: state.viewBox.left,
-                    top: state.viewBox.top,
-                    width: width * state.scaleFactor,
-                    height: height * state.scaleFactor,
-                }
             }
         });
     }
@@ -117,10 +106,12 @@ class Board extends React.Component<IProps, IState> {
      * @see {@link https://reactjs.org/docs/react-component.html#componentdidmount componentDidMount}
      * */
     componentDidMount() {
+        this.props.board.update = () => this.setState({})
         this.setState({});
         let board = this.ref.current;
-        this.resizeObserer = new ResizeObserver(this.onResize.bind(this));
-        this.resizeObserer.observe(board)
+        this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
+        this.resizeObserver.observe(board)
+        this.mouseManager.getViewCoordinates = this.getViewCoordinates.bind(this);
     }
 
     /**
@@ -129,7 +120,8 @@ class Board extends React.Component<IProps, IState> {
      * Generally used to clean up any bindings set up in {@link componentDidMount}, and other stray bindings.
      * @see {@link https://reactjs.org/docs/react-component.html#componentwillunmount componentWillUnmount} */
     componentWillUnmount() {
-        this.resizeObserer?.disconnect();
+        this.resizeObserver?.disconnect();
+        this.mouseManager.reset();
     }
 
     /** SVG definitions referenced by other svg elements. */
@@ -174,27 +166,22 @@ class Board extends React.Component<IProps, IState> {
 
     /** Draws the grid background as a repeated pattern on a rectangle which exactly fills the viewBox */
     renderGrid() {
-        const left = this.state.viewBox.left,
-            width = this.state.viewBox.width,
-            top = this.state.viewBox.top,
-            height = this.state.viewBox.height;
+        const {left, top, width, height} = this.props.board.viewBox;
 
         return <rect key="grid" x={left} y={top} width={width} height={height} fill="url(#grid)"/>;
     }
 
     render() {
-        const left = this.state.viewBox.left,
-            width = this.state.viewBox.width,
-            top = this.state.viewBox.top,
-            height = this.state.viewBox.height;
+        const {left, top, width, height} = this.props.board.viewBox;
 
-        let selectionBox = (this.select?.exportSVG() as SVGElement)?.getAttribute('d');
+        let selectionBox = (this.mouseManager.selectBox?.exportSVG() as SVGElement)?.getAttribute('d');
+
+        let mm = this.mouseManager;
 
         let handlers: GateEventHandlers = {
-            onGateMouseDown: this.handleGateMouseDown.bind(this),
-            onGateMouseUp: this.handleGateMouseUp.bind(this),
+            onGateMouseDown: mm.handleGateMouseDown.bind(mm, this.props.board),
             onGateContextMenu: this.handleGateContextMenu.bind(this),
-            onPinMouseDown: this.handlePinMouseDown.bind(this),
+            onPinMouseDown: mm.handlePinMouseDown.bind(mm, this.props.board),
         }
 
         let renderedConnections: JSX.Element[] = [];
@@ -217,10 +204,7 @@ class Board extends React.Component<IProps, IState> {
                 <svg className="board-wrapper" style={this.state.viewPort}
                      xmlns="http://www.w3.org/2000/svg"
                      onWheel={(e)=> this.handleWheel(e)}
-                     onMouseMove={(e) => this.handleMouseMove(e)}
-                     onMouseDown={(e) => this.handleMouseDown(e)}
-                     onMouseUp={(e) => this.handleMouseUp(e)}
-                     onMouseLeave={(e) => this.handleMouseExit(e)}
+                     onMouseDown={mm.handleBoardMouseDown.bind(mm, this.props.board)}
                      onDragEnter={this.handleDragEnter.bind(this)}
                      onDragOver={(e) => this.handleDragOver(e)}
                      onDrop={(e) => this.handleDrop(e)}
@@ -252,8 +236,8 @@ class Board extends React.Component<IProps, IState> {
     }
 
     /**  Maps a mouse event's position on the page to the viewBox coordinates */
-    getViewCoordinates(e: React.MouseEvent<SVGSVGElement, MouseEvent>): MouseEventMapping {
-        let rect = e.currentTarget.getBoundingClientRect();
+    getViewCoordinates(e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent): MouseEventMapping {
+        let rect = this.ref.current.getBoundingClientRect();
         const l = rect.left,
             t = rect.top,
             w = rect.width,
@@ -267,13 +251,12 @@ class Board extends React.Component<IProps, IState> {
         const dLocalX = e.movementX / window.devicePixelRatio,
             dLocalY = e.movementY / window.devicePixelRatio;
 
-        const viewWidth = this.state.viewBox.width,
-            viewHeight = this.state.viewBox.height;
+        const {left: viewLeft, top: viewTop, width: viewWidth, height: viewHeight} = this.props.board.viewBox;
 
         const viewRelativeX = localX / w,
             viewRelativeY = localY / h,
-            viewX = this.state.viewBox.left + viewRelativeX * viewWidth,
-            viewY = this.state.viewBox.top + viewRelativeY * viewHeight,
+            viewX = viewLeft + viewRelativeX * viewWidth,
+            viewY = viewTop + viewRelativeY * viewHeight,
             dX = dLocalX / w * viewWidth,
             dY = dLocalY / h * viewHeight;
 
@@ -287,19 +270,7 @@ class Board extends React.Component<IProps, IState> {
         }
     }
 
-    /*
-    Event handlers and associated helpers
-     */
-    enableDrag(e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
-        e.stopPropagation()
-        this.setState({drag: true})
-    }
-
-    disableDrag(e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
-        e.stopPropagation()
-        this.setState({drag: false})
-    }
-
+    /* Event handlers and associated helpers. */
     handleDragEnter(e: React.DragEvent<SVGSVGElement>) {
         e.preventDefault();
         e.dataTransfer.effectAllowed = "move";
@@ -318,160 +289,12 @@ class Board extends React.Component<IProps, IState> {
             return
         }
         let component = part.make(this.props.board);
+        // TODO: Compute offset when dropping components to make drag point more consistent.
         component.geometry.translate(new paper.Point(x - 16, y - 16))
 
         this.props.board.addComponent(component);
 
         this.setState({})
-    }
-
-    handleMouseDown(e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
-        e.preventDefault();
-        e.stopPropagation();
-        // This is only called if neither a pin nor component is clicked.
-        this.clearSelection();
-        const {Path, Point, Rectangle, Size} = this.props.board.scope;
-        // this.setState({pan: true});
-        const {x, y} = this.getViewCoordinates(e);
-        this.sPoint = new Point(x, y);
-        let rect = new Rectangle(this.sPoint, new Size(0, 0))
-        this.select = new Path.Rectangle(rect)
-        this.setState({})
-    }
-
-    handleMouseUp(e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
-        e.preventDefault();
-        e.stopPropagation();
-        // this.setState({pan: false});
-        if (this.select) {
-            this.select.remove()
-            this.select = null;
-        }
-
-        this.setState({pan: false, drag: false});
-    }
-
-    handleMouseExit(_e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
-
-        if (this.select) {
-            this.select.remove()
-            this.select = null;
-        }
-        this.setState({pan: false, drag: false})
-    }
-
-    isSelected(item: paper.Item): boolean {
-        const select = this.select as paper.Item;
-        const selectionRect = select.bounds;
-        // let clone = item.clone();
-        // clone.transform(item.parent.matrix)
-        // let isSelected = clone.intersects(select) || clone.isInside(selectionRect) || clone.contains(selectionRect.center)
-        // clone.remove()
-
-        let matrix = item.parent.matrix;
-        let imatrix = matrix.inverted();
-        item.transform(matrix)
-        let isSelected = item.intersects(select) || item.isInside(selectionRect) || item.contains(selectionRect.center)
-        item.transform(imatrix)
-        return isSelected
-    }
-
-    handleMouseMove(e: React.MouseEvent<SVGSVGElement, MouseEvent>) {
-        let {x, y, dx, dy} = this.getViewCoordinates(e)
-
-        if (this.state.drag) {
-            e.stopPropagation();
-            e.preventDefault();
-
-            let selected = this.props.board.selectedComponents;
-
-            for (let s of selected) {
-                let dp = new paper.Point(dx, dy);
-                s.translate(dp)
-            }
-            // this.setState({});
-
-        }
-
-        if (this.select && this.sPoint) {
-            let select = this.select;
-            const [sx, sy] = [this.sPoint.x, this.sPoint.y]
-
-            if (x === sx && y === sy) {
-                for (let s of select.segments) {
-                    s.point = this.sPoint;
-                }
-            }
-
-            if (x <= sx) {
-                select.segments[0].point.x = x
-                select.segments[1].point.x = x
-                select.segments[2].point.x = sx
-                select.segments[3].point.x = sx
-            }
-            if (x >= sx) {
-                select.segments[0].point.x = sx
-                select.segments[1].point.x = sx
-                select.segments[2].point.x = x
-                select.segments[3].point.x = x
-            }
-            if (y <= sy) {
-                select.segments[0].point.y = sy
-                select.segments[1].point.y = y
-                select.segments[2].point.y = y
-                select.segments[3].point.y = sy
-            }
-            if (y >= sy) {
-                select.segments[0].point.y = y
-                select.segments[1].point.y = sy
-                select.segments[2].point.y = sy
-                select.segments[3].point.y = y
-            }
-
-            let components = this.props.board.components.values();
-            let selectedComponents: LogicComponent[] = [];
-
-            for (let component of components) {
-                // if (this.isSelected(component)) {
-                if (component.collides(this.select)) {
-                    component.selected = true;
-                    selectedComponents.push(component);
-                } else {
-                    component.selected = false;
-                }
-            }
-
-            this.props.board.selectedComponents = selectedComponents;
-
-            let selectedPins: LogicPin[] = [];
-            let pins = this.props.board.pins.values();
-            for (let pin of pins) {
-                if (selectedComponents.length !== 0) {
-                    pin.selected = false;
-                    continue;
-                }
-                if (pin.collides(this.select)) {
-                    pin.selected = true;
-                    selectedPins.push(pin)
-                }
-            }
-
-            this.props.board.selectedPins = selectedPins;
-
-            this.setState({});
-            this.props.board.updateProperties();
-        }
-
-        if (this.state.pan) {
-            this.setState({
-                viewBox: {
-                    top: this.state.viewBox.top - dy,
-                    left: this.state.viewBox.left - dx,
-                    width: this.state.viewBox.width,
-                    height: this.state.viewBox.height,
-                },
-            });
-        }
     }
 
     static between(a: number , b: number, c: number) {
@@ -482,15 +305,15 @@ class Board extends React.Component<IProps, IState> {
         let {x, y, rx, ry} = this.getViewCoordinates(e);
 
         const viewWidth = this.state.viewPort.width,
-              viewHeight = this.state.viewPort.height;
+            viewHeight = this.state.viewPort.height;
 
         const MIN_SCALE = 1 / 16.0;
         const MAX_SCALE = 4.0;
         const {scaleFactor} = this.state;
 
         const newScaleFactor = Board.between(MIN_SCALE, Math.pow(2, e.deltaY / 1000) * scaleFactor, MAX_SCALE),
-              newWidth = viewWidth * newScaleFactor,
-              newHeight = viewHeight * newScaleFactor;
+            newWidth = viewWidth * newScaleFactor,
+            newHeight = viewHeight * newScaleFactor;
 
         const newViewBox = {
             left: x - rx * newWidth,
@@ -499,38 +322,14 @@ class Board extends React.Component<IProps, IState> {
             height: newHeight,
         };
 
+        this.props.board.viewBox = newViewBox;
+
         this.setState({
             scaleFactor: newScaleFactor,
-            viewBox: newViewBox,
         });
     }
 
-
-    handleGateMouseDown(logicComponent: LogicComponent, e: React.MouseEvent<SVGElement, MouseEvent>) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        console.log("Gate Down");
-        // let selected = this.props.board.scope.project.getItems({
-        //     selected: true,
-        // })
-        let selected = this.props.board.selectedComponents;
-
-        if (!selected.includes(logicComponent)) {
-            this.props.board.clearSelection()
-            logicComponent.selected = true;
-            this.props.board.selectedComponents = [logicComponent]
-        }
-
-        this.setState({drag: true});
-    }
-
-    handleGateMouseUp(logicComponent: LogicComponent, e: React.MouseEvent<SVGElement, MouseEvent>) {
-        e.preventDefault();
-        console.log("up gate")
-    }
-
-    handleGateContextMenu(logicComponent: LogicComponent, e:React.MouseEvent<SVGElement, MouseEvent>) {
+    handleGateContextMenu(logicComponent: LogicComponent, e:React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
         if (e.shiftKey) {
             return;
         }
@@ -539,36 +338,6 @@ class Board extends React.Component<IProps, IState> {
         console.log("context g!")
     }
 
-    handlePinMouseDown(logicPin: LogicPin, e:React.MouseEvent<SVGElement, MouseEvent>) {
-        e.stopPropagation();
-        e.preventDefault();
-
-        let pins = this.props.board.selectedPins;
-
-
-        let numOutputs = pins.filter(p => p.pinType === PinType.OUTPUT).length;
-        console.log(`Num outputs: ${numOutputs}`)
-        if (numOutputs <= 1) {
-            for(let pin of pins) {
-                this.makeConnection(pin, logicPin);
-            }
-        }
-
-
-    }
-
-    makeConnection(a: LogicPin, b: LogicPin) {
-        console.log("attempting connection")
-        let connection = a.connectTo(b);
-        if (connection) {
-            this.props.board.addConnection(connection);
-            this.setState({});
-        }
-    }
-
-    get scope(): paper.PaperScope {
-        return this.props.board.scope;
-    }
 }
 
 export default Board;

@@ -12,6 +12,7 @@ import "../css/Properties.css"
 import SliderWithInput from "./SliderWithInput";
 import NumberInputWithSideControls from "./NumberInputWithSideControls";
 import Stack from "@mui/material/Stack";
+import FluentIterable from "../util/FluentIterable";
 
 interface IProps {
   board: LogicBoard;
@@ -42,12 +43,14 @@ class Properties extends React.Component<IProps, IState> {
 
   render() {
     let components = this.props.board.selectedComponents;
-    let open = components.length !== 0;
-    let adjustableWidth = components
+    let open = components.size !== 0;
+    let adjustableWidth = FluentIterable
+        .from(components)
         .map(c => c.adjustableWidth)
         .reduce((prev, current) => prev && current, true)
 
-    let widths = components
+    let widths = FluentIterable
+        .from(components)
         .map(c => c.width)
         .reduce((values, current) => values.add(current), new Set<number>());
 
@@ -58,11 +61,13 @@ class Properties extends React.Component<IProps, IState> {
       widths.forEach(v => width = v);
     }
 
-    let adjustableNumInputs = components
+    let adjustableNumInputs = FluentIterable
+        .from(components)
         .map(c => c.adjustableFieldWidth)
         .reduce((prev, current) => prev && current, true)
 
-    let numInputss = components
+    let numInputss = FluentIterable
+        .from(components)
         .map(c => c.fieldWidth)
         .reduce((values, current) => values.add(current), new Set<number>());
 

@@ -51,7 +51,6 @@ class LogicConnection {
   /** Triggers a re-render */
   update() {
     this.updateSelf && this.updateSelf();
-    console.log(this.updateSelf ? "update yes" : "update no")
   }
 }
 
