@@ -4,13 +4,13 @@ import Board from "../components/Board";
 import LogicComponent from "./LogicComponent";
 import LogicConnection from "./LogicConnection";
 import paper from "paper/dist/paper-core";
-import {makeAndSetupScope} from "../util/PaperHelp";
+import { makeAndSetupScope } from "../util/PaperHelp";
 import LogicState from "./LogicState";
 import LogicPin from "./LogicPin";
 import BinarySearchTree from "../BinarySearchTree";
 import LogicEvent from "./LogicEvent";
 import OperableSet from "../util/OperableSet";
-import {ViewBox} from "../util/Types";
+import { ViewBox } from "../util/Types";
 
 /**
  *
@@ -36,16 +36,28 @@ class LogicBoard {
   /** Paper scope for this board used to compute geometry, and intersections */
   scope: paper.PaperScope = makeAndSetupScope();
   /** All pending logical events on the board **/
-  simulation: BinarySearchTree<LogicEvent> = new BinarySearchTree<LogicEvent>({cmp: (a, b) => a.cmp(b)});
+  simulation: BinarySearchTree<LogicEvent> = new BinarySearchTree<LogicEvent>({ cmp: (a, b) => a.cmp(b) });
   simulationTimerId: number = -1;
   simulationCurrentTime: number = 0;
   /** Controls how frequently the simulation is updated **/
   simulationIntervalMs: number = 25;
   /** Controls how many time units pass per simulation interval **/
   simulationStepSize: number = 1;
-  updateApp: Function = () => {};
-  updateProperties: () => void = () => {};
-  update: () => void = () => {};
+  updateApp: Function = () => { };
+  updateProperties: () => void = () => { };
+  update: () => void = () => { };
+
+  temporaryConnection?: { source: LogicPin, currentPos: paper.Point };
+
+  setTemporaryConnection(source: LogicPin, currentPos: paper.Point) {
+    this.temporaryConnection = { source, currentPos };
+    this.update();
+  }
+
+  clearTemporaryConnection() {
+    this.temporaryConnection = undefined;
+    this.update();
+  }
 
   get viewBox(): ViewBox {
     return this._viewBox!
@@ -57,7 +69,7 @@ class LogicBoard {
 
   render(): React.ReactElement {
     return (
-        <Board board={this}/>
+      <Board board={this} />
     )
   }
 

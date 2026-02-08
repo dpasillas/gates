@@ -4,7 +4,8 @@
     background-color: lightgray
 }
 
-.part-image, .decoration {
+.part-image,
+.decoration {
     pointer-events: none;
 }
 
@@ -60,7 +61,8 @@ path.grid {
     fill: #007ADD80;
 }
 
-.component :focus, .component:focus {
+.component :focus,
+.component:focus {
     stroke-width: 3px;
 }
 
@@ -85,8 +87,9 @@ path.grid {
 
 .anchor {
     stroke: rgba(0, 0, 0, 0);
-    fill: rgba(0,0,0,0);
+    fill: rgba(0, 0, 0, 0);
     transition: fill 0.4s ease-in-out;
+    cursor: crosshair;
 }
 
 .pin:hover .anchor {
@@ -157,7 +160,7 @@ text {
     pointer-events: none;
 }
 
-.component text > tspan {
+.component text>tspan {
     font-size: 5px;
     baseline-shift: sub;
 }

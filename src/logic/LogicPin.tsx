@@ -1,7 +1,7 @@
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import LogicComponent from "./LogicComponent";
 import * as Constants from "../Constants";
-import Pin, {PinEventHandlers, PinProps} from "../components/Pin";
+import Pin, { PinEventHandlers, PinProps } from "../components/Pin";
 import React from "react";
 import LogicState from "./LogicState";
 import LogicConnection from "./LogicConnection";
@@ -143,9 +143,9 @@ class LogicPin {
       } else {
         this.disconnect()
       }
-      let connection = new LogicConnection({source: other, sink: this, board: this.board})
-      this.connections.set(connection.uuid, connection);
-      other.connections.set(connection.uuid, connection);
+      let connection = new LogicConnection({ source: other, sink: this, board: this.board })
+      this.connections.set(other.uuid, connection);
+      other.connections.set(this.uuid, connection);
       this.setLogicState(other.state);
       return connection;
     } else {
@@ -190,18 +190,18 @@ class LogicPin {
 
     let [text, subscript] = this.label.split("__");
     return (
-        <text key={i} className={textClass} x={this.pos.x} y={this.pos.y}>
-          {text}
-          {subscript && <tspan>{subscript}</tspan>}
-        </text>
+      <text key={i} className={textClass} x={this.pos.x} y={this.pos.y}>
+        {text}
+        {subscript && <tspan>{subscript}</tspan>}
+      </text>
     );
   }
 
   render(handlers?: PinEventHandlers): React.ReactElement {
     return (
-        <Pin key={this.uuid}
-             {...this.getRenderParams(handlers)}
-        />
+      <Pin key={this.uuid}
+        {...this.getRenderParams(handlers)}
+      />
     )
   }
 
@@ -220,10 +220,10 @@ class LogicPin {
 
   /** Places the pin at a location on the parent, and subtracts the parent's body from its geometry. */
   updateGeometry(pos: paper.Point) {
-    if(this.geometry) {
+    if (this.geometry) {
       this.geometry.remove()
     }
-    let {CompoundPath, Path, Point} = this.parent.scope;
+    let { CompoundPath, Path, Point } = this.parent.scope;
     let pin;
     if (this.not) {
       pin = new CompoundPath(Constants.NOT_PIN_PATH)
@@ -309,6 +309,11 @@ class LogicPin {
     return isSelected;
   }
 
+  isOver(point: paper.Point): boolean {
+    let [anchor,] = this.anchor
+    return this.transform(anchor).getDistance(point) < 15
+  }
+
   /**
    * Creates a bitmask of the specified width
    *
@@ -323,14 +328,14 @@ class LogicPin {
   reset() {
     // If a connection to an input pin already exists, it will be handled by the output pin.
     if (this.pinType === PinType.INPUT && this.connections.size !== 0) {
-        return
+      return
     }
 
     if (this.pinType === PinType.INPUT) {
-      this.setLogicState(new LogicState({z: this.bitMask()}))
+      this.setLogicState(new LogicState({ z: this.bitMask() }))
       this.parent.operate();
     } else {
-      this.setLogicState(new LogicState({x: this.bitMask()}))
+      this.setLogicState(new LogicState({ x: this.bitMask() }))
       this.updateNext(true);
     }
   }
