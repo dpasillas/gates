@@ -1,13 +1,13 @@
 import BinarySearchTree from "./BinarySearchTree";
 
 test('renders learn react link', () => {
-  let bst = new BinarySearchTree<number>({cmp: (a, b) =>  a - b});
+  const bst = new BinarySearchTree<number>({cmp: (a, b) =>  a - b});
 
   for (let i = 1; i <= 16; ++i) {
     bst.insert(i);
   }
 
-  let f = bst.first();
+  const f = bst.first();
   expect(f).toBe(1);
   expect(bst.size()).toBe(16);
 

@@ -7,17 +7,19 @@ const { ResizeObserver } = window;
 beforeEach(() => {
   // @ts-ignore
   delete window.ResizeObserver;
-  window.ResizeObserver = jest.fn().mockImplementation(() => ({
-    observe: jest.fn(),
-    unobserve: jest.fn(),
-    disconnect: jest.fn(),
-  }));
+  window.ResizeObserver = vi.fn().mockImplementation(function () {
+    return {
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    };
+  });
 
 });
 
 afterEach(() => {
   window.ResizeObserver = ResizeObserver;
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 it('should do my test', () => {

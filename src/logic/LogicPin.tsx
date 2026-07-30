@@ -97,9 +97,9 @@ class LogicPin {
       throw new Error();
     }
 
-    for (let connection of this.connections.values()) {
+    for (const connection of this.connections.values()) {
       connection.update();
-      let inputPin = connection.sink;
+      const inputPin = connection.sink;
       // No need to simulate events which won't affect the output
       if (force || this.state.ne(inputPin.state)) {
         inputPin.setLogicState(this.state)
@@ -143,7 +143,7 @@ class LogicPin {
       } else {
         this.disconnect()
       }
-      let connection = new LogicConnection({ source: other, sink: this, board: this.board })
+      const connection = new LogicConnection({ source: other, sink: this, board: this.board })
       this.connections.set(other.uuid, connection);
       other.connections.set(this.uuid, connection);
       this.setLogicState(other.state);
@@ -188,7 +188,7 @@ class LogicPin {
         textClass = "";
     }
 
-    let [text, subscript] = this.label.split("__");
+    const [text, subscript] = this.label.split("__");
     return (
       <text key={i} className={textClass} x={this.pos.x} y={this.pos.y}>
         {text}
@@ -223,7 +223,7 @@ class LogicPin {
     if (this.geometry) {
       this.geometry.remove()
     }
-    let { CompoundPath, Path, Point } = this.parent.scope;
+    const { CompoundPath, Path, Point } = this.parent.scope;
     let pin;
     if (this.not) {
       pin = new CompoundPath(Constants.NOT_PIN_PATH)
@@ -300,17 +300,17 @@ class LogicPin {
   }
 
   collides(select: paper.Item): boolean {
-    let body = this.geometry!
-    let matrix = body.parent.matrix;
-    let imatrix = matrix.inverted();
+    const body = this.geometry!
+    const matrix = body.parent.matrix;
+    const imatrix = matrix.inverted();
     select.transform(imatrix)
-    let isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
+    const isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
     select.transform(matrix)
     return isSelected;
   }
 
   isOver(point: paper.Point): boolean {
-    let [anchor,] = this.anchor
+    const [anchor,] = this.anchor
     return this.transform(anchor).getDistance(point) < 15
   }
 

@@ -39,22 +39,22 @@ class Component extends React.Component<GateProps, IState> {
      * Gets the translation and rotation transforms of the component.
      */
     getTransforms() {
-        let {x, y} = this.props.logicComponent.geometry.position
-        let offset_transform = `translate(${x} ${y})`
-        let rotate_transform = `rotate(${this.props.logicComponent.geometry.rotation})`
+        const {x, y} = this.props.logicComponent.geometry.position
+        const offset_transform = `translate(${x} ${y})`
+        const rotate_transform = `rotate(${this.props.logicComponent.geometry.rotation})`
         return [offset_transform, rotate_transform].join(' ')
     }
 
     render() {
-        let {onGateMouseDown, onGateMouseUp, onGateContextMenu, ...handlers} = this.props.handlers;
+        const {onGateMouseDown, onGateMouseUp, onGateContextMenu, ...handlers} = this.props.handlers;
 
-        let logicPins = this.props.logicComponent.pins();
-        let pins = logicPins.map(p => p.render(handlers))
+        const logicPins = this.props.logicComponent.pins();
+        const pins = logicPins.map(p => p.render(handlers))
 
-        let gate = this.props.logicComponent;
-        let body = gate.body as paper.Item;
+        const gate = this.props.logicComponent;
+        const body = gate.body as paper.Item;
 
-        let classNames = ['component']
+        const classNames = ['component']
 
         if (body.selected) {
             classNames.push('selected')

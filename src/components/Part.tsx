@@ -35,7 +35,7 @@ class Part {
   }
 
   make(board?: LogicBoard): LogicComponent {
-    let scope = board?.scope ?? GLOBAL_SCOPE;
+    const scope = board?.scope ?? GLOBAL_SCOPE;
     switch (this.type) {
       case PartType.GATE:
         return new LogicGate({subtype: this.subtype, scope: scope, board: board});

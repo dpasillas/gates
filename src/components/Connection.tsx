@@ -23,7 +23,7 @@ class Connection extends React.Component<IProps, IState> {
 
   render() {
 
-    let {source, sink} = this.props.connection;
+    const {source, sink} = this.props.connection;
 
     let [ianchor, idir] = source.anchor;
     let [oanchor, odir] = sink.anchor;
@@ -31,32 +31,32 @@ class Connection extends React.Component<IProps, IState> {
     ianchor = source.transform(ianchor);
     oanchor = sink.transform(oanchor);
 
-    let dist = Math.min(ianchor.getDistance(oanchor), 30)
+    const dist = Math.min(ianchor.getDistance(oanchor), 30)
 
-    let ic = ianchor.add(idir.multiply(dist));
-    let oc = oanchor.add(odir.multiply(dist));
+    const ic = ianchor.add(idir.multiply(dist));
+    const oc = oanchor.add(odir.multiply(dist));
 
-    let {x: ix, y: iy} = ianchor;
-    let {x: ox, y: oy} = oanchor;
+    const {x: ix, y: iy} = ianchor;
+    const {x: ox, y: oy} = oanchor;
 
     // console.log(`Connection (${ix}, ${iy}) - (${ox}, ${oy})`)
 
-    let {x: icx, y: icy} = ic;
-    let {x: ocx, y: ocy} = oc;
+    const {x: icx, y: icy} = ic;
+    const {x: ocx, y: ocy} = oc;
 
-    let r = 1
+    const r = 1
     // Render each endpoint of the connection as a circle.
     // Each endpoint is split into two half circles, as it's impossible to render a full circle with a single arc
     // command.
-    let end1_1 = `M ${ix - r} ${iy} A ${r} ${r} 180 0 0 ${ix + r} ${iy} `
-    let end1_2 = `A ${r} ${r} 180 0 0 ${ix - r} ${iy} `
-    let end2_1 = `M ${ox - r} ${oy} A ${r} ${r} 180 0 0 ${ox + r} ${oy} `
-    let end2_2 = `A ${r} ${r} 180 0 0 ${ox - r} ${oy} `
+    const end1_1 = `M ${ix - r} ${iy} A ${r} ${r} 180 0 0 ${ix + r} ${iy} `
+    const end1_2 = `A ${r} ${r} 180 0 0 ${ix - r} ${iy} `
+    const end2_1 = `M ${ox - r} ${oy} A ${r} ${r} 180 0 0 ${ox + r} ${oy} `
+    const end2_2 = `A ${r} ${r} 180 0 0 ${ox - r} ${oy} `
     // The path of a connection is both endpoints drawn as circles, connected by a bezier curve.
-    let d = `${end1_1} ${end1_2} M ${ix} ${iy} C ${icx} ${icy} ${ocx} ${ocy} ${ox} ${oy} ${end2_1} ${end2_2}`;
+    const d = `${end1_1} ${end1_2} M ${ix} ${iy} C ${icx} ${icy} ${ocx} ${ocy} ${ox} ${oy} ${end2_1} ${end2_2}`;
 
     let fillClass;
-    let state = this.props.connection.source.state;
+    const state = this.props.connection.source.state;
     if (state.x) {
       fillClass = "error"
     } else if (state.z) {

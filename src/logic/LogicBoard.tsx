@@ -43,7 +43,7 @@ class LogicBoard {
   simulationIntervalMs: number = 25;
   /** Controls how many time units pass per simulation interval **/
   simulationStepSize: number = 1;
-  updateApp: Function = () => { };
+  updateApp: () => void = () => { };
   updateProperties: () => void = () => { };
   update: () => void = () => { };
 
@@ -81,7 +81,7 @@ class LogicBoard {
    * @param delay - The amount of time from the current time before the pin's state should be updated.
    */
   postEvent(state: LogicState, pin: LogicPin, delay: number) {
-    let event = new LogicEvent({
+    const event = new LogicEvent({
       pin: pin,
       time: this.simulationCurrentTime + delay,
       state: state
@@ -114,11 +114,11 @@ class LogicBoard {
   }
 
   advanceSimulation() {
-    let current = this.simulationCurrentTime;
-    let target = current + this.simulationStepSize;
+    const current = this.simulationCurrentTime;
+    const target = current + this.simulationStepSize;
     // TODO(dpasillas): Modify Binary Tree to remove need to check first() on every loop.
     while (this.simulation.size() && this.simulation.first()!.time <= target) {
-      let event = this.simulation.popFirst()!;
+      const event = this.simulation.popFirst()!;
       // Update the time so that operations triggered by this event use the correct reference time.
       this.simulationCurrentTime = event.time;
       event.apply();
@@ -174,12 +174,12 @@ class LogicBoard {
   }
 
   clearSelection() {
-    for (let c of this.selectedComponents) {
+    for (const c of this.selectedComponents) {
       c.selected = false;
     }
     this.selectedComponents.clear()
 
-    for (let p of this.selectedPins) {
+    for (const p of this.selectedPins) {
       p.selected = false;
     }
     this.selectedPins.clear()

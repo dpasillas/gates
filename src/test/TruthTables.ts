@@ -137,21 +137,21 @@ const indexes = {
 }
 
 function lookup<W extends number>(truthTable: TruthTable<2, W>, input: [TruthValue, TruthValue]): TruthEntry<W> {
-  let [i1, i2] = input;
-  let index = indexes[i1] * 4 + indexes[i2]
-  let [, output] = truthTable[index];
+  const [i1, i2] = input;
+  const index = indexes[i1] * 4 + indexes[i2]
+  const [, output] = truthTable[index];
   return output;
 }
 
 export function cascadeTruthTable<N extends number>(bTable: TruthTable<2>, truthTable: TruthTable<N>): TruthTable<Add<N, 1>> {
-  let truthValues: TruthValue[] = ['0', '1', 'x', 'z']
-  let result: TruthTable<Add<N, 1>> = [];
-  for (let truthValue of truthValues) {
-    for(let [input, output] of truthTable) {
-      let newOutput: TruthEntry<1> = lookup(bTable, [truthValue, output])
+  const truthValues: TruthValue[] = ['0', '1', 'x', 'z']
+  const result: TruthTable<Add<N, 1>> = [];
+  for (const truthValue of truthValues) {
+    for(const [input, output] of truthTable) {
+      const newOutput: TruthEntry<1> = lookup(bTable, [truthValue, output])
       // @ts-ignore
-      let newInput: Tuple<Add<N, 1>, TruthValue> = [truthValue, ...input];
-      let entry: TruthTableEntry<Add<N, 1>, 1> = [newInput, newOutput];
+      const newInput: Tuple<Add<N, 1>, TruthValue> = [truthValue, ...input];
+      const entry: TruthTableEntry<Add<N, 1>, 1> = [newInput, newOutput];
       result.push(entry);
     }
   }
@@ -165,12 +165,12 @@ function mergeTruths<N extends number, W1 extends number, W2 extends number>(t1:
 
 //TODO: Complete this function.
 export function baseWidenTruthTable<N extends number, W extends number>(refTable: TruthTable<N>, truthTable: TruthTable<N, W>): TruthTable<N, Add<W, 1>> {
-  let result: TruthTable<N, Add<W, 1>> = [];
-  for (let [rinput, routput] of refTable) {
-    for (let [input, output] of truthTable) {
-      let newInput: Tuple<N, TruthEntry<Add<W, 1>>> = mergeTruths(rinput, input);
+  const result: TruthTable<N, Add<W, 1>> = [];
+  for (const [rinput, routput] of refTable) {
+    for (const [input, output] of truthTable) {
+      const newInput: Tuple<N, TruthEntry<Add<W, 1>>> = mergeTruths(rinput, input);
       // @ts-ignore
-      let newOutput: TruthEntry<Add<W, 1>> = `${routput}${output}`;
+      const newOutput: TruthEntry<Add<W, 1>> = `${routput}${output}`;
       result.push([newInput, newOutput]);
     }
   }

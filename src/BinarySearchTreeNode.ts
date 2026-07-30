@@ -24,8 +24,8 @@ class BinarySearchTreeNode<T> {
       throw Error("Impossible rotation")
     }
 
-    let ret = this.right;
-    let side = ret.left;
+    const ret = this.right;
+    const side = ret.left;
     this.right = side;
     this.weight -= ret.weight;
     this.weight += side?.weight || 0;
@@ -44,8 +44,8 @@ class BinarySearchTreeNode<T> {
       throw Error("Impossible rotation")
     }
 
-    let ret = this.left;
-    let side = ret.right;
+    const ret = this.left;
+    const side = ret.right;
     this.left = side;
     this.weight -= ret.weight;
     this.weight += side?.weight || 0;
@@ -60,21 +60,21 @@ class BinarySearchTreeNode<T> {
   }
 
   private slant(): number {
-    let l = this.left?.max_depth || 0;
-    let r = this.right?.max_depth || 0;
+    const l = this.left?.max_depth || 0;
+    const r = this.right?.max_depth || 0;
     return r - l;
   }
 
   private balance(): BinarySearchTreeNode<T> {
-    let slant = this.slant();
+    const slant = this.slant();
     if (slant < -1 && this.left) {
-      let side_slant = this.left.slant();
+      const side_slant = this.left.slant();
       if (side_slant >= 1) {
         this.left = this.left.rotateLeft();
       }
       return this.rotateRight();
     } else if (slant > 1 && this.right) {
-      let side_slant = this.right.slant();
+      const side_slant = this.right.slant();
       if (side_slant <= -1) {
         this.right = this.right.rotateRight();
       }
@@ -85,8 +85,8 @@ class BinarySearchTreeNode<T> {
   }
 
   insert(t: T, cmp: Comparator<T>): [BinarySearchTreeNode<T>, boolean] {
-    let result = cmp(t, this.data)
-    let added: boolean = false;
+    const result = cmp(t, this.data)
+    let added: boolean;
     if (result < 0) {
       if (this.left) {
         [this.left, added] = this.left.insert(t, cmp)
@@ -116,7 +116,7 @@ class BinarySearchTreeNode<T> {
   }
 
   find(t: T, cmp: Comparator<T>): T | null {
-    let result = cmp(t, this.data)
+    const result = cmp(t, this.data)
     if (result < 0) {
       return this.left && this.left.find(t, cmp);
     } else if (result > 0) {
@@ -130,7 +130,7 @@ class BinarySearchTreeNode<T> {
     if (!this.left) {
       return [this.right, this.data];
     } else {
-      let [node, val] = this.left.popFirst();
+      const [node, val] = this.left.popFirst();
       this.left = node;
 
       this.weight -= 1;
@@ -144,7 +144,7 @@ class BinarySearchTreeNode<T> {
     if (!this.right) {
       return [this.left, this.data];
     } else {
-      let [node, val] = this.right.popFirst();
+      const [node, val] = this.right.popFirst();
       this.right = node;
 
       this.weight -= 1;
@@ -155,7 +155,7 @@ class BinarySearchTreeNode<T> {
   }
 
   remove(t: T, cmp: Comparator<T>): [BinarySearchTreeNode<T> | null, boolean] {
-    let result = cmp(t, this.data)
+    const result = cmp(t, this.data)
     let removed: boolean;
     let ret: BinarySearchTreeNode<T> | null = this;
     if (result < 0) {

@@ -8,7 +8,7 @@ interface IParams<T> {
     cmp: Comparator<T>;
 }
 
-class BinarySearchTree<T extends Object> {
+class BinarySearchTree<T> {
     private readonly cmp: Comparator<T>;
     root: BinarySearchTreeNode<T> | null = null;
 
@@ -75,7 +75,7 @@ class BinarySearchTree<T extends Object> {
             return null;
         }
 
-        let [node, val] = this.root.popFirst();
+        const [node, val] = this.root.popFirst();
         this.root = node;
         return val;
     }
@@ -95,7 +95,7 @@ function* inOrderIterator<T>(bst: BinarySearchTree<T>): Generator<T> {
         return;
     }
 
-    let stack = [];
+    const stack = [];
     let current: BinarySearchTreeNode<T> | null = bst.root;
 
     while (current || stack.length) {
@@ -105,7 +105,7 @@ function* inOrderIterator<T>(bst: BinarySearchTree<T>): Generator<T> {
         }
 
         // @ts-ignore
-        let ret: BinarySearchTreeNode<T> = stack.pop();
+        const ret: BinarySearchTreeNode<T> = stack.pop();
         yield ret.data;
         if (ret.right) {
             current = ret.right;

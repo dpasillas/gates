@@ -114,12 +114,12 @@ class LogicGate extends LogicComponent {
   opAnd(): LogicState {
     let value = this.bitMask();
     let unknown = 0;
-    let high_impedance = 0;
+    const high_impedance = 0;
 
     // Keep track of input zeroes so we can ignore errors from other pins at these outputs
     let zeroes = 0;
 
-    for (let pin of this.inputPins) {
+    for (const pin of this.inputPins) {
         // Count zeroes only if no error state exists for that bit.
         zeroes |= ~(pin.state.v | pin.state.x | pin.state.z)
         value &= pin.state.v;
@@ -140,16 +140,16 @@ class LogicGate extends LogicComponent {
   }
 
   opNand(): LogicState {
-    let state = this.opAnd();
+    const state = this.opAnd();
     return state.negated(this.width);
   }
 
   opOr(): LogicState{
     let value = 0;
     let unknown = 0;
-    let high_impedance = 0;
+    const high_impedance = 0;
 
-    for (let pin of this.inputPins) {
+    for (const pin of this.inputPins) {
       value |= pin.state.v;
       unknown |= pin.state.x;
       // Treat input z as unknown.
@@ -169,16 +169,16 @@ class LogicGate extends LogicComponent {
   }
 
   opNor(): LogicState {
-    let state = this.opOr();
+    const state = this.opOr();
     return state.negated(this.width);
   }
 
   opXor(): LogicState {
     let value = 0;
     let unknown = 0;
-    let high_impedance = 0;
+    const high_impedance = 0;
 
-    for (let pin of this.inputPins) {
+    for (const pin of this.inputPins) {
       value ^= pin.state.v;
       unknown |= pin.state.x;
       // Treat input z as unknown.
@@ -195,15 +195,15 @@ class LogicGate extends LogicComponent {
   }
 
   opXnor(): LogicState {
-    let state = this.opXor();
+    const state = this.opXor();
     return state.negated(this.width);
   }
 
   opBuf(): LogicState {
-    let [inputPin,] = this.inputPins;
-    let value = inputPin.state.v;
-    let unknown = inputPin.state.x | inputPin.state.z;
-    let high_impedance = 0;
+    const [inputPin,] = this.inputPins;
+    const value = inputPin.state.v;
+    const unknown = inputPin.state.x | inputPin.state.z;
+    const high_impedance = 0;
 
     return new LogicState({
       v: value,
@@ -213,10 +213,10 @@ class LogicGate extends LogicComponent {
   }
 
   opNot(): LogicState {
-    let [inputPin,] = this.inputPins;
-    let unknown = inputPin.state.x | inputPin.state.z;
-    let value = ~inputPin.state.v & this.bitMask() & ~unknown;
-    let high_impedance = 0;
+    const [inputPin,] = this.inputPins;
+    const unknown = inputPin.state.x | inputPin.state.z;
+    const value = ~inputPin.state.v & this.bitMask() & ~unknown;
+    const high_impedance = 0;
 
     return new LogicState({
       v: value,
@@ -229,20 +229,20 @@ class LogicGate extends LogicComponent {
     if (!this.opFunc) {
       return;
     }
-    let logicState = this.opFunc();
+    const logicState = this.opFunc();
     this.postEvent(logicState, this.outputPins[0])
   }
 
 
   setUpBody(): paper.Item {
-    let {CompoundPath} = this.scope;
+    const {CompoundPath} = this.scope;
     return new CompoundPath(pathFromGateType(this.subtype))
   }
 
   setUpInputPins({fieldWidth, width}: UpdateGeometryParams): LogicPin[] {
     // Keep pins that fit within tne new field width to maintain old connections
-    let inputPins = this.inputPins.slice(0, fieldWidth);
-    let nuke = this.inputPins.slice(fieldWidth);
+    const inputPins = this.inputPins.slice(0, fieldWidth);
+    const nuke = this.inputPins.slice(fieldWidth);
     nuke.forEach(p => p.remove());
 
     for (let i = Math.max(this.fieldWidth, 0); i < fieldWidth; ++i) {
@@ -262,12 +262,12 @@ class LogicGate extends LogicComponent {
       })
     }
 
-    let offset =
+    const offset =
         fieldWidth === 1 ? 16 :
             fieldWidth === 2 ? 32 / 3 :
                 fieldWidth === 3 ? 6 :
                     2;
-    let spacing =
+    const spacing =
         fieldWidth === 2 ? 32 / 3 :
             fieldWidth === 3 ? 10 :
                 28 / 3;
@@ -288,7 +288,7 @@ class LogicGate extends LogicComponent {
       }
       return this.outputPins;
     }
-    let pin = new LogicPin({
+    const pin = new LogicPin({
       parent: this,
       pinType: PinType.OUTPUT,
       orientation: PinOrientation.RIGHT,
