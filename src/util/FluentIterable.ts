@@ -37,7 +37,7 @@ class Mapperator<T, U> implements Iterator<U> {
   }
 
   next(value?: any): IteratorResult<U> {
-    let ret = this.iterator.next()
+    const ret = this.iterator.next()
 
     if (ret.done) {
       return ret
@@ -58,12 +58,12 @@ class FluentIterable<T> {
   }
 
   static from<T>(iterable: Iterable<T>): FluentIterable<T> {
-    let iterator = iterable[Symbol.iterator]();
+    const iterator = iterable[Symbol.iterator]();
     return new FluentIterable<T>(iterator)
   }
 
   map<U>(callback: (t: T) => U): FluentIterable<U> {
-    let mappedIterator = new Mapperator(this.iterator, callback);
+    const mappedIterator = new Mapperator(this.iterator, callback);
     return new FluentIterable<U>(mappedIterator);
   }
 
@@ -77,14 +77,14 @@ class FluentIterable<T> {
   }
 
   forEach(consumer: Consumer<T>) {
-    for (let value of this) {
+    for (const value of this) {
       consumer(value);
     }
   }
 
   reduce<U>(reducer: Reducer<T, U>, initialValue: U) {
     let prev = initialValue;
-    for (let value of this) {
+    for (const value of this) {
       prev = reducer(prev, value);
     }
 

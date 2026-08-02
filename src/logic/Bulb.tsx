@@ -29,7 +29,7 @@ class Bulb extends LogicComponent {
   extraRender(): React.ReactElement {
     // TODO: Render the glow on top of all other components.
     //   SVG renders elements in document order.
-    let display = this.on ? "auto" : "none"
+    const display = this.on ? "auto" : "none"
     return (
         <circle className={"bulb-glow"} cx={16} cy={16} r={32} display={display}/>
     );
@@ -40,8 +40,8 @@ class Bulb extends LogicComponent {
   }
 
   setUpInputPins(): LogicPin[] {
-    let {bottom} = this.body.bounds;
-    let pin = new LogicPin({
+    const {bottom} = this.body.bounds;
+    const pin = new LogicPin({
       parent: this,
       pinType: PinType.INPUT,
       orientation: PinOrientation.DOWN,

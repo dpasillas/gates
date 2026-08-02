@@ -79,9 +79,9 @@ class Board extends React.Component<IProps, IState> {
 
     /** Resize handler to make sure the board doesn't scale up when the window is resized */
     onResize(entries: ResizeObserverEntry[]) {
-        let { width, height } = entries[0].contentRect;
+        const { width, height } = entries[0].contentRect;
 
-        let board = this.props.board;
+        const board = this.props.board;
         this.setState((state) => {
             board.viewBox = {
                 left: board.viewBox.left,
@@ -108,7 +108,7 @@ class Board extends React.Component<IProps, IState> {
     componentDidMount() {
         this.props.board.update = () => this.setState({})
         this.setState({});
-        let board = this.ref.current;
+        const board = this.ref.current;
         this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
         this.resizeObserver.observe(board)
         this.mouseManager.getViewCoordinates = this.getViewCoordinates.bind(this);
@@ -174,20 +174,20 @@ class Board extends React.Component<IProps, IState> {
     render() {
         const { left, top, width, height } = this.props.board.viewBox;
 
-        let selectionBox = (this.mouseManager.selectBox?.exportSVG() as SVGElement)?.getAttribute('d');
+        const selectionBox = (this.mouseManager.selectBox?.exportSVG() as SVGElement)?.getAttribute('d');
 
-        let mm = this.mouseManager;
+        const mm = this.mouseManager;
 
-        let handlers: GateEventHandlers = {
+        const handlers: GateEventHandlers = {
             onGateMouseDown: mm.handleGateMouseDown.bind(mm, this.props.board),
             onGateContextMenu: this.handleGateContextMenu.bind(this),
             onPinMouseDown: mm.handlePinMouseDown.bind(mm, this.props.board),
         }
 
-        let renderedConnections: JSX.Element[] = [];
+        const renderedConnections: JSX.Element[] = [];
         this.props.board.connections.forEach((c) => renderedConnections.push(c.render()));
 
-        let renderedComponents: JSX.Element[] = [];
+        const renderedComponents: JSX.Element[] = [];
         this.props.board.components.forEach((c) => renderedComponents.push(c.render(handlers)));
 
         // Nested svgs is a hack to allow resizing the viewPort without scaling the contents.
@@ -235,7 +235,7 @@ class Board extends React.Component<IProps, IState> {
                             const d = `M ${start.x} ${start.y} C ${ic.x} ${ic.y} ${oc.x} ${oc.y} ${currentPos.x} ${currentPos.y}`;
 
                             let fillClass;
-                            let state = source.state;
+                            const state = source.state;
                             if (state.x || state.z) {
                                 fillClass = "error"
                             } else if (state.v) {
@@ -271,7 +271,7 @@ class Board extends React.Component<IProps, IState> {
 
     /**  Maps a mouse event's position on the page to the viewBox coordinates */
     getViewCoordinates(e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent): MouseEventMapping {
-        let rect = this.ref.current.getBoundingClientRect();
+        const rect = this.ref.current.getBoundingClientRect();
         const l = rect.left,
             t = rect.top,
             w = rect.width,
@@ -311,12 +311,12 @@ class Board extends React.Component<IProps, IState> {
 
     handleDrop(e: React.DragEvent<SVGSVGElement>) {
         e.preventDefault();
-        let { x, y } = this.getViewCoordinates(e);
-        let part = Part.data as Part;
+        const { x, y } = this.getViewCoordinates(e);
+        const part = Part.data as Part;
         if (!part) {
             return
         }
-        let component = part.make(this.props.board);
+        const component = part.make(this.props.board);
         // TODO: Compute offset when dropping components to make drag point more consistent.
         component.geometry.translate(new paper.Point(x - 16, y - 16))
 
@@ -330,7 +330,7 @@ class Board extends React.Component<IProps, IState> {
     }
 
     handleWheel(e: React.WheelEvent<SVGSVGElement>) {
-        let { x, y, rx, ry } = this.getViewCoordinates(e);
+        const { x, y, rx, ry } = this.getViewCoordinates(e);
 
         const viewWidth = this.state.viewPort.width,
             viewHeight = this.state.viewPort.height;
@@ -343,14 +343,12 @@ class Board extends React.Component<IProps, IState> {
             newWidth = viewWidth * newScaleFactor,
             newHeight = viewHeight * newScaleFactor;
 
-        const newViewBox = {
+        this.props.board.viewBox = {
             left: x - rx * newWidth,
             top: y - ry * newHeight,
             width: newWidth,
             height: newHeight,
         };
-
-        this.props.board.viewBox = newViewBox;
 
         this.setState({
             scaleFactor: newScaleFactor,

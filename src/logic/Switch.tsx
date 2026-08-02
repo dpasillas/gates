@@ -21,12 +21,12 @@ class Switch extends LogicComponent {
     operate(): void {}
 
     setUpBody({width}: UpdateGeometryParams): paper.Item {
-        let {Path, Point, Size} = this.scope;
+        const {Path, Point, Size} = this.scope;
         return new Path.Rectangle(new Point(0, 0), new Size(32 * width, 32));
     }
 
     setUpOutputPins({width}: UpdateGeometryParams): LogicPin[] {
-        let pin = new LogicPin({
+        const pin = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.RIGHT,
@@ -40,18 +40,18 @@ class Switch extends LogicComponent {
     }
 
     extraRender(): React.ReactElement {
-        let [pin] = this.outputPins
-        let extras = []
+        const [pin] = this.outputPins
+        const extras = []
         for (let i = 0; i < this.width; i++) {
-            let classnames = ["switch"]
+            const classnames = ["switch"]
             let stateString = "0"
             if ((pin.state.v >> i) & 1) {
                 classnames.push("on")
                 stateString = "1"
             }
 
-            let x = 16 + 32 * (this.width - i - 1);
-            let y = 16;
+            const x = 16 + 32 * (this.width - i - 1);
+            const y = 16;
 
             // TODO: Pass mouse events over the button to the parent element
             extras.push(
@@ -73,8 +73,8 @@ class Switch extends LogicComponent {
     }
 
     handleClick(i: number) {
-        let [pin] = this.outputPins;
-        let v = (pin.state.v ^ (1 << i));
+        const [pin] = this.outputPins;
+        const v = (pin.state.v ^ (1 << i));
         pin.setLogicState(new LogicState({
             v: v
         }));
@@ -86,17 +86,17 @@ class Switch extends LogicComponent {
     }
 
     set width(width: number) {
-        let {Point} = this.scope;
+        const {Point} = this.scope;
         console.log(width);
-        let diff = this.width - width;
+        const diff = this.width - width;
         this.translate(new Point(diff * 32, 0))
         super.width = width;
     }
 
     /** Reset but keep prior state */
     reset(): void {
-        let [output] = this.outputPins;
-        let s = output.state;
+        const [output] = this.outputPins;
+        const s = output.state;
         super.reset();
         output.setLogicState(s);
     }

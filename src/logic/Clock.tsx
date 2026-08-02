@@ -17,25 +17,25 @@ class Clock extends LogicComponent {
       type: PartType.INPUT,
       delay: 10,
     });
-    let [output] = this.outputPins
+    const [output] = this.outputPins
     // This hack ensures that the clock triggers itself to change.
-    let selfConnection = new LogicConnection({source: output, sink: output})
+    const selfConnection = new LogicConnection({source: output, sink: output})
     output.connections.set(output.uuid, selfConnection);
   }
 
   operate(): void {
-    let s = this.outputPins[0].state.negated(1);
+    const s = this.outputPins[0].state.negated(1);
     this.postEvent(s);
   }
 
   setUpBody(): paper.Item {
-    let {Path, Point, Size} = this.scope;
+    const {Path, Point, Size} = this.scope;
     return new Path.Rectangle(new Point(0, 0), new Size(32, 32));
 
   }
 
   setUpOutputPins(): LogicPin[] {
-    let pin = new LogicPin({
+    const pin = new LogicPin({
       parent: this,
       pinType: PinType.OUTPUT,
       orientation: PinOrientation.RIGHT,
@@ -52,7 +52,7 @@ class Clock extends LogicComponent {
   }
 
   reset() {
-    let [output] = this.outputPins;
+    const [output] = this.outputPins;
     output.setLogicState(new LogicState({v: 0}));
     output.updateNext(true);
     this.operate();

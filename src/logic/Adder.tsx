@@ -18,12 +18,12 @@ class Adder extends LogicComponent {
         if (this.subtype === 0) {
 
             // Half-adder
-            let a = this.inputPins[0].state;
-            let b = this.inputPins[1].state;
+            const a = this.inputPins[0].state;
+            const b = this.inputPins[1].state;
             if (a.x === 0 && a.z === 0 && b.x === 0 && b.z === 0) {
                 // No input related errors
-                let cout = (a.v & b.v );
-                let sum  = (a.v ^ b.v);
+                const cout = (a.v & b.v );
+                const sum  = (a.v ^ b.v);
 
                 this.postEvent(new LogicState({v: sum}), this.outputPins[0])
                 this.postEvent(new LogicState({v: cout}), this.outputPins[1])
@@ -34,11 +34,11 @@ class Adder extends LogicComponent {
         } else {
 
             // Adder
-            let a = this.inputPins[0].state;
-            let b = this.inputPins[1].state;
-            let cin = this.inputPins[2].state;
+            const a = this.inputPins[0].state;
+            const b = this.inputPins[1].state;
+            const cin = this.inputPins[2].state;
             let sum = a.v + b.v + cin.v;
-            let cout = sum >> this.width;
+            const cout = sum >> this.width;
             let error = a.x | b.x | cin.x | a.z | b.z | cin.z
 
             for (let i = 0; i < this.width; i++) {
@@ -61,13 +61,13 @@ class Adder extends LogicComponent {
     }
 
     setUpBody(): paper.Item {
-        let {Path, Point, Size} = this.scope;
+        const {Path, Point, Size} = this.scope;
         return new Path.Rectangle(new Point(0, 0), new Size(48, 32));
 
     }
 
     setUpOutputPins({width}: UpdateGeometryParams): LogicPin[] {
-        let sum = new LogicPin({
+        const sum = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.UP,
@@ -76,7 +76,7 @@ class Adder extends LogicComponent {
             label: 'S',
         });
 
-        let cout = new LogicPin({
+        const cout = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.LEFT,
@@ -91,7 +91,7 @@ class Adder extends LogicComponent {
     }
 
     setUpInputPins({width}: UpdateGeometryParams): LogicPin[] {
-        let a = new LogicPin({
+        const a = new LogicPin({
             parent: this,
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
@@ -101,7 +101,7 @@ class Adder extends LogicComponent {
         });
         a.updateGeometry(new this.scope.Point(16, 32));
 
-        let b = new LogicPin({
+        const b = new LogicPin({
             parent: this,
             pinType: PinType.INPUT,
             orientation: PinOrientation.DOWN,
@@ -116,7 +116,7 @@ class Adder extends LogicComponent {
             return [a, b];
         }
 
-        let cin = new LogicPin({
+        const cin = new LogicPin({
             parent: this,
             pinType: PinType.INPUT,
             orientation: PinOrientation.RIGHT,

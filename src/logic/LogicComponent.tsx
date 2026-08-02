@@ -125,8 +125,8 @@ abstract class LogicComponent {
 
     this.board = params.board;
 
-    let width = params.width ?? 1;
-    let fieldWidth = params.fieldWidth ?? 0;
+    const width = params.width ?? 1;
+    const fieldWidth = params.fieldWidth ?? 0;
 
     this.updateGeometry({width, fieldWidth});
 
@@ -145,8 +145,8 @@ abstract class LogicComponent {
 
   /** Handler for updating this component's body and pins in response to property updates */
   updateGeometry(params: Partial<UpdateGeometryParams>) {
-    let fullParams = this.makeUpdateGeometryParams(params);
-    let {Group, Point} = this.scope;
+    const fullParams = this.makeUpdateGeometryParams(params);
+    const {Group, Point} = this.scope;
     let selected = false;
     if (this.body) {
       this.body.remove();
@@ -199,7 +199,7 @@ abstract class LogicComponent {
    * */
   clearPins() {
     //TODO(dpasillas): remove logic events associated with pins
-    for (let pin of this.pins()) {
+    for (const pin of this.pins()) {
       pin.remove();
     }
 
@@ -229,11 +229,11 @@ abstract class LogicComponent {
   }
 
   collides(select: paper.Item): boolean {
-    let matrix = this.geometry.matrix;
-    let imatrix = matrix.inverted();
-    let body = this.body;
+    const matrix = this.geometry.matrix;
+    const imatrix = matrix.inverted();
+    const body = this.body;
     select.transform(imatrix)
-    let isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
+    const isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
     select.transform(matrix)
     return isSelected
   }
@@ -353,7 +353,7 @@ abstract class LogicComponent {
   abstract operate(): void
   /** Returns the component to its initial state at power up */
   reset() {
-    for (let pin of this.pins()) {
+    for (const pin of this.pins()) {
       pin.reset();
     }
   }

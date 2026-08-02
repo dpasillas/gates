@@ -43,11 +43,11 @@ class Sidebar extends React.Component<IProps, IState> {
   }
 
   renderUnderlay() {
-    let sidebarClasses = ["sidebar"]
+    const sidebarClasses = ["sidebar"]
     if (!this.state.activeTab) {
       sidebarClasses.push("collapsed");
     }
-    let classNames = sidebarClasses.join(' ');
+    const classNames = sidebarClasses.join(' ');
     return (
         <Box className={classNames}>
           <Paper classes={{root: "sidebar-content"}}/>
@@ -56,11 +56,11 @@ class Sidebar extends React.Component<IProps, IState> {
   }
 
   renderPartsView() {
-    let sidebarClasses = ["sidebar"]
+    const sidebarClasses = ["sidebar"]
     if ("Parts".localeCompare(this.state.activeTab || "")) {
       sidebarClasses.push("collapsed");
     }
-    let classNames = sidebarClasses.join(' ');
+    const classNames = sidebarClasses.join(' ');
     return (
         <Box className={classNames}>
           <Paper classes={{root: "sidebar-content"}} sx={{pointerEvents: "auto"}}>
@@ -77,11 +77,11 @@ class Sidebar extends React.Component<IProps, IState> {
   }
 
   renderProjectView() {
-    let sidebarClasses = ["sidebar"]
+    const sidebarClasses = ["sidebar"]
     if ("Project".localeCompare(this.state.activeTab || "")) {
       sidebarClasses.push("collapsed");
     }
-    let classNames = sidebarClasses.join(' ');
+    const classNames = sidebarClasses.join(' ');
     return (
       <Box className={classNames}>
         <Paper classes={{root: "sidebar-content"}} sx={{pointerEvents: "auto"}}>
@@ -130,7 +130,7 @@ class Sidebar extends React.Component<IProps, IState> {
     );
   }
 
-  handleTabClick(value: string, e: React.MouseEvent<HTMLElement>) {
+  handleTabClick(value: string, _e: React.MouseEvent<HTMLElement>) {
     if (value.localeCompare(this.state.activeTab || "") === 0) {
       this.setState({activeTab: false})
     }
@@ -140,7 +140,7 @@ class Sidebar extends React.Component<IProps, IState> {
     this.setState({activeTab: newValue})
   }
 
-  handleMouseEnter(e: React.MouseEvent<HTMLElement>) {
+  handleMouseEnter(_e: React.MouseEvent<HTMLElement>) {
     this.setState({open: true});
   }
 }

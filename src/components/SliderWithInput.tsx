@@ -80,13 +80,13 @@ class SliderWithInput extends React.Component<IProps, IState>{
     if (this.state.empty) {
       this.setState({empty: false})
     }
-    let valueString = (v as number).toString();
+    const valueString = (v as number).toString();
     // The number array comes from sliders with more than one thumb, which is not being used here.
     this.handleChange(v as number, valueString);
   }
 
   handleChangeInput(e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement> ) {
-    let valueString = e.target.value;
+    const valueString = e.target.value;
 
     if (valueString.length === 0 && !this.state.empty) {
       this.setState({empty: true});
@@ -95,19 +95,18 @@ class SliderWithInput extends React.Component<IProps, IState>{
       this.setState({empty: false});
     }
 
-    let value = parseInt(e.target.value);
-    let {min, max} = this.props
+    const value = parseInt(e.target.value);
+    const {min, max} = this.props
 
     if (!isNaN(value) && value >= min && value <= max) {
       this.handleChange(value, valueString)
     }
   }
 
-  handleChange(value: number, valueString: string) {
-    let {min, max} = this.props;
-    let clippedNumber = Math.min(Math.max(value, min), max ?? Number.MAX_SAFE_INTEGER)
-
-    this.props.onChange(value)
+  handleChange(value: number, _valueString: string) {
+    const {min, max} = this.props;
+    const clipped = Math.min(Math.max(value, min), max ?? Number.MAX_SAFE_INTEGER);
+    this.props.onChange(clipped)
   }
 }
 
