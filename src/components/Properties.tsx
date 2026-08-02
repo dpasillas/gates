@@ -42,14 +42,14 @@ class Properties extends React.Component<IProps, IState> {
   }
 
   render() {
-    let components = this.props.board.selectedComponents;
-    let open = components.size !== 0;
-    let adjustableWidth = FluentIterable
+    const components = this.props.board.selectedComponents;
+    const open = components.size !== 0;
+    const adjustableWidth = FluentIterable
         .from(components)
         .map(c => c.adjustableWidth)
         .reduce((prev, current) => prev && current, true)
 
-    let widths = FluentIterable
+    const widths = FluentIterable
         .from(components)
         .map(c => c.width)
         .reduce((values, current) => values.add(current), new Set<number>());
@@ -61,12 +61,12 @@ class Properties extends React.Component<IProps, IState> {
       widths.forEach(v => width = v);
     }
 
-    let adjustableNumInputs = FluentIterable
+    const adjustableNumInputs = FluentIterable
         .from(components)
         .map(c => c.adjustableFieldWidth)
         .reduce((prev, current) => prev && current, true)
 
-    let numInputss = FluentIterable
+    const numInputss = FluentIterable
         .from(components)
         .map(c => c.fieldWidth)
         .reduce((values, current) => values.add(current), new Set<number>());
@@ -118,9 +118,9 @@ class Properties extends React.Component<IProps, IState> {
   }
 
   handleChangeWidth(width: number) {
-    let components = this.props.board.selectedComponents;
+    const components = this.props.board.selectedComponents;
 
-    for (let component of components) {
+    for (const component of components) {
       if (component.adjustableWidth) {
         component.width = width;
       }
@@ -130,9 +130,9 @@ class Properties extends React.Component<IProps, IState> {
   }
 
   handleChangeNumInputs(numInputs: number) {
-    let components = this.props.board.selectedComponents;
+    const components = this.props.board.selectedComponents;
 
-    for (let component of components) {
+    for (const component of components) {
       if (component.adjustableFieldWidth) {
         component.fieldWidth = Math.min(component.maxFieldWidth, Math.max(component.minFieldWidth, numInputs))
       }
@@ -141,9 +141,9 @@ class Properties extends React.Component<IProps, IState> {
   }
 
   handleChangePropagationDelay(delay: number) {
-    let components = this.props.board.selectedComponents;
+    const components = this.props.board.selectedComponents;
 
-    for (let component of components) {
+    for (const component of components) {
       if (component.hasDelay) {
         component.delay = delay
       }

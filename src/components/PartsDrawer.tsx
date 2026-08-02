@@ -32,16 +32,16 @@ class PartsDrawer extends React.Component<IProps, IState> {
   }
 
   renderPart(part: Part) {
-    let component = part.component;
-    let element = component.render();
-    let {label} = part
+    const component = part.component;
+    const element = component.render();
+    const {label} = part
     let {left, top, width, height} = component.geometry.bounds;
     left -= 2;
     top -= 2;
     width += 4;
     height += 4;
 
-    let id = label.replace(' ', '_');
+    const id = label.replace(' ', '_');
     return (
         <Paper
             elevation={3}
@@ -64,9 +64,9 @@ class PartsDrawer extends React.Component<IProps, IState> {
   handleDragStart(id: string, part: Part, e: React.DragEvent<HTMLElement>) {
     Part.data = part;
 
-    let elem = document.getElementById(id) as HTMLElement;
+    const elem = document.getElementById(id) as HTMLElement;
 
-    let {x, y} = part.component.geometry.bounds.center;
+    const {x, y} = part.component.geometry.bounds.center;
 
     e.dataTransfer.setDragImage(elem, x+2, y+2);
     e.dataTransfer.effectAllowed = "move";

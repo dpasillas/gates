@@ -23,12 +23,12 @@ class Ground extends LogicComponent {
     }
 
     setUpBody(): paper.Item {
-        let {Path, Point, Size} = this.scope;
+        const {Path, Point, Size} = this.scope;
         return new Path.Rectangle(new Point(0, 0), new Size(32, 32));
     }
 
     setUpOutputPins(): LogicPin[] {
-        let pin = new LogicPin({
+        const pin = new LogicPin({
             parent: this,
             pinType: PinType.OUTPUT,
             orientation: PinOrientation.RIGHT,

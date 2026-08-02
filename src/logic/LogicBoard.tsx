@@ -4,13 +4,13 @@ import Board from "../components/Board";
 import LogicComponent from "./LogicComponent";
 import LogicConnection from "./LogicConnection";
 import paper from "paper/dist/paper-core";
-import {makeAndSetupScope} from "../util/PaperHelp";
+import { makeAndSetupScope } from "../util/PaperHelp";
 import LogicState from "./LogicState";
 import LogicPin from "./LogicPin";
 import BinarySearchTree from "../BinarySearchTree";
 import LogicEvent from "./LogicEvent";
 import OperableSet from "../util/OperableSet";
-import {ViewBox} from "../util/Types";
+import { ViewBox } from "../util/Types";
 
 /**
  *
@@ -36,16 +36,28 @@ class LogicBoard {
   /** Paper scope for this board used to compute geometry, and intersections */
   scope: paper.PaperScope = makeAndSetupScope();
   /** All pending logical events on the board **/
-  simulation: BinarySearchTree<LogicEvent> = new BinarySearchTree<LogicEvent>({cmp: (a, b) => a.cmp(b)});
+  simulation: BinarySearchTree<LogicEvent> = new BinarySearchTree<LogicEvent>({ cmp: (a, b) => a.cmp(b) });
   simulationTimerId: number = -1;
   simulationCurrentTime: number = 0;
   /** Controls how frequently the simulation is updated **/
   simulationIntervalMs: number = 25;
   /** Controls how many time units pass per simulation interval **/
   simulationStepSize: number = 1;
-  updateApp: Function = () => {};
-  updateProperties: () => void = () => {};
-  update: () => void = () => {};
+  updateApp: () => void = () => { };
+  updateProperties: () => void = () => { };
+  update: () => void = () => { };
+
+  temporaryConnection?: { source: LogicPin, currentPos: paper.Point };
+
+  setTemporaryConnection(source: LogicPin, currentPos: paper.Point) {
+    this.temporaryConnection = { source, currentPos };
+    this.update();
+  }
+
+  clearTemporaryConnection() {
+    this.temporaryConnection = undefined;
+    this.update();
+  }
 
   get viewBox(): ViewBox {
     return this._viewBox!
@@ -57,7 +69,7 @@ class LogicBoard {
 
   render(): React.ReactElement {
     return (
-        <Board board={this}/>
+      <Board board={this} />
     )
   }
 
@@ -69,7 +81,7 @@ class LogicBoard {
    * @param delay - The amount of time from the current time before the pin's state should be updated.
    */
   postEvent(state: LogicState, pin: LogicPin, delay: number) {
-    let event = new LogicEvent({
+    const event = new LogicEvent({
       pin: pin,
       time: this.simulationCurrentTime + delay,
       state: state
@@ -102,11 +114,11 @@ class LogicBoard {
   }
 
   advanceSimulation() {
-    let current = this.simulationCurrentTime;
-    let target = current + this.simulationStepSize;
+    const current = this.simulationCurrentTime;
+    const target = current + this.simulationStepSize;
     // TODO(dpasillas): Modify Binary Tree to remove need to check first() on every loop.
     while (this.simulation.size() && this.simulation.first()!.time <= target) {
-      let event = this.simulation.popFirst()!;
+      const event = this.simulation.popFirst()!;
       // Update the time so that operations triggered by this event use the correct reference time.
       this.simulationCurrentTime = event.time;
       event.apply();
@@ -162,12 +174,12 @@ class LogicBoard {
   }
 
   clearSelection() {
-    for (let c of this.selectedComponents) {
+    for (const c of this.selectedComponents) {
       c.selected = false;
     }
     this.selectedComponents.clear()
 
-    for (let p of this.selectedPins) {
+    for (const p of this.selectedPins) {
       p.selected = false;
     }
     this.selectedPins.clear()

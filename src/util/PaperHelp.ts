@@ -6,7 +6,7 @@ import paper from "paper";
  * Primarily intended to allow initializing scopes inline as class or global variables.
  * */
 export function makeAndSetupScope() {
-  let scope = new paper.PaperScope();
+  const scope = new paper.PaperScope();
   // @ts-ignore
   scope.setup();
   // Performance testing indicated that paperjs was spending a lot of time drawing the project.

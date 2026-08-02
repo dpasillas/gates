@@ -1,5 +1,5 @@
 import LogicPin from "./LogicPin";
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import Connection from "../components/Connection";
 import LogicBoard from "./LogicBoard";
 
@@ -36,14 +36,14 @@ class LogicConnection {
   }
 
   remove() {
-    this.source.connections.delete(this.uuid);
-    this.sink.connections.delete(this.uuid);
+    this.source.connections.delete(this.sink.uuid);
+    this.sink.connections.delete(this.source.uuid);
     this.board?.removeConnection(this.uuid);
   }
 
   render() {
     return (
-        <Connection key={this.uuid} connection={this} />
+      <Connection key={this.uuid} connection={this} />
     );
 
   }

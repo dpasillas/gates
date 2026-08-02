@@ -55,10 +55,10 @@ class LogicState {
    * */
   negated(numBits: number) {
     // (2^n) - 1 will result in a mask with the lower n bits set.
-    let mask = (1 << numBits) - 1
+    const mask = (1 << numBits) - 1
 
     // Bits with corresponding errors should be masked out
-    let v = ~this.v & ~this.x & ~this.z & mask;
+    const v = ~this.v & ~this.x & ~this.z & mask;
     return new LogicState({
       v: v,
       x: this.x,

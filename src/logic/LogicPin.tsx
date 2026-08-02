@@ -1,7 +1,7 @@
-import {v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import LogicComponent from "./LogicComponent";
 import * as Constants from "../Constants";
-import Pin, {PinEventHandlers, PinProps} from "../components/Pin";
+import Pin, { PinEventHandlers, PinProps } from "../components/Pin";
 import React from "react";
 import LogicState from "./LogicState";
 import LogicConnection from "./LogicConnection";
@@ -97,9 +97,9 @@ class LogicPin {
       throw new Error();
     }
 
-    for (let connection of this.connections.values()) {
+    for (const connection of this.connections.values()) {
       connection.update();
-      let inputPin = connection.sink;
+      const inputPin = connection.sink;
       // No need to simulate events which won't affect the output
       if (force || this.state.ne(inputPin.state)) {
         inputPin.setLogicState(this.state)
@@ -143,9 +143,9 @@ class LogicPin {
       } else {
         this.disconnect()
       }
-      let connection = new LogicConnection({source: other, sink: this, board: this.board})
-      this.connections.set(connection.uuid, connection);
-      other.connections.set(connection.uuid, connection);
+      const connection = new LogicConnection({ source: other, sink: this, board: this.board })
+      this.connections.set(other.uuid, connection);
+      other.connections.set(this.uuid, connection);
       this.setLogicState(other.state);
       return connection;
     } else {
@@ -188,20 +188,20 @@ class LogicPin {
         textClass = "";
     }
 
-    let [text, subscript] = this.label.split("__");
+    const [text, subscript] = this.label.split("__");
     return (
-        <text key={i} className={textClass} x={this.pos.x} y={this.pos.y}>
-          {text}
-          {subscript && <tspan>{subscript}</tspan>}
-        </text>
+      <text key={i} className={textClass} x={this.pos.x} y={this.pos.y}>
+        {text}
+        {subscript && <tspan>{subscript}</tspan>}
+      </text>
     );
   }
 
   render(handlers?: PinEventHandlers): React.ReactElement {
     return (
-        <Pin key={this.uuid}
-             {...this.getRenderParams(handlers)}
-        />
+      <Pin key={this.uuid}
+        {...this.getRenderParams(handlers)}
+      />
     )
   }
 
@@ -220,10 +220,10 @@ class LogicPin {
 
   /** Places the pin at a location on the parent, and subtracts the parent's body from its geometry. */
   updateGeometry(pos: paper.Point) {
-    if(this.geometry) {
+    if (this.geometry) {
       this.geometry.remove()
     }
-    let {CompoundPath, Path, Point} = this.parent.scope;
+    const { CompoundPath, Path, Point } = this.parent.scope;
     let pin;
     if (this.not) {
       pin = new CompoundPath(Constants.NOT_PIN_PATH)
@@ -300,13 +300,18 @@ class LogicPin {
   }
 
   collides(select: paper.Item): boolean {
-    let body = this.geometry!
-    let matrix = body.parent.matrix;
-    let imatrix = matrix.inverted();
+    const body = this.geometry!
+    const matrix = body.parent.matrix;
+    const imatrix = matrix.inverted();
     select.transform(imatrix)
-    let isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
+    const isSelected = body.intersects(select) || select.contains(body.position) || body.contains(select.position)
     select.transform(matrix)
     return isSelected;
+  }
+
+  isOver(point: paper.Point): boolean {
+    const [anchor,] = this.anchor
+    return this.transform(anchor).getDistance(point) < 15
   }
 
   /**
@@ -323,14 +328,14 @@ class LogicPin {
   reset() {
     // If a connection to an input pin already exists, it will be handled by the output pin.
     if (this.pinType === PinType.INPUT && this.connections.size !== 0) {
-        return
+      return
     }
 
     if (this.pinType === PinType.INPUT) {
-      this.setLogicState(new LogicState({z: this.bitMask()}))
+      this.setLogicState(new LogicState({ z: this.bitMask() }))
       this.parent.operate();
     } else {
-      this.setLogicState(new LogicState({x: this.bitMask()}))
+      this.setLogicState(new LogicState({ x: this.bitMask() }))
       this.updateNext(true);
     }
   }

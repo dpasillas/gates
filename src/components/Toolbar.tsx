@@ -23,8 +23,8 @@ interface IState {}
 
 class Toolbar extends React.Component<IProps, IState> {
   render() {
-    let running = this.props.board.simulationRunning;
-    let stopped = !running && this.props.board.simulationStopped;
+    const running = this.props.board.simulationRunning;
+    const stopped = !running && this.props.board.simulationStopped;
     return (
         <Stack className="toolbar"
                sx={{
@@ -61,7 +61,7 @@ class Toolbar extends React.Component<IProps, IState> {
   }
 
   onPlay() {
-    let board = this.props.board;
+    const board = this.props.board;
     if (board.simulationRunning) {
       this.props.board.pauseSimulation();
     } else {

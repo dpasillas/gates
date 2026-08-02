@@ -20,14 +20,14 @@ function toLogicState<N extends number>(value: TruthEntry<N>): LogicState {
 
 function testLogicGateMatchesTruthTable<N extends number, W extends number>(gateType: GateType, truthTable: TruthTable<N, W>) {
   let output;
-  let gate = new LogicGate({
+  const gate = new LogicGate({
     scope: GLOBAL_SCOPE,
     subtype: gateType,
   });
   gate.postEvent = (s) => {output = s}
 
-  for (let entry of truthTable) {
-    let [i, o] = entry;
+  for (const entry of truthTable) {
+    const [i, o] = entry;
     // @ts-ignore
     i.forEach((v: TruthEntry<W>, idx: number) => {
       gate.inputPins[idx].setLogicState(toLogicState(v))
@@ -38,7 +38,7 @@ function testLogicGateMatchesTruthTable<N extends number, W extends number>(gate
 
 function getNameFromValue(enumValue: GateType): string {
   // @ts-ignore
-  let keys = Object.keys(GateType).filter(x => GateType[x] === enumValue);
+  const keys = Object.keys(GateType).filter(x => GateType[x] === enumValue);
   return keys[0]
 }
 
@@ -48,11 +48,10 @@ function getTestName(gateType: GateType, fieldWidth: number, width: number): str
 
 type NaryGateTypes = GateType.AND | GateType.NAND | GateType.OR | GateType.NOR | GateType.XOR | GateType.XNOR;
 function testNaryGatesMatchTruthTables() {
-  let gateTypes: NaryGateTypes[] = [GateType.AND, GateType.NAND, GateType.OR, GateType.NOR, GateType.XOR, GateType.XNOR];
-  for (let gateType of gateTypes) {
-    let testName: string = getTestName(gateType, 2, 1);
-    let truthTable: TruthTable<2> = BINARY_TRUTH_TABLES[gateType];
-    // eslint-disable-next-line jest/valid-title
+  const gateTypes: NaryGateTypes[] = [GateType.AND, GateType.NAND, GateType.OR, GateType.NOR, GateType.XOR, GateType.XNOR];
+  for (const gateType of gateTypes) {
+    const testName: string = getTestName(gateType, 2, 1);
+    const truthTable: TruthTable<2> = BINARY_TRUTH_TABLES[gateType];
     test(testName, () => {
       testLogicGateMatchesTruthTable(gateType, truthTable)
     })
@@ -61,10 +60,9 @@ function testNaryGatesMatchTruthTables() {
 
 type UnaryGateTypes = GateType.BUF | GateType.NOT;
 function testUnaryGatesMatchTruthTables(width: number) {
-  let gateTypes: UnaryGateTypes[] = [GateType.BUF, GateType.NOT]
-  for (let gateType of gateTypes) {
-    let testName: string = getTestName(gateType, 1, width);
-    // eslint-disable-next-line jest/valid-title
+  const gateTypes: UnaryGateTypes[] = [GateType.BUF, GateType.NOT]
+  for (const gateType of gateTypes) {
+    const testName: string = getTestName(gateType, 1, width);
     test(testName, () => {
       testLogicGateMatchesTruthTable(gateType, UNARY_TRUTH_TABLES[gateType])
     })

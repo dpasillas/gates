@@ -1,11 +1,11 @@
 import OperableSet from "./OperableSet";
 import LogicComponent from "../logic/LogicComponent";
-import LogicPin, {PinType} from "../logic/LogicPin";
+import LogicPin from "../logic/LogicPin";
 import paper from "paper";
 import React from "react";
 import LogicBoard from "../logic/LogicBoard";
 import MouseEventMapping from "./MouseEventMapping";
-import {MouseEventHandler, MouseEventName} from "./Types";
+import { MouseEventHandler, MouseEventName } from "./Types";
 
 
 enum MouseAction {
@@ -15,6 +15,7 @@ enum MouseAction {
   SELECT,
   SELECT_APPEND,
   SELECT_XOR,
+  CONNECT,
 }
 
 
@@ -41,6 +42,7 @@ enum SelectionType {
  * */
 class MouseManager {
   private sPoint?: paper.Point;
+  private pPoint?: paper.Point;
   selectBox?: paper.Path;
 
   private mouseButton?: number;
@@ -72,7 +74,7 @@ class MouseManager {
     this.handlers.clear()
   }
 
-  reset() {
+  reset(board: any) {
     this.removeHandlers()
     this.mouseButton = undefined;
     this.action = MouseAction.NONE;
@@ -81,11 +83,13 @@ class MouseManager {
       this.selectBox.remove();
       this.selectBox = undefined;
       this.sPoint = undefined;
+      this.pPoint = undefined;
     }
 
     this.priorSelectionType = SelectionType.NONE;
     this.priorSelection.clear();
     this.currentSelection.clear();
+    board.update()
   }
 
   handleBoardMouseDown(board: LogicBoard, e: React.MouseEvent<SVGElement> | MouseEvent) {
@@ -113,11 +117,12 @@ class MouseManager {
         board.clearSelection();
       }
 
-      const {Path, Point, Rectangle, Size} = board.scope;
-      const {x, y} = this.getViewCoordinates!(e);
+      const { Path, Point, Rectangle, Size } = board.scope;
+      const { x, y } = this.getViewCoordinates!(e);
       this.sPoint = new Point(x, y);
-      let rect = new Rectangle(this.sPoint, new Size(0, 0))
+      const rect = new Rectangle(this.sPoint, new Size(0, 0))
       this.selectBox = new Path.Rectangle(rect)
+      this.pPoint = this.sPoint;
 
       // Add handlers directly to the window to ensure that events aren't dropped once the cursor moves out of the
       // widget's rendered area.  Dropping these events would lead to an inconsistent mouse state.
@@ -131,12 +136,14 @@ class MouseManager {
       // widget's rendered area.  Dropping these events would lead to an inconsistent mouse state.
       this.addHandler('mousemove', this.handleMouseMovePan.bind(this, board))
       this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
+      const { x, y } = this.getViewCoordinates!(e);
+      this.pPoint = new board.scope.Point(x, y);
     }
   }
 
   handleGateMouseDown(board: LogicBoard,
-                      target: LogicComponent,
-                      e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
+    target: LogicComponent,
+    e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
 
     if (e.button !== 0) {
       return
@@ -151,8 +158,10 @@ class MouseManager {
 
     this.mouseButton = e.button;
     this.targetComponent = target;
+    const { x, y } = this.getViewCoordinates!(e);
+    this.pPoint = new board.scope.Point(x, y);
 
-    let selected = board.selectedComponents;
+    const selected = board.selectedComponents;
 
     if (e.getModifierState("Control")) {
       if (target.selected) {
@@ -184,27 +193,30 @@ class MouseManager {
     this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
   }
 
-  handlePinMouseDown(board: LogicBoard, target: LogicPin, e:React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
-    // TODO: Drag-and-drop connections
+  handlePinMouseDown(board: LogicBoard, target: LogicPin, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
+    // Drag-and-drop connections
     e.stopPropagation();
     e.preventDefault();
 
-    let pins = board.selectedPins;
+    this.mouseButton = e.button;
 
-    let numOutputs = 0;
-    pins.forEach((pin) => {numOutputs += (pin.pinType === PinType.OUTPUT) ? 1 : 0})
-    if (numOutputs <= 1) {
-      for(let pin of pins) {
-        this.makeConnection(board, pin, target);
-      }
-    }
+    // Start connection drag
+    this.action = MouseAction.CONNECT;
+    this.targetComponent = target as unknown as LogicComponent; // Hack because targetComponent is LogicComponent type but we store Pin
+    const { x, y } = this.getViewCoordinates!(e);
+    this.pPoint = new board.scope.Point(x, y);
 
+    // Add handlers directly to the window to ensure that events aren't dropped
+    this.addHandler('mousemove', this.handleMouseMoveConnect.bind(this, board))
+    this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
+
+    // Select the pin as well
     target.selected = true;
     board.selectedPins.add(target)
   }
 
   makeConnection(board: LogicBoard, a: LogicPin, b: LogicPin) {
-    let connection = a.connectTo(b);
+    const connection = a.connectTo(b);
     if (connection) {
       board.addConnection(connection);
       board.update();
@@ -215,26 +227,48 @@ class MouseManager {
     e.preventDefault();
     e.stopPropagation();
 
-    if (e.button !== this.mouseButton) {
-      return
+    if (this.action === MouseAction.CONNECT) {
+      board.clearTemporaryConnection();
+      // Check for drop
+      const { x, y } = this.getViewCoordinates!(e);
+      const point = new paper.Point(x, y);
+
+      const sourcePin = this.targetComponent as unknown as LogicPin;
+
+      // Find if we dropped on a pin
+      for (const pin of board.pins.values()) {
+        if (pin !== sourcePin && pin.isOver(point)) {
+          if (sourcePin.canConnect(pin)) {
+            this.makeConnection(board, sourcePin, pin);
+          }
+          break;
+        }
+      }
     }
 
-    this.reset()
     if (board.selectedComponents.size > 0) {
-      this.priorSelectionType = SelectionType.COMPONENT;
+      this.priorSelectionType = SelectionType.NONE; // Changed to NONE to avoid sticky state issues
       this.priorSelection.addAll(board.selectedComponents)
     } else if (board.selectedPins.size > 0) {
-      this.priorSelectionType = SelectionType.PIN;
+      this.priorSelectionType = SelectionType.NONE;
       this.priorSelection.addAll(board.selectedPins)
     }
 
-    // Required to remove the selection box without re-rendering the entire board.
-    // TODO: refactor the selection box as a widget so it can be updated independently of the rest of the board.
-    board.update()
+    this.reset(board)
+    this.pPoint = undefined;
+  }
+
+  handleMouseMoveConnect(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
+    const { x, y } = this.getViewCoordinates!(e);
+    const point = new paper.Point(x, y);
+    if (!this.targetComponent || (this.targetComponent as any).pinType === undefined) {
+      return;
+    }
+    board.setTemporaryConnection(this.targetComponent as unknown as LogicPin, point);
   }
 
   handleMouseMoveSelect(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
-    let {x, y} = this.getViewCoordinates!(e);
+    const { x, y } = this.getViewCoordinates!(e);
 
     e.stopPropagation();
     e.preventDefault();
@@ -245,7 +279,7 @@ class MouseManager {
     const [sx, sy] = [this.sPoint.x, this.sPoint.y]
 
     if (x === sx && y === sy) {
-      for (let s of this.selectBox.segments) {
+      for (const s of this.selectBox.segments) {
         s.point = this.sPoint;
       }
     }
@@ -278,13 +312,13 @@ class MouseManager {
     board.selectedComponents.clear();
     board.selectedPins.clear();
 
-    let components = [...board.components.values()];
-    let pins = [...board.pins.values()];
+    const components = [...board.components.values()];
+    const pins = [...board.pins.values()];
 
     if (this.action === MouseAction.SELECT) {
       this.currentSelection.clear();
 
-      for (let component of components) {
+      for (const component of components) {
         if (component.collides(this.selectBox)) {
           this.currentSelection.add(component);
         }
@@ -294,9 +328,9 @@ class MouseManager {
         board.selectedComponents.clear();
         board.selectedComponents.addAll(this.currentSelection as Set<LogicComponent>);
       } else {
-        let pins = [...board.pins.values()];
+        const pins = [...board.pins.values()];
 
-        for (let pin of pins) {
+        for (const pin of pins) {
           if (pin.collides(this.selectBox)) {
             this.currentSelection.add(pin);
           }
@@ -309,8 +343,8 @@ class MouseManager {
       this.currentSelection.clear()
 
       if (this.priorSelectionType === SelectionType.COMPONENT) {
-        let components = [...board.components.values()];
-        for (let component of components) {
+        const components = [...board.components.values()];
+        for (const component of components) {
           if (component.collides(this.selectBox)) {
             this.currentSelection.add(component);
           }
@@ -324,8 +358,8 @@ class MouseManager {
           throw new Error("Inconsistent selection state");
         }
       } else if (this.priorSelectionType === SelectionType.PIN) {
-        let pins = [...board.pins.values()];
-        for (let pin of pins) {
+        const pins = [...board.pins.values()];
+        for (const pin of pins) {
           if (pin.collides(this.selectBox)) {
             this.currentSelection.add(pin);
           }
@@ -344,27 +378,27 @@ class MouseManager {
     }
 
     if (board.selectedComponents.size > 0) {
-      for (let component of components) {
+      for (const component of components) {
         component.selected = board.selectedComponents.has(component);
       }
 
-      for (let pin of pins) {
+      for (const pin of pins) {
         pin.selected = false
       }
     } else if (board.selectedPins.size > 0) {
-      for (let pin of pins) {
+      for (const pin of pins) {
         pin.selected = board.selectedPins.has(pin)
       }
 
-      for (let component of components) {
+      for (const component of components) {
         component.selected = false;
       }
     } else {
-      for (let component of components) {
+      for (const component of components) {
         component.selected = false;
       }
 
-      for (let pin of pins) {
+      for (const pin of pins) {
         pin.selected = false
       }
     }
@@ -376,34 +410,48 @@ class MouseManager {
   }
 
   handleMouseMovePan(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
-    let {dx, dy} = this.getViewCoordinates!(e)
+    const { x, y } = this.getViewCoordinates!(e)
+    const currentPoint = new board.scope.Point(x, y);
 
-    board.viewBox = {
-      top: board.viewBox.top - dy,
-      left: board.viewBox.left - dx,
-      width: board.viewBox.width,
-      height: board.viewBox.height,
+    if (this.pPoint) {
+      const dx = currentPoint.x - this.pPoint.x;
+      const dy = currentPoint.y - this.pPoint.y;
+
+      board.viewBox = {
+        top: board.viewBox.top - dy,
+        left: board.viewBox.left - dx,
+        width: board.viewBox.width,
+        height: board.viewBox.height,
+      }
     }
 
+    this.pPoint = currentPoint;
     board.update()
   }
 
   handleMouseMoveDrag(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
-    let {dx, dy} = this.getViewCoordinates!(e)
+    const { x, y } = this.getViewCoordinates!(e)
+    const currentPoint = new board.scope.Point(x, y);
 
     if (!this.targetComponent?.selected) {
       this.targetComponent!.selected = true;
       board.selectedComponents.add(this.targetComponent!)
     }
 
-    for (let component of board.selectedComponents) {
-      component.translate(new paper.Point(dx, dy))
+    if (this.pPoint) {
+      const dx = currentPoint.x - this.pPoint.x;
+      const dy = currentPoint.y - this.pPoint.y;
+
+      for (const component of board.selectedComponents) {
+        component.translate(new board.scope.Point(dx, dy))
+      }
     }
 
+    this.pPoint = currentPoint;
   }
 
   isSelect(): boolean {
-    let {SELECT, SELECT_APPEND, SELECT_XOR} = MouseAction;
+    const { SELECT, SELECT_APPEND, SELECT_XOR } = MouseAction;
     return [SELECT, SELECT_APPEND, SELECT_XOR].includes(this.action)
   }
 
