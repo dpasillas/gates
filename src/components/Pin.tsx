@@ -12,7 +12,6 @@ export interface PinEventHandlers<T = PinMouseEventHandler> {
 }
 
 export interface PinProps {
-    // @ts-ignore
     pin: LogicPin,
     type: PinType,
     handlers: PinEventHandlers<MouseEventHandler>

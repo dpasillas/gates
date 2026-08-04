@@ -64,13 +64,18 @@ interface IState {
  * */
 class Board extends React.Component<IProps, IState> {
     private mouseManager: MouseManager = new MouseManager();
-    private ref: React.RefObject<any>;
+    /**
+     * The container this board renders into.
+     *
+     * React populates this before componentDidMount and clears it on unmount, and the handlers
+     * below only run in between, so the non-null assertions at those use sites are safe.
+     */
+    private ref: React.RefObject<HTMLDivElement>;
     private resizeObserver?: ResizeObserver;
 
     constructor(props: Readonly<IProps>) {
         super(props);
 
-        // @ts-ignore
         this.state = {
             viewPort: {
                 width: 0,
@@ -81,7 +86,7 @@ class Board extends React.Component<IProps, IState> {
             drag: false,
         }
 
-        this.ref = React.createRef();
+        this.ref = React.createRef<HTMLDivElement>();
     }
 
     /** Resize handler to make sure the board doesn't scale up when the window is resized */
@@ -115,7 +120,7 @@ class Board extends React.Component<IProps, IState> {
     componentDidMount() {
         this.props.board.update = () => this.setState({})
         this.setState({});
-        const board = this.ref.current;
+        const board = this.ref.current!;
         this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
         this.resizeObserver.observe(board)
         this.mouseManager.getViewCoordinates = this.getViewCoordinates.bind(this);
@@ -378,7 +383,7 @@ class Board extends React.Component<IProps, IState> {
 
     /**  Maps a mouse event's position on the page to the viewBox coordinates */
     getViewCoordinates(e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent): MouseEventMapping {
-        const rect = this.ref.current.getBoundingClientRect();
+        const rect = this.ref.current!.getBoundingClientRect();
         const l = rect.left,
             t = rect.top,
             w = rect.width,

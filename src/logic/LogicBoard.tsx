@@ -92,7 +92,6 @@ class LogicBoard {
 
   startSimulation() {
     if (this.simulationTimerId === -1) {
-      // @ts-ignore: Not using NodeJs.setInterval.  This is actually a number
       this.simulationTimerId = setInterval(this.advanceSimulation.bind(this), this.simulationIntervalMs);
     }
   }

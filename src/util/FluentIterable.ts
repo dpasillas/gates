@@ -1,6 +1,6 @@
 
 type Predicate<T> = (t: T) => boolean;
-type Consumer<T> = (t: T) => any;
+type Consumer<T> = (t: T) => void;
 type Mapping<T, U> = (t: T) => U;
 type Reducer<T, U> = (prev: U, current: T) => U
 
@@ -14,7 +14,7 @@ class Filterator<T> implements Iterator<T> {
     this.predicate = predicate;
   }
 
-  next(value?: any): IteratorResult<T> {
+  next(): IteratorResult<T> {
     let ret = this.iterator.next()
 
     while (!ret.done && !this.predicate(ret.value)) {
@@ -36,7 +36,7 @@ class Mapperator<T, U> implements Iterator<U> {
     this.callback = callback;
   }
 
-  next(value?: any): IteratorResult<U> {
+  next(): IteratorResult<U> {
     const ret = this.iterator.next()
 
     if (ret.done) {
