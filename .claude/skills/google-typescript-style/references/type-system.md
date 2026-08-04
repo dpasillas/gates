@@ -6,7 +6,7 @@
 and `new` expressions. An annotation there restates what is already obvious and becomes one
 more thing to keep in sync.
 
-```ts
+```
 const x = 15;                    // Good — obviously a number
 const y: number = 15;            // Unnecessary
 const s = new Set<string>();     // Type parameter needed: nothing to infer from
@@ -28,7 +28,7 @@ signals absence with `undefined` (`Map.get`), while DOM APIs generally use `null
 **Type aliases must not include `|null` or `|undefined`.** Bake nullability into an alias and
 every consumer inherits it, including the ones that have a value in hand.
 
-```ts
+```
 // Bad
 type CoffeeResponse = Latte|Americano|undefined;
 
@@ -43,7 +43,7 @@ class CoffeeService {
 **Prefer optional syntax over `|undefined`** for fields and parameters. `milk?: string` says
 "may be absent"; `milk: string|undefined` additionally requires callers to pass something.
 
-```ts
+```
 interface Order {
   milk?: string;
 }
@@ -59,7 +59,7 @@ because it was declared to implement it.
 **When you intend a value to satisfy a type, annotate it at declaration.** Otherwise the value
 gets its own inferred type and errors surface far from the mistake.
 
-```ts
+```
 // Good — mismatches are reported here
 const foo: Foo = {a: 123, b: 'abc'};
 
@@ -76,7 +76,7 @@ implementation and a runtime identity you do not need when you only want a shape
 compiler performance; the TypeScript team's own position is that there is no upside to a type
 alias for an object type given the display and performance costs.
 
-```ts
+```
 // Good
 interface User {
   firstName: string;
@@ -99,7 +99,7 @@ For simple element types — alphanumeric with dots — use the shorthand `T[]` 
 including multi-dimensional (`T[][]`). For anything more complex, use `Array<T>`, because the
 suffix form becomes hard to parse.
 
-```ts
+```
 let a: string[];
 let b: readonly string[];
 let d: string[][];
@@ -112,7 +112,7 @@ let f: Array<string|number>;
 Index signatures model associative arrays. Give the key a descriptive label — it is
 documentation only, but it is the only place the key's meaning can be recorded:
 
-```ts
+```
 const users: {[userName: string]: number} = ...;
 ```
 
@@ -126,7 +126,7 @@ little repetition or verbosity is usually much cheaper than the long-term cost o
 type expression. Mapped and conditional types resist refactoring tools, defeat plain-text
 search, and have an evaluation model most readers cannot simulate in their head.
 
-```ts
+```
 // Prefer an explicit interface
 interface FoodPreferences {
   favoriteIcecream: string;
@@ -146,7 +146,7 @@ type FoodPreferences = Pick<User, 'favoriteIcecream'|'favoriteChocolate'>;
    dereferencing anything until you narrow, so the check happens where the knowledge is.
 3. **Suppress the lint warning with a comment** explaining why neither of the above works.
 
-```ts
+```
 // Bad — every downstream use is unchecked, silently
 const danger: any = value;
 danger.whoops();
@@ -162,7 +162,7 @@ so one `any` at a boundary can disable checking across a whole call path.
 
 Prefer a tuple to a purpose-built interface for pair-like returns:
 
-```ts
+```
 function splitInHalf(input: string): [string, string] {
   return [x, y];
 }

@@ -17,7 +17,7 @@ Use consecutive single-line comments rather than a block comment, indented to ma
 surrounding code. Do not draw boxes around comments — the decoration adds nothing and every
 edit has to preserve the alignment.
 
-```ts
+```
 // This is the preferred form
 // across multiple lines.
 
@@ -29,14 +29,14 @@ edit has to preserve the alignment.
 
 Single line when it fits:
 
-```ts
+```
 /** This short jsdoc describes the function. */
 function doSomething(arg: number) { … }
 ```
 
 Multi-line otherwise, with the opening `` /** `` and closing `` */ `` on their own lines:
 
-```ts
+```
 /**
  * Multiple lines of JSDoc text are written here,
  * wrapped normally.
@@ -56,7 +56,7 @@ changes without the comment being updated. Describe *meaning*; let the signature
 JSDoc is rendered as Markdown, so plain-text formatting is silently collapsed. Use real
 Markdown when structure matters:
 
-```ts
+```
 // Bad — the list flattens into one line when rendered
 /**
  * Factors:
@@ -78,7 +78,7 @@ Markdown when structure matters:
 Each tag goes on its own line, starting at the beginning of the line. Do not combine or
 duplicate tags on a single line.
 
-```ts
+```
 /**
  * @param left Left value
  * @param right Right value

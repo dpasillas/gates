@@ -56,7 +56,7 @@ not take the prefix.** They use qualified, unprefixed names — `GateProps`, `Pi
 `LogicComponentParams`, `UpdateGeometryParams`, `InteractionParams`, `GateEventHandlers`. So
 when adding an interface, the question is whether it is exported:
 
-```ts
+```
 interface IProps { ... }                    // module-private — prefixed
 export interface LogicComponentParams { ... }  // exported — qualified, no prefix
 ```

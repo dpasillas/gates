@@ -45,7 +45,7 @@
 - **Parameter properties** are the preferred way to avoid threading constructor arguments
   into fields by hand:
 
-  ```ts
+  ```
   class Foo {
     constructor(private readonly bar: Bar) {}
   }

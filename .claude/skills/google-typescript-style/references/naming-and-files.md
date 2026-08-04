@@ -57,7 +57,7 @@ A top-level `@fileoverview` *may* describe the file's contents, its uses, or its
 
 Four forms, each with its own use:
 
-```ts
+```
 import * as foo from './foo';        // module (namespace) import
 import {Foo} from './foo';           // named import
 import Foo from 'foo';               // default import — from external code only
@@ -78,7 +78,7 @@ import './foo';                      // side-effect import
   name, so each importer picks its own and the same symbol acquires several names across the
   codebase, defeating search and refactoring.
 
-  ```ts
+  ```
   // Good
   export class Foo { ... }
 
