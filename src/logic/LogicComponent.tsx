@@ -2,12 +2,12 @@ import React from "react";
 import paper from "paper";
 import {v4 as uuidv4} from 'uuid';
 
-import PartType from "../enums/PartType";
-import GateType from "../enums/GateType";
-import LogicPin from "./LogicPin";
-import Component, {GateEventHandlers, GateProps} from "../components/Component";
-import LogicState from "./LogicState";
-import LogicBoard from "./LogicBoard";
+import {PartType} from "../enums/PartType";
+import {GateType} from "../enums/GateType";
+import {LogicPin} from "./LogicPin";
+import {Component, GateEventHandlers, GateProps} from "../components/Component";
+import {LogicState} from "./LogicState";
+import {LogicBoard} from "./LogicBoard";
 
 
 /**
@@ -359,4 +359,4 @@ abstract class LogicComponent {
   }
 }
 
-export default LogicComponent;
+export {LogicComponent};

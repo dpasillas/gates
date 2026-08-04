@@ -2,14 +2,14 @@ import React from 'react';
 import Box from "@mui/material/Box"
 import {Theme, ThemeProvider} from "@mui/material/styles"
 
-import Sidebar from "./Sidebar";
-import Part from "./Part";
-import PartType from "../enums/PartType";
-import GateType from "../enums/GateType";
-import LogicBoard from "../logic/LogicBoard";
-import Toolbar from "./Toolbar";
+import {Sidebar} from "./Sidebar";
+import {Part} from "./Part";
+import {PartType} from "../enums/PartType";
+import {GateType} from "../enums/GateType";
+import {LogicBoard} from "../logic/LogicBoard";
+import {Toolbar} from "./Toolbar";
 import {LightTheme} from "../Themes";
-import ThemeContext from "../ThemeContext";
+import {ThemeContext} from "../ThemeContext";
 import '../css/App.css';
 
 interface IProps {}
@@ -91,4 +91,4 @@ class App extends React.Component<IProps , IState>{
   }
 }
 
-export default App;
+export {App};

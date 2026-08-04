@@ -203,4 +203,4 @@ class BinarySearchTreeNode<T> {
 
 }
 
-export default BinarySearchTreeNode;
+export {BinarySearchTreeNode};

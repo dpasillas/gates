@@ -1,15 +1,15 @@
-import GateType from "../enums/GateType";
-import LogicComponent from "../logic/LogicComponent";
-import LogicGate from "../logic/LogicGate";
-import PartType from "../enums/PartType";
+import {GateType} from "../enums/GateType";
+import {LogicComponent} from "../logic/LogicComponent";
+import {LogicGate} from "../logic/LogicGate";
+import {PartType} from "../enums/PartType";
 import {GLOBAL_SCOPE} from "../Constants";
-import LogicBoard from "../logic/LogicBoard";
-import Bulb from "../logic/Bulb";
-import Clock from "../logic/Clock";
-import Switch from "../logic/Switch";
+import {LogicBoard} from "../logic/LogicBoard";
+import {Bulb} from "../logic/Bulb";
+import {Clock} from "../logic/Clock";
+import {Switch} from "../logic/Switch";
 import paper from "paper";
-import Adder from "../logic/Adder";
-import Ground from "../logic/Ground";
+import {Adder} from "../logic/Adder";
+import {Ground} from "../logic/Ground";
 
 interface PartParams {
   type: PartType,
@@ -76,4 +76,4 @@ class Part {
   }
 }
 
-export default Part;
+export {Part};

@@ -49,4 +49,4 @@ class NumberInputWithSideControls extends React.Component<IProps, IState> {
   }
 }
 
-export default NumberInputWithSideControls
+export {NumberInputWithSideControls};

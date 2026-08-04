@@ -1,5 +1,5 @@
 import React from "react"
-import ThemeContext from "../ThemeContext";
+import {ThemeContext} from "../ThemeContext";
 import {IconButton} from "@mui/material";
 import {DarkTheme, LightTheme} from "../Themes";
 import Brightness4 from "@mui/icons-material/Brightness4";
@@ -22,4 +22,4 @@ class ToggleThemeButton extends React.Component<IProps, IState> {
   }
 }
 
-export default ToggleThemeButton;
+export {ToggleThemeButton};

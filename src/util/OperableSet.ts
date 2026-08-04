@@ -53,4 +53,4 @@ class OperableSet<T> extends Set<T> {
 }
 
 
-export default OperableSet;
+export {OperableSet};

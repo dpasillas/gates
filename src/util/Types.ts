@@ -1,6 +1,6 @@
-import LogicComponent from "../logic/LogicComponent";
+import {LogicComponent} from "../logic/LogicComponent";
 import React from "react";
-import LogicPin from "../logic/LogicPin";
+import {LogicPin} from "../logic/LogicPin";
 
 export type ViewBox = {
   left: number,

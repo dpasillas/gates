@@ -1,4 +1,4 @@
-import GateType from "../enums/GateType";
+import {GateType} from "../enums/GateType";
 import {Add, Tuple, TruthEntry, TruthTable, TruthTableEntry, TruthValue} from "./Types";
 
 type UNARY_GATE_TYPES = GateType.BUF | GateType.NOT;

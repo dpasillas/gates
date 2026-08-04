@@ -1,12 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
-import LogicComponent from "./LogicComponent";
+import {LogicComponent} from "./LogicComponent";
 import * as Constants from "../Constants";
-import Pin, { PinEventHandlers, PinProps } from "../components/Pin";
+import {Pin, PinEventHandlers, PinProps} from "../components/Pin";
 import React from "react";
-import LogicState from "./LogicState";
-import LogicConnection from "./LogicConnection";
+import {LogicState} from "./LogicState";
+import {LogicConnection} from "./LogicConnection";
 import * as paper from "paper";
-import LogicBoard from "./LogicBoard";
+import {LogicBoard} from "./LogicBoard";
 
 export enum PinOrientation {
   UNKNOWN,
@@ -341,4 +341,4 @@ class LogicPin {
   }
 }
 
-export default LogicPin;
+export {LogicPin};

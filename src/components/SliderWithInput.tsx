@@ -110,4 +110,4 @@ class SliderWithInput extends React.Component<IProps, IState>{
   }
 }
 
-export default SliderWithInput
+export {SliderWithInput};

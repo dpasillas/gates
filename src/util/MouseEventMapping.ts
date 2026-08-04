@@ -22,4 +22,4 @@ interface MouseEventMapping {
   dy: number,
 }
 
-export default MouseEventMapping;
+export type {MouseEventMapping};

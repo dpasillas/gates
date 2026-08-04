@@ -1,9 +1,9 @@
 import React from "react";
 
-import LogicComponent, {LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
-import LogicPin, {PinOrientation, PinType} from "./LogicPin";
-import PartType from "../enums/PartType";
-import LogicState from "./LogicState";
+import {LogicComponent, LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
+import {LogicPin, PinOrientation, PinType} from "./LogicPin";
+import {PartType} from "../enums/PartType";
+import {LogicState} from "./LogicState";
 
 interface IParams extends Omit<LogicComponentParams, "type"> {}
 
@@ -102,4 +102,4 @@ class Switch extends LogicComponent {
     }
 }
 
-export default Switch;
+export {Switch};

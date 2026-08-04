@@ -1,11 +1,11 @@
 import paper from "paper";
 
-import LogicComponent, {LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
-import PartType from "../enums/PartType";
-import LogicPin, {PinOrientation, PinType} from "./LogicPin";
-import GateType from "../enums/GateType";
+import {LogicComponent, LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
+import {PartType} from "../enums/PartType";
+import {LogicPin, PinOrientation, PinType} from "./LogicPin";
+import {GateType} from "../enums/GateType";
 import * as Constants from "../Constants";
-import LogicState from "./LogicState";
+import {LogicState} from "./LogicState";
 
 /** Helper function which maps Gate types to svg paths.*/
 function pathFromGateType(type: GateType) {
@@ -302,4 +302,4 @@ class LogicGate extends LogicComponent {
   }
 }
 
-export default LogicGate;
+export {LogicGate};

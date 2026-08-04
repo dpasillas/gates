@@ -8,4 +8,4 @@ const ThemeContext = React.createContext({
   setTheme: (theme: Theme) => {}
 });
 
-export default ThemeContext;
+export {ThemeContext};

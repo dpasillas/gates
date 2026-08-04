@@ -5,9 +5,9 @@ import ListSubheader from "@mui/material/ListSubheader"
 import Paper from "@mui/material/Paper"
 import Tab from "@mui/material/Tab"
 import Tabs from "@mui/material/Tabs"
-import Part from "./Part";
+import {Part} from "./Part";
 
-import PartsDrawer from "./PartsDrawer";
+import {PartsDrawer} from "./PartsDrawer";
 import "../css/Sidebar.css"
 import Divider from "@mui/material/Divider";
 
@@ -145,4 +145,4 @@ class Sidebar extends React.Component<IProps, IState> {
   }
 }
 
-export default Sidebar;
+export {Sidebar};

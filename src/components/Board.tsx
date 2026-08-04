@@ -2,11 +2,11 @@ import paper from "paper";
 import React from "react";
 
 import '../css/Board.css';
-import Part from "./Part";
-import LogicComponent from "../logic/LogicComponent";
+import {Part} from "./Part";
+import {LogicComponent} from "../logic/LogicComponent";
 import { GateEventHandlers } from "./Component";
-import LogicBoard from "../logic/LogicBoard";
-import MouseManager from "../util/MouseManager";
+import {LogicBoard} from "../logic/LogicBoard";
+import {MouseManager} from "../util/MouseManager";
 
 // import Properties from "./Properties";
 
@@ -502,4 +502,4 @@ class Board extends React.Component<IProps, IState> {
 
 }
 
-export default Board;
+export {Board};
