@@ -1,6 +1,6 @@
 type SafeNumber<T> = T extends number ? T : never;
-type Length<T extends any[]> = T extends {length: infer L} ? SafeNumber<L> : never;
-export type Tuple<N, U = any, T extends U[] = []> = Length<T> extends N ? T : Tuple<N, U, [U, ...T]>;
+type Length<T extends unknown[]> = T extends {length: infer L} ? SafeNumber<L> : never;
+export type Tuple<N, U = unknown, T extends U[] = []> = Length<T> extends N ? T : Tuple<N, U, [U, ...T]>;
 export type Add<A extends number, B extends number> = Length<[...Tuple<A>, ...Tuple<B>]>;
 // type Sub<A extends number, B extends number> = Tuple<A> extends [...Tuple<B>, ...infer U] ? Length<U> : never;
 // type IteratedAdd<A extends number, I extends number, Sum extends number = 0> =

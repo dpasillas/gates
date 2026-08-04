@@ -22,11 +22,11 @@ enum MouseAction {
 // Not enum because some mice may have additional buttons.
 const BUTTON_LEFT = 0;
 const BUTTON_MIDDLE = 1;
-// eslint-disable-next-line -- Unused
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BUTTON_RIGHT = 2;
-// eslint-disable-next-line -- Unused
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BUTTON_BROWSER_BACK = 3;
-// eslint-disable-next-line -- Unused
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BUTTON_BROWSER_FORWARD = 4;
 
 
@@ -74,7 +74,7 @@ class MouseManager {
     this.handlers.clear()
   }
 
-  reset(board: any) {
+  reset(board: LogicBoard) {
     this.removeHandlers()
     this.mouseButton = undefined;
     this.action = MouseAction.NONE;
@@ -261,7 +261,8 @@ class MouseManager {
   handleMouseMoveConnect(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
     const { x, y } = this.getViewCoordinates!(e);
     const point = new paper.Point(x, y);
-    if (!this.targetComponent || (this.targetComponent as any).pinType === undefined) {
+    // During a connection drag targetComponent holds a pin, not a component; see handleMouseDownConnect.
+    if (!this.targetComponent || !('pinType' in this.targetComponent)) {
       return;
     }
     board.setTemporaryConnection(this.targetComponent as unknown as LogicPin, point);
