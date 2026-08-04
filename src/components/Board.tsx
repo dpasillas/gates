@@ -34,6 +34,13 @@ interface MouseEventMapping {
     dy: number,
 }
 
+/** Thickness of the coordinate rulers, in screen pixels */
+const RULER_SIZE = 20;
+/** Approximate screen distance between labeled ruler ticks, in pixels */
+const TICK_TARGET_SPACING = 80;
+/** Number of unlabeled subdivisions drawn between each pair of labeled ticks */
+const MINOR_TICKS = 4;
+
 interface IProps {
     board: LogicBoard;
 }
@@ -171,6 +178,105 @@ class Board extends React.Component<IProps, IState> {
         return <rect key="grid" x={left} y={top} width={width} height={height} fill="url(#grid)" />;
     }
 
+    /** Draws the x and y axes, spanning the viewBox and crossing at the board's origin */
+    renderAxes() {
+        const { left, top, width, height } = this.props.board.viewBox;
+        // The origin marker is sized in board units so that it stays a constant size on screen.
+        const unitsPerPixel = width / (this.state.viewPort.width || 1);
+
+        return (
+            <g key="axes">
+                <path className="axis" d={`M ${left} 0 H ${left + width}`} vectorEffect="non-scaling-stroke" />
+                <path className="axis" d={`M 0 ${top} V ${top + height}`} vectorEffect="non-scaling-stroke" />
+                <circle className="origin" cx={0} cy={0} r={3 * unitsPerPixel} />
+            </g>
+        );
+    }
+
+    /**
+     * Draws coordinate rulers along the top and left edges of the board.
+     *
+     * Unlike the rest of the board, these are drawn in the outer svg, so their geometry is in screen
+     * pixels rather than board coordinates. That keeps the rulers a constant thickness as the board
+     * is zoomed, while their tick values track the viewBox.
+     */
+    renderRulers() {
+        const { width: portWidth, height: portHeight } = this.state.viewPort;
+        const { left, top, width, height } = this.props.board.viewBox;
+
+        if (!portWidth || !portHeight || !width || !height) {
+            return null;
+        }
+
+        const unitsPerPixelX = width / portWidth,
+            unitsPerPixelY = height / portHeight;
+        const stepX = Board.tickStep(unitsPerPixelX),
+            stepY = Board.tickStep(unitsPerPixelY);
+        const minorStepX = stepX / (MINOR_TICKS + 1),
+            minorStepY = stepY / (MINOR_TICKS + 1);
+
+        const ticks: JSX.Element[] = [];
+
+        for (let i = Math.ceil(left / minorStepX); i * minorStepX <= left + width; ++i) {
+            const boardX = i * minorStepX;
+            const screenX = (boardX - left) / unitsPerPixelX;
+            // Ticks which would fall inside the corner block are left out.
+            if (screenX < RULER_SIZE) {
+                continue;
+            }
+
+            const major = i % (MINOR_TICKS + 1) === 0;
+            ticks.push(
+                <path key={`x${i}`} className="ruler-tick"
+                    d={`M ${screenX} ${RULER_SIZE - (major ? 8 : 4)} V ${RULER_SIZE}`} />
+            );
+
+            if (major) {
+                ticks.push(
+                    <text key={`xlabel${i}`} className="ruler-label" x={screenX + 3} y={RULER_SIZE - 9}>
+                        {Board.formatTick(boardX, stepX)}
+                    </text>
+                );
+            }
+        }
+
+        for (let i = Math.ceil(top / minorStepY); i * minorStepY <= top + height; ++i) {
+            const boardY = i * minorStepY;
+            const screenY = (boardY - top) / unitsPerPixelY;
+            if (screenY < RULER_SIZE) {
+                continue;
+            }
+
+            const major = i % (MINOR_TICKS + 1) === 0;
+            ticks.push(
+                <path key={`y${i}`} className="ruler-tick"
+                    d={`M ${RULER_SIZE - (major ? 8 : 4)} ${screenY} H ${RULER_SIZE}`} />
+            );
+
+            if (major) {
+                // Rotated so the label reads bottom-to-top, which is how vertical rulers are conventionally drawn.
+                const labelX = RULER_SIZE - 9, labelY = screenY - 3;
+                ticks.push(
+                    <text key={`ylabel${i}`} className="ruler-label" x={labelX} y={labelY}
+                        transform={`rotate(-90 ${labelX} ${labelY})`}>
+                        {Board.formatTick(boardY, stepY)}
+                    </text>
+                );
+            }
+        }
+
+        return (
+            <g key="rulers" className="rulers">
+                <rect className="ruler-face" x={0} y={0} width={portWidth} height={RULER_SIZE} />
+                <rect className="ruler-face" x={0} y={0} width={RULER_SIZE} height={portHeight} />
+                {ticks}
+                <rect className="ruler-face" x={0} y={0} width={RULER_SIZE} height={RULER_SIZE} />
+                <path className="ruler-edge"
+                    d={`M ${RULER_SIZE} ${portHeight} V ${RULER_SIZE} H ${portWidth}`} />
+            </g>
+        );
+    }
+
     render() {
         const { left, top, width, height } = this.props.board.viewBox;
 
@@ -217,7 +323,7 @@ class Board extends React.Component<IProps, IState> {
                     >
                         {this.defs()}
                         {this.renderGrid()}
-                        <circle className={"origin"} x="0" y="0" r="40" fill="red" />
+                        {this.renderAxes()}
                         {renderedConnections}
                         {this.props.board.temporaryConnection && (() => {
                             const { source, currentPos } = this.props.board.temporaryConnection;
@@ -258,6 +364,7 @@ class Board extends React.Component<IProps, IState> {
                             <path className="select" d={selectionBox} vectorEffect="non-scaling-stroke" />
                         }
                     </svg>
+                    {this.renderRulers()}
                 </svg>
                 {/*<Properties board={this.props.board}/>*/}
             </div>
@@ -327,6 +434,35 @@ class Board extends React.Component<IProps, IState> {
 
     static between(a: number, b: number, c: number) {
         return Math.min(Math.max(a, b), c);
+    }
+
+    /**
+     * Picks a "nice" ruler interval — 1, 2, or 5 times a power of ten — whose on-screen size is
+     * closest to {@link TICK_TARGET_SPACING}, so that labels stay evenly spaced at any zoom level.
+     */
+    static tickStep(unitsPerPixel: number) {
+        const rawStep = unitsPerPixel * TICK_TARGET_SPACING;
+        const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        const normalized = rawStep / magnitude;
+
+        if (normalized < 1.5) {
+            return magnitude;
+        } else if (normalized < 3.5) {
+            return 2 * magnitude;
+        } else if (normalized < 7.5) {
+            return 5 * magnitude;
+        }
+        return 10 * magnitude;
+    }
+
+    /** Formats a tick's coordinate with just enough precision to tell adjacent ticks apart */
+    static formatTick(value: number, step: number) {
+        // Ticks landing on the origin accumulate a little floating point error, which would
+        // otherwise render as "-0".
+        const snapped = Math.abs(value) < step / 2 ? 0 : value;
+        const decimals = Math.max(0, -Math.floor(Math.log10(step)));
+
+        return snapped.toFixed(decimals);
     }
 
     handleWheel(e: React.WheelEvent<SVGSVGElement>) {

@@ -124,8 +124,44 @@ text {
     fill: #003C6E;
 }
 
+.axis {
+    stroke: #5a5f68;
+    stroke-width: 2px;
+    fill: none;
+}
+
 .origin {
-    /*mix-blend-mode: color-dodge;*/
+    fill: #c62828;
+    stroke: none;
+}
+
+/* Rulers are an overlay, so they must never swallow board interactions. */
+.rulers {
+    pointer-events: none;
+}
+
+.ruler-face {
+    fill: #e4e6e9;
+    stroke: none;
+}
+
+.ruler-edge {
+    stroke: #a8adb5;
+    stroke-width: 1px;
+    fill: none;
+}
+
+.ruler-tick {
+    stroke: #5b626e;
+    stroke-width: 1px;
+    fill: none;
+}
+
+.ruler-label {
+    fill: #3a404b;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 9px;
+    stroke: none;
 }
 
 .switch {

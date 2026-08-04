@@ -2,6 +2,7 @@
 
 # project
 /.idea
+/planning
 
 # dependencies
 /node_modules
