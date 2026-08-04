@@ -1,4 +1,4 @@
-import BinarySearchTreeNode from "./BinarySearchTreeNode";
+import {BinarySearchTreeNode} from "./BinarySearchTreeNode";
 
 interface Comparator<T> {
     (a: T, b: T): number;
@@ -115,4 +115,4 @@ function* inOrderIterator<T>(bst: BinarySearchTree<T>): Generator<T> {
     return;
 }
 
-export default BinarySearchTree;
+export {BinarySearchTree};

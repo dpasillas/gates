@@ -1,4 +1,4 @@
-import BinarySearchTree from "./BinarySearchTree";
+import {BinarySearchTree} from "./BinarySearchTree";
 
 test('renders learn react link', () => {
   const bst = new BinarySearchTree<number>({cmp: (a, b) =>  a - b});

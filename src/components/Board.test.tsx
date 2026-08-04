@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from '@testing-library/react';
-import Board from './Board';
-import LogicBoard from '../logic/LogicBoard';
+import {Board} from './Board';
+import {LogicBoard} from '../logic/LogicBoard';
 
 /** Captures the observer callback so a resize can be delivered on demand. */
 let notifyResize: ((entries: ResizeObserverEntry[]) => void) | undefined;

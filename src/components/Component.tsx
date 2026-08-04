@@ -1,9 +1,9 @@
 import React from "react";
 import {PinEventHandlers} from "./Pin";
 import paper from 'paper';
-import GateType from "../enums/GateType";
+import {GateType} from "../enums/GateType";
 import {ComponentMouseEventHandler, MouseEventHandler} from "../util/Types";
-import LogicComponent from "../logic/LogicComponent";
+import {LogicComponent} from "../logic/LogicComponent";
 
 export interface GateEventHandlers<T = ComponentMouseEventHandler> extends PinEventHandlers {
     onGateMouseDown?: T;
@@ -83,4 +83,4 @@ class Component extends React.Component<GateProps, IState> {
     }
 }
 
-export default Component;
+export {Component};

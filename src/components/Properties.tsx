@@ -7,12 +7,12 @@ import Collapse from "@mui/material/Collapse";
 import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 
-import LogicBoard from "../logic/LogicBoard";
+import {LogicBoard} from "../logic/LogicBoard";
 import "../css/Properties.css"
-import SliderWithInput from "./SliderWithInput";
-import NumberInputWithSideControls from "./NumberInputWithSideControls";
+import {SliderWithInput} from "./SliderWithInput";
+import {NumberInputWithSideControls} from "./NumberInputWithSideControls";
 import Stack from "@mui/material/Stack";
-import FluentIterable from "../util/FluentIterable";
+import {FluentIterable} from "../util/FluentIterable";
 
 interface IProps {
   board: LogicBoard;
@@ -151,4 +151,4 @@ class Properties extends React.Component<IProps, IState> {
   }
 }
 
-export default Properties;
+export {Properties};

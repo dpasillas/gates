@@ -1,7 +1,7 @@
-import LogicGate from "./LogicGate";
-import GateType from "../enums/GateType";
+import {LogicGate} from "./LogicGate";
+import {GateType} from "../enums/GateType";
 import {GLOBAL_SCOPE} from "../Constants";
-import LogicState from "./LogicState";
+import {LogicState} from "./LogicState";
 import {TruthEntry, TruthTable} from "../test/Types";
 import {BINARY_TRUTH_TABLES, UNARY_TRUTH_TABLES} from "../test/TruthTables";
 

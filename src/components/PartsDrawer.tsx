@@ -7,7 +7,7 @@ import Paper from "@mui/material/Paper"
 import {faChevronRight} from "@fortawesome/free-solid-svg-icons/faChevronRight";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-import Part from "./Part";
+import {Part} from "./Part";
 import "../css/PartsDrawer.css"
 
 interface IProps {
@@ -111,4 +111,4 @@ class PartsDrawer extends React.Component<IProps, IState> {
   }
 }
 
-export default PartsDrawer;
+export {PartsDrawer};

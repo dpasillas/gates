@@ -1,7 +1,7 @@
-import LogicPin from "./LogicPin";
+import {LogicPin} from "./LogicPin";
 import { v4 as uuidv4 } from 'uuid';
-import Connection from "../components/Connection";
-import LogicBoard from "./LogicBoard";
+import {Connection} from "../components/Connection";
+import {LogicBoard} from "./LogicBoard";
 
 interface IParams {
   uuid?: string;
@@ -54,4 +54,4 @@ class LogicConnection {
   }
 }
 
-export default LogicConnection;
+export {LogicConnection};

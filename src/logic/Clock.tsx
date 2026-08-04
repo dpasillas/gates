@@ -1,10 +1,10 @@
 import React from "react";
 
-import LogicComponent, {LogicComponentParams} from "./LogicComponent";
-import LogicPin, {PinOrientation, PinType} from "./LogicPin";
-import PartType from "../enums/PartType";
-import LogicConnection from "./LogicConnection";
-import LogicState from "./LogicState";
+import {LogicComponent, LogicComponentParams} from "./LogicComponent";
+import {LogicPin, PinOrientation, PinType} from "./LogicPin";
+import {PartType} from "../enums/PartType";
+import {LogicConnection} from "./LogicConnection";
+import {LogicState} from "./LogicState";
 
 interface IParams extends Omit<LogicComponentParams, "type" | "width"> {}
 
@@ -59,4 +59,4 @@ class Clock extends LogicComponent {
   }
 }
 
-export default Clock;
+export {Clock};

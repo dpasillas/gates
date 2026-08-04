@@ -11,4 +11,4 @@ enum GateType {
   NOT,
 }
 
-export default GateType;
+export {GateType};

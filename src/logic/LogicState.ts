@@ -67,4 +67,4 @@ class LogicState {
   }
 }
 
-export default LogicState;
+export {LogicState};

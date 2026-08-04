@@ -1,15 +1,15 @@
 import React from "react";
 
-import Board from "../components/Board";
-import LogicComponent from "./LogicComponent";
-import LogicConnection from "./LogicConnection";
+import {Board} from "../components/Board";
+import {LogicComponent} from "./LogicComponent";
+import {LogicConnection} from "./LogicConnection";
 import paper from "paper/dist/paper-core";
 import { makeAndSetupScope } from "../util/PaperHelp";
-import LogicState from "./LogicState";
-import LogicPin from "./LogicPin";
-import BinarySearchTree from "../BinarySearchTree";
-import LogicEvent from "./LogicEvent";
-import OperableSet from "../util/OperableSet";
+import {LogicState} from "./LogicState";
+import {LogicPin} from "./LogicPin";
+import {BinarySearchTree} from "../BinarySearchTree";
+import {LogicEvent} from "./LogicEvent";
+import {OperableSet} from "../util/OperableSet";
 import { ViewBox } from "../util/Types";
 
 /**
@@ -186,4 +186,4 @@ class LogicBoard {
   }
 }
 
-export default LogicBoard;
+export {LogicBoard};

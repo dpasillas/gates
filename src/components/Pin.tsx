@@ -1,7 +1,7 @@
 import React from "react";
 import Tooltip from "@mui/material/Tooltip";
 
-import LogicPin, { PinType } from "../logic/LogicPin";
+import {LogicPin, PinType} from "../logic/LogicPin";
 import { MouseEventHandler, PinMouseEventHandler } from "../util/Types";
 
 export interface PinEventHandlers<T = PinMouseEventHandler> {
@@ -72,4 +72,4 @@ class Pin extends React.Component<PinProps, IState> {
     }
 }
 
-export default Pin;
+export {Pin};

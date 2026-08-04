@@ -1,10 +1,10 @@
-import OperableSet from "./OperableSet";
-import LogicComponent from "../logic/LogicComponent";
-import LogicPin from "../logic/LogicPin";
+import {OperableSet} from "./OperableSet";
+import {LogicComponent} from "../logic/LogicComponent";
+import {LogicPin} from "../logic/LogicPin";
 import paper from "paper";
 import React from "react";
-import LogicBoard from "../logic/LogicBoard";
-import MouseEventMapping from "./MouseEventMapping";
+import {LogicBoard} from "../logic/LogicBoard";
+import {MouseEventMapping} from "./MouseEventMapping";
 import { MouseEventHandler, MouseEventName } from "./Types";
 
 
@@ -465,4 +465,4 @@ class MouseManager {
   }
 }
 
-export default MouseManager;
+export {MouseManager};

@@ -1,5 +1,5 @@
-import LogicPin from "./LogicPin";
-import LogicState from "./LogicState";
+import {LogicPin} from "./LogicPin";
+import {LogicState} from "./LogicState";
 
 interface IParams {
   pin: LogicPin,
@@ -38,4 +38,4 @@ class LogicEvent {
   // TODO: add comparators
 }
 
-export default LogicEvent;
+export {LogicEvent};

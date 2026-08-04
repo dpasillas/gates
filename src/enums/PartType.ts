@@ -8,5 +8,5 @@ enum PartType {
   COMPOSITE_CUSTOM
 }
 
-export default PartType;
+export {PartType};
 

@@ -1,10 +1,10 @@
 import paper from "paper/dist/paper-core";
 import React from "react";
 
-import LogicComponent, {LogicComponentParams} from "./LogicComponent";
+import {LogicComponent, LogicComponentParams} from "./LogicComponent";
 import {BULB_PATH} from "../Constants";
-import PartType from "../enums/PartType";
-import LogicPin, {PinOrientation, PinType} from "./LogicPin";
+import {PartType} from "../enums/PartType";
+import {LogicPin, PinOrientation, PinType} from "./LogicPin";
 
 interface IParams extends Omit<LogicComponentParams, "type"> {
 }
@@ -53,4 +53,4 @@ class Bulb extends LogicComponent {
   }
 }
 
-export default Bulb;
+export {Bulb};

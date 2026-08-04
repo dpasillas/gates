@@ -93,4 +93,4 @@ class FluentIterable<T> {
 
 }
 
-export default FluentIterable;
+export {FluentIterable};

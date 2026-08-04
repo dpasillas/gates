@@ -1,5 +1,5 @@
 import React from "react";
-import LogicConnection from "../logic/LogicConnection";
+import {LogicConnection} from "../logic/LogicConnection";
 
 interface IProps {
   connection: LogicConnection;
@@ -89,4 +89,4 @@ class Connection extends React.Component<IProps, IState> {
 
 }
 
-export default Connection;
+export {Connection};

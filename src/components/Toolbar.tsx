@@ -11,8 +11,8 @@ import Stack from "@mui/material/Stack"
 // import SkipNext from "@mui/icons-material/SkipNext";
 // import Stop from "@mui/icons-material/Stop";
 
-import LogicBoard from "../logic/LogicBoard";
-import ToggleThemeButton from "./ToggleThemeButton";
+import {LogicBoard} from "../logic/LogicBoard";
+import {ToggleThemeButton} from "./ToggleThemeButton";
 import "../css/Toolbar.css";
 
 interface IProps {
@@ -80,4 +80,4 @@ class Toolbar extends React.Component<IProps, IState> {
   }
 }
 
-export default Toolbar;
+export {Toolbar};
