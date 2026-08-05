@@ -389,9 +389,10 @@ class Board extends React.Component<IProps, IState> {
             w = rect.width,
             h = rect.height;
 
-
-        const localX = e.pageX - l,
-            localY = e.pageY - t;
+        // clientX/clientY rather than pageX/pageY, so that both sides of the subtraction are in the
+        // same coordinate system: getBoundingClientRect is viewport-relative and excludes scroll.
+        const localX = e.clientX - l,
+            localY = e.clientY - t;
 
         const { left: viewLeft, top: viewTop, width: viewWidth, height: viewHeight } = this.props.board.viewBox;
 
