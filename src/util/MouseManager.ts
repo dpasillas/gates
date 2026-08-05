@@ -43,6 +43,15 @@ enum SelectionType {
 class MouseManager {
   private sPoint?: paper.Point;
   private pPoint?: paper.Point;
+  /**
+   * The board coordinate grabbed at the start of a pan.
+   *
+   * Panning moves the viewBox, so board coordinates measured during a pan are expressed in a frame
+   * that is itself moving; differencing successive positions in that frame yields the wrong delta.
+   * This anchor is captured once and never updated, so each move can solve for the viewBox which
+   * keeps the grabbed point under the cursor.
+   */
+  private panAnchor?: paper.Point;
   selectBox?: paper.Path;
 
   private mouseButton?: number;
@@ -78,6 +87,7 @@ class MouseManager {
     this.removeHandlers()
     this.mouseButton = undefined;
     this.action = MouseAction.NONE;
+    this.panAnchor = undefined;
 
     if (this.selectBox) {
       this.selectBox.remove();
@@ -137,7 +147,7 @@ class MouseManager {
       this.addHandler('mousemove', this.handleMouseMovePan.bind(this, board))
       this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
       const { x, y } = this.getViewCoordinates!(e);
-      this.pPoint = new board.scope.Point(x, y);
+      this.panAnchor = new board.scope.Point(x, y);
     }
   }
 
@@ -411,22 +421,22 @@ class MouseManager {
   }
 
   handleMouseMovePan(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
-    const { x, y } = this.getViewCoordinates!(e)
-    const currentPoint = new board.scope.Point(x, y);
-
-    if (this.pPoint) {
-      const dx = currentPoint.x - this.pPoint.x;
-      const dy = currentPoint.y - this.pPoint.y;
-
-      board.viewBox = {
-        top: board.viewBox.top - dy,
-        left: board.viewBox.left - dx,
-        width: board.viewBox.width,
-        height: board.viewBox.height,
-      }
+    if (!this.panAnchor) {
+      return;
     }
 
-    this.pPoint = currentPoint;
+    // rx and ry are relative to the viewport rather than the viewBox, so they stay meaningful as
+    // the viewBox moves beneath the cursor.
+    const { rx, ry } = this.getViewCoordinates!(e);
+    const { width, height } = board.viewBox;
+
+    board.viewBox = {
+      top: this.panAnchor.y - ry * height,
+      left: this.panAnchor.x - rx * width,
+      width: width,
+      height: height,
+    }
+
     board.update()
   }
 
