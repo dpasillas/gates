@@ -100,6 +100,7 @@ class LogicGate extends LogicComponent {
   constructor(params: IParams) {
     super({
       ...params,
+      label: GateType[params.subtype],
       type: PartType.GATE,
       fieldWidth: Math.min(2, maxPins(params.subtype)),
       adjustableWidth: true,

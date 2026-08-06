@@ -309,7 +309,13 @@ class Board extends React.Component<IProps, IState> {
                 ref={this.ref}
                 style={{
                     width: "100%",
-                    height: "100%"
+                    height: "100%",
+                    // As a flex item this defaults to min-width/min-height auto, meaning it refuses
+                    // to shrink below the size of the board it contains. When the window narrows it
+                    // would then hold its width and push the right-hand rail off screen instead of
+                    // yielding space to it.
+                    minWidth: 0,
+                    minHeight: 0,
                 }}
             >
                 <svg className="board-wrapper" style={this.state.viewPort}

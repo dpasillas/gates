@@ -8,6 +8,7 @@ import {LogicPin} from "./LogicPin";
 import {Component, GateEventHandlers, GateProps} from "../components/Component";
 import {LogicState} from "./LogicState";
 import {LogicBoard} from "./LogicBoard";
+import {ComponentProperty} from "./ComponentProperty";
 
 
 /**
@@ -27,6 +28,8 @@ export interface InteractionParams {
 }
 
 export interface LogicComponentParams {
+  /** Human-readable name of this kind of component, shown in the properties panel. */
+  label?: string;
   /** The type of the component, required for serialization */
   type: PartType;
   /** The subtype of the component, required for serialization */
@@ -74,6 +77,8 @@ abstract class LogicComponent {
   private __d: string = "";
   /** The unique id of this component, used for rendering, and serialization */
   readonly uuid: string;
+  /** Human-readable name of this kind of component, e.g. "AND" or "Clock". */
+  readonly label: string;
   readonly type: PartType;
   readonly subtype: GateType;
   readonly scope: paper.PaperScope;
@@ -109,6 +114,7 @@ abstract class LogicComponent {
   protected constructor(params: LogicComponentFullParams) {
 
     this.uuid = uuidv4();
+    this.label = params.label ?? "Component";
     this.scope = params.scope
     this.type = params.type;
     this.subtype = params.subtype;
@@ -262,6 +268,62 @@ abstract class LogicComponent {
 
   get width() {
     return this.__width;
+  }
+
+  /**
+   * Properties specific to this kind of component, shown above its position in the panel.
+   *
+   * Subclasses override this to add or replace rows; the position is appended by
+   * {@link properties} so that it always sorts last.
+   */
+  protected specificProperties(): ComponentProperty[] {
+    const properties: ComponentProperty[] = [{
+      key: "width",
+      label: "Bit Width",
+      value: this.width,
+      // Components which do not declare an adjustable width are pinned to whatever they were built
+      // with, so the row still shows but cannot be edited.
+      editable: this.adjustableWidth,
+      min: 1,
+      max: 32,
+      setValue: (width: number) => {this.width = width},
+    }];
+
+    if (this.adjustableFieldWidth) {
+      properties.push({
+        key: "fieldWidth",
+        label: "Inputs",
+        value: this.fieldWidth,
+        editable: true,
+        min: this.minFieldWidth,
+        max: this.maxFieldWidth,
+        setValue: (fieldWidth: number) => {this.fieldWidth = fieldWidth},
+      });
+    }
+
+    if (this.hasDelay) {
+      properties.push({
+        key: "delay",
+        label: "Delay",
+        value: this.delay,
+        editable: true,
+        min: 1,
+        setValue: (delay: number) => {this.delay = delay},
+      });
+    }
+
+    return properties;
+  }
+
+  /** Every property surfaced in the properties panel, with position pinned last. */
+  properties(): ComponentProperty[] {
+    const {x, y} = this.geometry.bounds.topLeft;
+
+    return [
+      ...this.specificProperties(),
+      {key: "x", label: "X", value: x, editable: false, precision: 1, setValue: () => {}},
+      {key: "y", label: "Y", value: y, editable: false, precision: 1, setValue: () => {}},
+    ];
   }
 
   /** Path description of the component's body */

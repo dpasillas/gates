@@ -4,7 +4,7 @@
     left: 0;
     display: flex;
     position: absolute;
-    transition: left 0.67s cubic-bezier(0.65, 0, 0.35, 1);
+    transition: left 0.15s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 .sidebar-content {

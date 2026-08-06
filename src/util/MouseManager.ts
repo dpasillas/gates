@@ -197,6 +197,9 @@ class MouseManager {
       }
     }
 
+    // Clicking a component selects it, which the properties panel renders from.
+    board.updateProperties();
+
     // Add handlers directly to the window to ensure that events aren't dropped once the cursor moves out of the
     // widget's rendered area.  Dropping these events would lead to an inconsistent mouse state.
     this.addHandler('mousemove', this.handleMouseMoveDrag.bind(this, board))
@@ -223,6 +226,7 @@ class MouseManager {
     // Select the pin as well
     target.selected = true;
     board.selectedPins.add(target)
+    board.updateProperties();
   }
 
   makeConnection(board: LogicBoard, a: LogicPin, b: LogicPin) {
@@ -456,6 +460,10 @@ class MouseManager {
       for (const component of board.selectedComponents) {
         component.translate(new board.scope.Point(dx, dy))
       }
+
+      // Only the panel needs telling: the components redraw themselves as they translate, so a
+      // full board update on every mouse move would be wasted work.
+      board.updateProperties();
     }
 
     this.pPoint = currentPoint;

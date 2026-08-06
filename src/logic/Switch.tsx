@@ -11,6 +11,7 @@ class Switch extends LogicComponent {
     constructor(params: IParams) {
         super({
             ...params,
+            label: "Switch",
             type: PartType.INPUT,
             adjustableWidth: true,
             hasDelay: false,

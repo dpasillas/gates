@@ -3,6 +3,7 @@ import Box from "@mui/material/Box"
 import {Theme, ThemeProvider} from "@mui/material/styles"
 
 import {Sidebar} from "./Sidebar";
+import {Properties} from "./Properties";
 import {Part} from "./Part";
 import {PartType} from "../enums/PartType";
 import {GateType} from "../enums/GateType";
@@ -79,10 +80,13 @@ class App extends React.Component<IProps , IState>{
                 Menu
                 <Toolbar board={this.board}/>
               </div>
-              <Box sx={{bgcolor: 'background.default', width: "100%", height: "100%", display: "flex"}}>
+              {/* Relative so that the side panels, which overlay the board, anchor to this row. */}
+              <Box sx={{bgcolor: 'background.default', width: "100%", height: "100%", display: "flex",
+                        position: "relative"}}>
                 <Sidebar parts={this.parts}>
                 </Sidebar>
                 {this.board.render()}
+                <Properties board={this.board}/>
               </Box>
             </div>
           </ThemeProvider>
