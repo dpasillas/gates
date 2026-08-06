@@ -1,5 +1,8 @@
 import {MouseManager} from './MouseManager';
 import {LogicBoard} from '../logic/LogicBoard';
+import {LogicGate} from '../logic/LogicGate';
+import {GateType} from '../enums/GateType';
+import {GLOBAL_SCOPE} from '../Constants';
 import {MouseEventMapping} from './MouseEventMapping';
 
 const VIEWPORT = {width: 800, height: 600};
@@ -97,6 +100,85 @@ describe('middle-mouse pan', () => {
       expect(board.viewBox.left).toBeLessThan(previousLeft);
       previousLeft = board.viewBox.left;
     }
+
+    manager.reset(board);
+  });
+});
+
+/** Board wired with a counter, plus a manager ready to receive interactions. */
+function boardWithPanel() {
+  const board = new LogicBoard();
+  const counter = {notifications: 0};
+  board.updateProperties = () => {counter.notifications++};
+
+  const manager = new MouseManager();
+  manager.getViewCoordinates = viewCoordinateMapper(board);
+
+  return {board, manager, counter};
+}
+
+function xOf(gate: LogicGate): number {
+  return gate.properties().find(p => p.key === 'x')!.value;
+}
+
+describe('properties panel notifications', () => {
+  test('clicking a component tells the panel', () => {
+    // Previously only the rubberband path notified, so a clicked component left the panel blank.
+    const {board, manager, counter} = boardWithPanel();
+    const gate = new LogicGate({scope: GLOBAL_SCOPE, subtype: GateType.AND});
+
+    manager.handleGateMouseDown(board, gate, mouseEvent(0, 100, 100));
+
+    expect(counter.notifications).toBeGreaterThan(0);
+    expect([...board.selectedComponents]).toContain(gate);
+
+    manager.reset(board);
+  });
+
+  test('clicking a pin tells the panel', () => {
+    const {board, manager, counter} = boardWithPanel();
+    const gate = new LogicGate({scope: GLOBAL_SCOPE, subtype: GateType.AND});
+
+    manager.handlePinMouseDown(board, gate.inputPins[0], mouseEvent(0, 100, 100));
+
+    expect(counter.notifications).toBeGreaterThan(0);
+
+    manager.reset(board);
+  });
+
+  test('clearing the selection tells the panel', () => {
+    const {board, counter} = boardWithPanel();
+
+    board.clearSelection();
+
+    expect(counter.notifications).toBeGreaterThan(0);
+  });
+
+  test('dragging tells the panel on every move', () => {
+    const {board, manager, counter} = boardWithPanel();
+    const gate = new LogicGate({scope: GLOBAL_SCOPE, subtype: GateType.AND});
+
+    manager.handleGateMouseDown(board, gate, mouseEvent(0, 100, 100));
+    const afterClick = counter.notifications;
+
+    manager.handleMouseMoveDrag(board, mouseEvent(0, 120, 100));
+    manager.handleMouseMoveDrag(board, mouseEvent(0, 140, 100));
+
+    expect(counter.notifications).toBeGreaterThan(afterClick + 1);
+
+    manager.reset(board);
+  });
+
+  test('the position it reports follows the drag', () => {
+    const {board, manager} = boardWithPanel();
+    const gate = new LogicGate({scope: GLOBAL_SCOPE, subtype: GateType.AND});
+
+    manager.handleGateMouseDown(board, gate, mouseEvent(0, 100, 100));
+    const start = xOf(gate);
+    // The viewBox matches the viewport in these tests, so 40px of cursor travel is 40 board units.
+    manager.handleMouseMoveDrag(board, mouseEvent(0, 140, 100));
+
+    expect(xOf(gate)).toBeCloseTo(start + 40);
 
     manager.reset(board);
   });

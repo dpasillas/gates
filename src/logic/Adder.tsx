@@ -10,6 +10,7 @@ class Adder extends LogicComponent {
     constructor(params: IParams) {
         super({
             ...params,
+            label: params.subtype === 0 ? "Half-Adder" : "Adder",
             type: PartType.COMPOSITE_BUILT_IN,
             delay: 1});
     }

@@ -1,22 +1,75 @@
-.properties-root {
+/*
+ * Clips the sliding panel.
+ *
+ * This sits entirely on screen, immediately left of the tab rail, and hides whatever spills out of
+ * it. Without the clip the collapsed panel would extend the document's scroll width, which puts a
+ * horizontal scrollbar on the page and stops it reflowing when the viewport narrows.
+ */
+.properties-dock {
     position: absolute;
-    top:0;
-    right:0;
-    display: flex;
-    flex-direction: column;
-    border-width: 1px;
-    border-style: solid;
+    top: 0;
+    right: 32px;
+    height: 100%;
+    width: 250px;
+    overflow: hidden;
+    pointer-events: none;
 }
 
-.properties-main {
+/* Docked panel. Slides out from behind the right rail, mirroring the sidebar on the left. */
+.properties-panel {
+    height: 100%;
+    width: 250px;
+    right: 0;
+    top: 0;
+    position: absolute;
     display: flex;
-    flex-direction: column;
+    transition: right 0.15s cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-.properties-root #handle {
+/* Deliberately not named "collapsed": Sidebar.css defines that as a bare global selector carrying
+   a left offset, which would override the right offset below. */
+.properties-panel.properties-collapsed {
+    right: -250px;
+}
+
+/* Floating panel. Positioned once, then moved by react-draggable. */
+.properties-floating {
+    position: absolute;
+    top: 80px;
+    right: 80px;
+    width: 250px;
+    z-index: 1200;
+    pointer-events: auto;
+}
+
+.properties-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.properties-header {
+    padding: 8px 8px 8px 16px;
+    flex-shrink: 0;
+}
+
+.properties-header.draggable {
     cursor: grab;
 }
 
-.properties-root #handle:active {
+.properties-header.draggable:active {
     cursor: grabbing;
+}
+
+.properties-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-y: auto;
+}
+
+.properties-value {
+    font-family: 'Roboto Mono', monospace;
 }

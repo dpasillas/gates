@@ -8,6 +8,8 @@ import Tabs from "@mui/material/Tabs"
 import {Part} from "./Part";
 
 import {PartsDrawer} from "./PartsDrawer";
+import {ProjectIcon, PartsIcon} from "./RailIcons";
+import {RAIL_WIDTH, railTabSx, railLabelSx, railTextUpSx} from "./railStyle";
 import "../css/Sidebar.css"
 import Divider from "@mui/material/Divider";
 
@@ -91,15 +93,15 @@ class Sidebar extends React.Component<IProps, IState> {
     );
   }
 
-  renderTab(label: string, index: number) {
+  renderTab(label: string, index: number, icon: React.ReactElement) {
     return (
     <Tab label={
-      <Box sx={{
-        writingMode: "vertical-rl",
-        textOrientation: "mixed",
-        transform: "rotate(180deg)"}}>{label}</Box>}
+      <Box sx={railLabelSx}>
+        <Box sx={railTextUpSx}>{label}</Box>
+        {icon}
+      </Box>}
          value={label} {...a11yProps(index)}
-         sx={{minWidth: "48px", minHeight: "100px"}}
+         sx={railTabSx}
          onClick={this.handleTabClick.bind(this, label)}/>
     );
   }
@@ -113,15 +115,18 @@ class Sidebar extends React.Component<IProps, IState> {
               value={this.state.activeTab}
               onChange={this.handleTabChange.bind(this)}
               aria-label="Side Controls"
-              sx={{ borderRight: 1, borderColor: 'divider', flexShrink: 0, minWidth: '48px'}}
+              sx={{ borderRight: 1, borderColor: 'divider', flexShrink: 0, minWidth: `${RAIL_WIDTH}px`,
+                    width: `${RAIL_WIDTH}px`}}
           >
-            {this.renderTab("Project", 0)}
+            {this.renderTab("Project", 0, <ProjectIcon/>)}
             <Divider/>
-            {this.renderTab("Parts", 1)}
+            {this.renderTab("Parts", 1, <PartsIcon/>)}
             <Divider/>
           </Tabs>
           <Divider orientation="vertical" sx={{zIndex: 'drawer'}}/>
-          <div style={{position: "absolute", left: "50px", width: "100%", height: "100%", overflow: "hidden", pointerEvents: "none"}}>
+          {/* Anchored on both edges rather than sized at 100%: a full-width box offset by the rail
+              runs past the right edge of the page and adds horizontal scroll. */}
+          <div style={{position: "absolute", left: `${RAIL_WIDTH}px`, right: 0, height: "100%", overflow: "hidden", pointerEvents: "none"}}>
             {this.renderUnderlay()}
             {this.renderProjectView()}
             {this.renderPartsView()}

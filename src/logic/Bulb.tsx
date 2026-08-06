@@ -15,6 +15,7 @@ class Bulb extends LogicComponent {
   constructor(params: IParams) {
     super({
       ...params,
+      label: "Bulb",
       type: PartType.OUTPUT,
       hasDelay: false,
     });

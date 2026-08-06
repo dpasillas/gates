@@ -11,6 +11,7 @@ class Ground extends LogicComponent {
     constructor(params: IParams ) {
         super({
             ...params,
+            label: "Ground",
             type: PartType.INPUT,
         });
     }

@@ -182,6 +182,10 @@ class LogicBoard {
       p.selected = false;
     }
     this.selectedPins.clear()
+
+    // The properties panel renders from the selection, so it has to hear about this here rather
+    // than relying on every caller to remember.
+    this.updateProperties();
   }
 }
 
