@@ -36,13 +36,15 @@ class Component extends React.Component<GateProps, IState> {
     }
 
     /**
-     * Gets the translation and rotation transforms of the component.
+     * Gets the transform placing this component's local coordinates on the board.
+     *
+     * Taken from the geometry's matrix rather than rebuilt from position and rotation: the
+     * component is anchored at the centre of its body, so `position` is that centre and is not
+     * where the local origin lands.
      */
     getTransforms() {
-        const {x, y} = this.props.logicComponent.geometry.position
-        const offset_transform = `translate(${x} ${y})`
-        const rotate_transform = `rotate(${this.props.logicComponent.geometry.rotation})`
-        return [offset_transform, rotate_transform].join(' ')
+        const [a, b, c, d, tx, ty] = this.props.logicComponent.geometry.matrix.values;
+        return `matrix(${a} ${b} ${c} ${d} ${tx} ${ty})`;
     }
 
     render() {

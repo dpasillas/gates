@@ -435,8 +435,10 @@ class Board extends React.Component<IProps, IState> {
             return
         }
         const component = part.make(this.props.board);
-        // TODO: Compute offset when dropping components to make drag point more consistent.
-        component.geometry.translate(new paper.Point(x - 16, y - 16))
+        // Components are anchored at the centre of their body, so the drop point is the position.
+        // Offsetting by a fixed amount put anything that was not a 32-unit gate down off the cursor,
+        // by more the further its size differed.
+        component.geometry.position = new paper.Point(x, y);
 
         this.props.board.addComponent(component);
 

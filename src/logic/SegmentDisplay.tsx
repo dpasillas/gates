@@ -61,6 +61,9 @@ class SegmentDisplay extends LogicComponent {
       label: `${segmentCount(params.subtype)}-Segment`,
       type: PartType.OUTPUT,
       canMerge: true,
+      // Displays are normally fed a whole character at once, so they arrive on one bus. Separating
+      // the pins is the exception, for driving segments individually.
+      isMerged: params.isMerged ?? true,
       // A display only ever consumes, so there is no output for a delay to apply to.
       hasDelay: false,
     });
@@ -93,6 +96,19 @@ class SegmentDisplay extends LogicComponent {
   }
 
   /** How each segment should be drawn, in bit order. */
+  /**
+   * The bit of a merged bus that drives the given segment.
+   *
+   * The first segment takes the most significant bit, so that merging a display does not rearrange
+   * it. Separated, the segments run down the edge in order with `a` at the top; a bus carries its
+   * most significant channel at the top for the same reason. Numbering the segments upwards from
+   * the bottom is what keeps a display fed straight from a joiner lit the way its own pins are laid
+   * out.
+   */
+  private busBit(segment: number): number {
+    return this.segments - 1 - segment;
+  }
+
   private segmentStates(): SegmentState[] {
     const count = this.segments;
 
@@ -104,8 +120,10 @@ class SegmentDisplay extends LogicComponent {
       const {v, x, z} = pin.state;
       // Unsigned shifts: a 16-bit-wide bus never sets the sign bit, but the same expression is used
       // for every layout, so it should not depend on that.
-      return Array.from({length: count},
-                        (_, bit) => stateOf((v >>> bit) & 1, (x >>> bit) & 1, (z >>> bit) & 1));
+      return Array.from({length: count}, (_, segment) => {
+        const bit = this.busBit(segment);
+        return stateOf((v >>> bit) & 1, (x >>> bit) & 1, (z >>> bit) & 1);
+      });
     }
 
     return this.inputPins.map(pin => stateOf(pin.state.v & 1, pin.state.x & 1, pin.state.z & 1));
