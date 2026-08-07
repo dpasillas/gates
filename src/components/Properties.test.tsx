@@ -36,6 +36,10 @@ function gate(subtype: GateType) {
   return new LogicGate({scope: GLOBAL_SCOPE, subtype});
 }
 
+function sevenSegment() {
+  return new SegmentDisplay({scope: GLOBAL_SCOPE, subtype: 1});
+}
+
 describe('Properties panel', () => {
   test('says so when nothing is selected', () => {
     renderWithSelection();
@@ -97,51 +101,46 @@ describe('Properties panel', () => {
     });
 
     test('shows a boolean it just toggled', () => {
-      const display = new SegmentDisplay({scope: GLOBAL_SCOPE, subtype: 1});
-      renderWithSelection(display);
+      renderWithSelection(sevenSegment());
 
-      fireEvent.click(screen.getByLabelText('Merge Inputs'));
+      fireEvent.click(screen.getByLabelText('Merge Pins'));
 
-      expect((screen.getByLabelText('Merge Inputs') as HTMLInputElement).checked).toBe(true);
+      expect((screen.getByLabelText('Merge Pins') as HTMLInputElement).checked).toBe(false);
     });
   });
 
   describe('boolean properties', () => {
-    function sevenSegment() {
-      return new SegmentDisplay({scope: GLOBAL_SCOPE, subtype: 1});
-    }
-
     test('renders as a checkbox rather than a number field', () => {
       renderWithSelection(sevenSegment());
 
-      const checkbox = screen.getByLabelText('Merge Inputs') as HTMLInputElement;
+      const checkbox = screen.getByLabelText('Merge Pins') as HTMLInputElement;
       expect(checkbox.type).toBe('checkbox');
-      expect(checkbox.checked).toBe(false);
+      expect(checkbox.checked).toBe(true);
     });
 
     test('reflects the component it came from', () => {
       const display = sevenSegment();
-      display.isMerged = true;
+      display.isMerged = false;
       renderWithSelection(display);
 
-      expect((screen.getByLabelText('Merge Inputs') as HTMLInputElement).checked).toBe(true);
+      expect((screen.getByLabelText('Merge Pins') as HTMLInputElement).checked).toBe(false);
     });
 
     test('applies to the component when toggled', () => {
       const display = sevenSegment();
       renderWithSelection(display);
 
-      fireEvent.click(screen.getByLabelText('Merge Inputs'));
+      fireEvent.click(screen.getByLabelText('Merge Pins'));
 
-      expect(display.isMerged).toBe(true);
+      expect(display.isMerged).toBe(false);
     });
 
     test('shows a selection that disagrees as indeterminate rather than picking one', () => {
-      const merged = sevenSegment();
-      merged.isMerged = true;
-      renderWithSelection(merged, sevenSegment());
+      const separated = sevenSegment();
+      separated.isMerged = false;
+      renderWithSelection(separated, sevenSegment());
 
-      const checkbox = screen.getByLabelText('Merge Inputs');
+      const checkbox = screen.getByLabelText('Merge Pins');
       expect(checkbox).toHaveAttribute('aria-checked', 'mixed');
       expect(checkbox).toHaveAttribute('data-indeterminate', 'true');
     });

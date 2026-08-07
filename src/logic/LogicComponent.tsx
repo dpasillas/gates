@@ -161,7 +161,9 @@ abstract class LogicComponent {
   /** Handler for updating this component's body and pins in response to property updates */
   updateGeometry(params: Partial<UpdateGeometryParams>) {
     const fullParams = this.makeUpdateGeometryParams(params);
-    const {Group, Point} = this.scope;
+    const {Group} = this.scope;
+    // Read against the old body, before the pivot moves under it.
+    const placedAt = this.geometry?.position.clone();
     let selected = false;
     if (this.body) {
       this.body.remove();
@@ -172,8 +174,23 @@ abstract class LogicComponent {
 
     if (!this.geometry) {
       this.geometry = new Group();
-      this.geometry.pivot = new Point(0, 0);
       this.geometry.applyMatrix = false;
+    }
+
+    // The component is anchored at the centre of its body, so `geometry.position` is that centre and
+    // placing a component is a matter of setting it. Pins are deliberately excluded: they stick out
+    // asymmetrically and come and go, and an anchor that shifted when a pin appeared would drag the
+    // component with it.
+    //
+    // Expressed as a pivot rather than by moving the geometry, so that bodies, pins and the
+    // decorations drawn by extraRender all stay in the natural coordinates they are authored in.
+    this.geometry.pivot = this.body.bounds.center;
+
+    // A component that changes size stays where it was put, growing evenly about its centre rather
+    // than sprawling out of one corner. Without this the body would keep its old corner and the
+    // centre — the point the component is placed and reported by — would slide as it grew.
+    if (placedAt) {
+      this.geometry.position = placedAt;
     }
 
     this.setUpPins(fullParams);
@@ -333,7 +350,8 @@ abstract class LogicComponent {
     if (this.canMerge) {
       properties.push({
         key: "merged",
-        label: "Merge Inputs",
+        // Not "inputs": the same option collapses a switch's outputs onto one bus.
+        label: "Merge Pins",
         kind: "boolean",
         value: this.isMerged ? 1 : 0,
         editable: true,
@@ -357,7 +375,8 @@ abstract class LogicComponent {
 
   /** Every property surfaced in the properties panel, with position pinned last. */
   properties(): ComponentProperty[] {
-    const {x, y} = this.geometry.bounds.topLeft;
+    // The centre of the body, which is the point the component is anchored and placed by.
+    const {x, y} = this.geometry.position;
 
     return [
       ...this.specificProperties(),

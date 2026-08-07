@@ -13,6 +13,11 @@ function display(segments: 7 | 14 | 16): SegmentDisplay {
   return new SegmentDisplay({scope: GLOBAL_SCOPE, subtype: SUBTYPE[segments]});
 }
 
+/** A display wired segment by segment, rather than from a bus as they come by default. */
+function separate(segments: 7 | 14 | 16): SegmentDisplay {
+  return new SegmentDisplay({scope: GLOBAL_SCOPE, subtype: SUBTYPE[segments], isMerged: false});
+}
+
 /** The class list of each rendered segment, in bit order. */
 function renderedStates(component: SegmentDisplay): string[] {
   const {container} = render(<svg>{component.extraRender()}</svg>);
@@ -29,24 +34,34 @@ function driveAll(component: SegmentDisplay, bits: number) {
 }
 
 describe('SegmentDisplay', () => {
-  test.each([7, 14, 16] as const)('a %i-segment display takes one pin per segment', segments => {
+  test.each([7, 14, 16] as const)('a %i-segment display arrives on one bus', segments => {
+    // A display is normally fed a whole character at once, so that is how it starts.
     const component = display(segments);
 
     expect(component.segments).toBe(segments);
+    expect(component.isMerged).toBe(true);
+    expect(component.inputPins).toHaveLength(1);
+    expect(component.inputPins[0].width).toBe(segments);
+  });
+
+  test.each([7, 14, 16] as const)('a separated %i-segment display takes one pin per segment',
+                                  segments => {
+    const component = separate(segments);
+
     expect(component.inputPins).toHaveLength(segments);
     expect(component.inputPins.every(p => p.width === 1)).toBe(true);
   });
 
   test('draws nothing on the body but the digit', () => {
     // The displays this copies carry no pin labels, and the body is sized for the digit alone.
-    const component = display(16);
+    const component = separate(16);
 
     expect(component.inputPins.every(p => p.label === undefined)).toBe(true);
   });
 
   test('splits the pins across both edges once there are too many for one', () => {
-    const seven = display(7);
-    const sixteen = display(16);
+    const seven = separate(7);
+    const sixteen = separate(16);
 
     // A 7-segment display fits on one edge; the wider layouts do not.
     expect(new Set(seven.inputPins.map(p => p.pos.x)).size).toBe(1);
@@ -68,7 +83,7 @@ describe('SegmentDisplay', () => {
   });
 
   test('lights the segments whose bits are set', () => {
-    const component = display(7);
+    const component = separate(7);
 
     driveAll(component, 0b0000101);
 
@@ -77,7 +92,7 @@ describe('SegmentDisplay', () => {
   });
 
   test('shows an unknown bit as an error rather than as unlit', () => {
-    const component = display(7);
+    const component = separate(7);
     driveAll(component, 0);
 
     component.inputPins[2].setLogicState(new LogicState({x: 1}));
@@ -95,7 +110,7 @@ describe('SegmentDisplay', () => {
 
 describe('merging a display', () => {
   test('collapses the pins into one bus as wide as the display', () => {
-    const component = display(16);
+    const component = separate(16);
 
     component.isMerged = true;
 
@@ -105,7 +120,6 @@ describe('merging a display', () => {
 
   test('lights segments from the bits of the bus, least significant first', () => {
     const component = display(7);
-    component.isMerged = true;
 
     component.inputPins[0].setLogicState(new LogicState({v: 0b0010010}));
 
@@ -113,10 +127,9 @@ describe('merging a display', () => {
       .toEqual(['off', 'on', 'off', 'off', 'on', 'off', 'off']);
   });
 
-  test('expands back to one pin per segment', () => {
+  test('separates back into one pin per segment', () => {
     const component = display(14);
 
-    component.isMerged = true;
     component.isMerged = false;
 
     expect(component.inputPins).toHaveLength(14);
@@ -125,24 +138,24 @@ describe('merging a display', () => {
 });
 
 describe('segment display properties', () => {
-  test('offers the merge toggle as a boolean', () => {
+  test('offers the merge toggle as a boolean, set by default', () => {
     const merged = display(7).properties().find(p => p.key === 'merged')!;
 
     expect(merged.kind).toBe('boolean');
     expect(merged.editable).toBe(true);
-    expect(merged.value).toBe(0);
+    expect(merged.value).toBe(1);
   });
 
   test('reports the bit width the wiring implies, and does not let it be set', () => {
     const component = display(7);
     const widthOf = () => component.properties().find(p => p.key === 'width')!;
 
-    expect(widthOf().value).toBe(1);
+    expect(widthOf().value).toBe(7);
     expect(widthOf().editable).toBe(false);
 
-    component.isMerged = true;
+    component.isMerged = false;
 
-    expect(widthOf().value).toBe(7);
+    expect(widthOf().value).toBe(1);
     expect(widthOf().editable).toBe(false);
   });
 
@@ -155,9 +168,9 @@ describe('segment display properties', () => {
     const component = display(7);
     const merged = component.properties().find(p => p.key === 'merged')!;
 
-    merged.setValue(1);
+    merged.setValue(0);
 
-    expect(component.isMerged).toBe(true);
-    expect(component.inputPins).toHaveLength(1);
+    expect(component.isMerged).toBe(false);
+    expect(component.inputPins).toHaveLength(7);
   });
 });

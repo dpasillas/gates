@@ -61,6 +61,9 @@ class SegmentDisplay extends LogicComponent {
       label: `${segmentCount(params.subtype)}-Segment`,
       type: PartType.OUTPUT,
       canMerge: true,
+      // Displays are normally fed a whole character at once, so they arrive on one bus. Separating
+      // the pins is the exception, for driving segments individually.
+      isMerged: params.isMerged ?? true,
       // A display only ever consumes, so there is no output for a delay to apply to.
       hasDelay: false,
     });
