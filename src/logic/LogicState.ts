@@ -1,3 +1,4 @@
+import {bitMask} from "../util/bits";
 
 interface IParams {
   v?: number; // non-error value
@@ -54,8 +55,7 @@ class LogicState {
    * state.negate(5)
    * */
   negated(numBits: number) {
-    // (2^n) - 1 will result in a mask with the lower n bits set.
-    const mask = (1 << numBits) - 1
+    const mask = bitMask(numBits)
 
     // Bits with corresponding errors should be masked out
     const v = ~this.v & ~this.x & ~this.z & mask;

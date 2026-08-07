@@ -7,6 +7,7 @@ import {LogicState} from "./LogicState";
 import {LogicConnection} from "./LogicConnection";
 import * as paper from "paper";
 import {LogicBoard} from "./LogicBoard";
+import {bitMask} from "../util/bits";
 
 export enum PinOrientation {
   UNKNOWN,
@@ -45,6 +46,16 @@ interface IParams {
  * A pin is any input or output to/from a LogicComponent
  * */
 class LogicPin {
+  /**
+   * Radius of the circle a connection attaches to.
+   *
+   * This is both what gets drawn and what a drop is tested against, so the target a user aims at is
+   * the target they actually hit. Pins on the denser components sit closer together than twice this,
+   * so the circles can still overlap and the caller has to pick the nearest rather than the first
+   * one in range.
+   */
+  static readonly ANCHOR_RADIUS = 5;
+
   private parent: LogicComponent;
   private connectionAnchor?: paper.Point;
   readonly uuid: string;
@@ -309,9 +320,14 @@ class LogicPin {
     return isSelected;
   }
 
-  isOver(point: paper.Point): boolean {
+  /** How far the given board point is from where a connection would attach. */
+  distanceTo(point: paper.Point): number {
     const [anchor,] = this.anchor
-    return this.transform(anchor).getDistance(point) < 15
+    return this.transform(anchor).getDistance(point)
+  }
+
+  isOver(point: paper.Point): boolean {
+    return this.distanceTo(point) < LogicPin.ANCHOR_RADIUS
   }
 
   /**
@@ -320,8 +336,7 @@ class LogicPin {
    * If no width is specified, defaults to this component's width.
    * */
   bitMask(numBits?: number): number {
-    numBits = numBits ?? this.width;
-    return (1 << numBits) - 1;
+    return bitMask(numBits ?? this.width);
   }
 
   /** Returns a pin to its default state */
