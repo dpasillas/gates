@@ -94,6 +94,26 @@ describe('mergeProperties', () => {
     expect(applied).toEqual([16, 16]);
   });
 
+  test('carries the property kind through, so the panel knows how to render it', () => {
+    const merged = mergeProperties([
+      [property({key: 'merged', kind: 'boolean', value: 1})],
+      [property({key: 'merged', kind: 'boolean', value: 1})],
+    ]);
+
+    expect(merged[0].kind).toBe('boolean');
+    expect(merged[0].value).toBe(1);
+  });
+
+  test('leaves a boolean undecided when the selection disagrees', () => {
+    const merged = mergeProperties([
+      [property({key: 'merged', kind: 'boolean', value: 1})],
+      [property({key: 'merged', kind: 'boolean', value: 0})],
+    ]);
+
+    expect(merged[0].kind).toBe('boolean');
+    expect(merged[0].value).toBeUndefined();
+  });
+
   test('never writes to a read-only contributor', () => {
     // A mixed selection is presented as read-only, but guard the write path too: a caller that
     // ignores the flag must still not be able to mutate a locked component.

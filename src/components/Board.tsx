@@ -330,7 +330,6 @@ class Board extends React.Component<IProps, IState> {
                         preserveAspectRatio="xMinYMin slice"
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox={`${left} ${top} ${width} ${height}`}
-                        onScroll={() => console.log("scroll")}
                     >
                         {this.defs()}
                         {this.renderGrid()}
@@ -507,9 +506,10 @@ class Board extends React.Component<IProps, IState> {
         if (e.shiftKey) {
             return;
         }
+        // TODO(dpasillas): Open a component context menu. Until then this only suppresses the
+        //   browser's own menu, which would otherwise cover the board.
         e.stopPropagation();
         e.preventDefault();
-        console.log("context g!")
     }
 
 }

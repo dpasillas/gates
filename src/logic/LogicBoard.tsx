@@ -3,7 +3,7 @@ import React from "react";
 import {Board} from "../components/Board";
 import {LogicComponent} from "./LogicComponent";
 import {LogicConnection} from "./LogicConnection";
-import paper from "paper/dist/paper-core";
+import paper from "paper";
 import { makeAndSetupScope } from "../util/PaperHelp";
 import {LogicState} from "./LogicState";
 import {LogicPin} from "./LogicPin";

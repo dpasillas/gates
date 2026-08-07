@@ -88,7 +88,6 @@ class Switch extends LogicComponent {
 
     set width(width: number) {
         const {Point} = this.scope;
-        console.log(width);
         const diff = this.width - width;
         this.translate(new Point(diff * 32, 0))
         super.width = width;

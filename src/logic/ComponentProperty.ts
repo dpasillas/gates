@@ -1,5 +1,13 @@
 /**
- * A numeric property of a component, surfaced in the properties panel.
+ * How a property should be presented and edited.
+ *
+ * Booleans still carry a numeric value (0 or 1) so that merging a multi-selection stays a matter of
+ * comparing values, with no per-kind branching.
+ */
+type PropertyKind = "number" | "boolean";
+
+/**
+ * A property of a component, surfaced in the properties panel.
  *
  * Components describe their own properties rather than the panel branching on component type. That
  * keeps the panel ignorant of what a Clock or a LogicGate is, and it means a multi-selection can be
@@ -10,6 +18,8 @@ interface ComponentProperty {
   readonly key: string;
   readonly label: string;
   readonly value: number;
+  /** Defaults to "number". */
+  readonly kind?: PropertyKind;
   /** Read-only properties are still shown; they just cannot be edited. */
   readonly editable: boolean;
   readonly min?: number;
@@ -20,4 +30,4 @@ interface ComponentProperty {
   setValue(value: number): void;
 }
 
-export type {ComponentProperty};
+export type {ComponentProperty, PropertyKind};

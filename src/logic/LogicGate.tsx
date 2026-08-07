@@ -92,6 +92,9 @@ class LogicGate extends LogicComponent {
     [GateType.XNOR]: LogicGate.prototype.opXnor,
     [GateType.BUF]: LogicGate.prototype.opBuf,
     [GateType.NOT]: LogicGate.prototype.opNot,
+    // Tri-state buffering needs an enable pin and an output that can be released, neither of which
+    // a primitive gate has, so it lives in TriStateBuffer instead.
+    [GateType.TRI]: () => {throw new Error("Unsupported type")},
     [GateType.UNKNOWN]: () => {throw new Error("Unsupported type")}
   }
 

@@ -1,4 +1,4 @@
-import {ComponentProperty} from "../logic/ComponentProperty";
+import {ComponentProperty, PropertyKind} from "../logic/ComponentProperty";
 
 /**
  * A property as presented for a whole selection.
@@ -13,6 +13,7 @@ interface MergedProperty {
   readonly label: string;
   /** The shared value, or undefined when the selection disagrees. */
   readonly value?: number;
+  readonly kind?: PropertyKind;
   readonly editable: boolean;
   readonly min?: number;
   readonly max?: number;
@@ -71,6 +72,7 @@ function mergeProperties(perComponent: ComponentProperty[][]): MergedProperty[] 
       key: property.key,
       label: property.label,
       value: values.size === 1 ? property.value : undefined,
+      kind: property.kind,
       editable: matches.every(p => p.editable),
       min: tightestMin(matches),
       max: tightestMax(matches),

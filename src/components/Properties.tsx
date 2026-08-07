@@ -2,6 +2,7 @@ import React from "react"
 import Draggable from "react-draggable"
 
 import Box from "@mui/material/Box";
+import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
@@ -33,20 +34,47 @@ interface IState {
 
 interface RowProps {
   property: MergedProperty;
+  /**
+   * Called once an edit has been applied.
+   *
+   * These rows are controlled inputs reading straight off the components, so without a re-render
+   * the field keeps showing the value from before the edit. Repeated nudges — the arrow keys or
+   * the wheel — would then each be computed from that stale value and never get further than one
+   * step from where they started.
+   */
+  onApplied: () => void;
 }
 
 /**
  * One property, rendered as a static value or an input depending on whether the whole selection
  * allows editing it.
  */
-function PropertyRow({property}: RowProps) {
+function PropertyRow({property, onApplied}: RowProps) {
   const {value, precision} = property;
   const display = value === undefined ? MIXED : value.toFixed(precision ?? 0);
 
   return (
     <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
       <Typography variant="body2" color="text.secondary">{property.label}</Typography>
-      {property.editable
+      {property.kind === "boolean"
+        // A checkbox can show all three states the merge can produce: on, off, and a selection that
+        // disagrees, which becomes the indeterminate mark rather than a silent default.
+        ? <Checkbox
+            size="small"
+            checked={value === 1}
+            indeterminate={value === undefined}
+            disabled={!property.editable}
+            // The indeterminate prop only changes the icon. Spelling the mixed state out in
+            // aria-checked is what makes it reach anyone not looking at the icon.
+            inputProps={{
+              "aria-label": property.label,
+              "aria-checked": value === undefined ? "mixed" : value === 1,
+            }}
+            onChange={(e) => {
+              property.apply(e.target.checked ? 1 : 0);
+              onApplied();
+            }}/>
+        : property.editable
         ? <TextField
             type="number"
             size="small"
@@ -67,6 +95,7 @@ function PropertyRow({property}: RowProps) {
                 return;
               }
               property.apply(parsed);
+              onApplied();
             }}/>
         : <Typography variant="body2" className="properties-value">{display}</Typography>}
     </Stack>
@@ -130,7 +159,9 @@ class Properties extends React.Component<IProps, IState> {
             {components.length} components selected
           </Typography>}
         <Divider/>
-        {properties.map(property => <PropertyRow key={property.key} property={property}/>)}
+        {properties.map(property => (
+          <PropertyRow key={property.key} property={property} onApplied={() => this.setState({})}/>
+        ))}
       </Box>
     );
   }

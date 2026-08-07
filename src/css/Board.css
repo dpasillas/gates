@@ -105,6 +105,25 @@ path.grid {
     fill: #007ADD80;
 }
 
+/* Segments carry their own fill and stroke so the component's white body does not show through, and
+   so an unlit segment stays visible as the dim outline a real display has. */
+.segment {
+    stroke: none;
+    transition: fill 0.1s;
+}
+
+.segment.off {
+    fill: #d6d8da;
+}
+
+.segment.on {
+    fill: #ff3b30;
+}
+
+.segment.error {
+    fill: #b0a0ff;
+}
+
 .bulb-glow {
     fill: url("#bulb-glow");
     stroke: none;
