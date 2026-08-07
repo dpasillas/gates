@@ -62,7 +62,8 @@ class Pin extends React.Component<PinProps, IState> {
                     onMouseUp={this.props.handlers?.onPinMouseUp}
                     onContextMenu={this.props.handlers?.onPinContextMenu}
                 >
-                    <circle className="anchor" cx={anchor.x} cy={anchor.y} r={5} />
+                    {/* The drawn circle is the drop target: same radius the drop is tested against. */}
+                    <circle className="anchor" cx={anchor.x} cy={anchor.y} r={LogicPin.ANCHOR_RADIUS} />
                     <path {...pathAttributes} />
                     {this.props.pin.width > 1 && <path className="wide" {...pathAttributes} />}
                 </g>

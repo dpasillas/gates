@@ -9,6 +9,7 @@ import {Component, GateEventHandlers, GateProps} from "../components/Component";
 import {LogicState} from "./LogicState";
 import {LogicBoard} from "./LogicBoard";
 import {ComponentProperty} from "./ComponentProperty";
+import {bitMask} from "../util/bits";
 
 
 /**
@@ -194,8 +195,7 @@ abstract class LogicComponent {
    * If no width is specified, defaults to this component's width.
    * */
   bitMask(numBits?: number): number {
-    numBits = numBits ?? this.width;
-    return (1 << numBits) - 1;
+    return bitMask(numBits ?? this.width);
   }
 
   /** Returns all pins associated with this component */
