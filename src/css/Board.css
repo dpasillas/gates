@@ -183,30 +183,44 @@ text {
     stroke: none;
 }
 
+/* A bank of toggles, drawn as a track with a thumb that slides across it. */
 .switch {
+    cursor: pointer;
+}
+
+.switch-track {
+    fill: #c2c8d0;
+    stroke: none;
+    transition: fill 0.15s;
+}
+
+.switch.on .switch-track {
+    fill: #a5d6a7;
+}
+
+.switch-thumb {
+    fill: #fafafa;
+    stroke: #9aa1ab;
     stroke-width: 0.5px;
-    transition: fill 0.1s, stroke-width 0.1s;
+    /* Slides between the two ends of the track rather than blinking across. */
+    transition: cx 0.15s, fill 0.15s;
 }
 
-.switch.on {
-    fill: chartreuse;
+.switch.on .switch-thumb {
+    fill: #43a047;
+    stroke: #2e7d32;
 }
 
-.switch:hover {
-    fill: #D0D0D0;
+.switch:hover .switch-track {
+    fill: #b0b7c1;
+}
+
+.switch.on:hover .switch-track {
+    fill: #93cc96;
+}
+
+.switch:active .switch-thumb {
     stroke-width: 1px;
-}
-
-.switch.on:hover {
-    fill: chartreuse;
-}
-
-.switch.on:active {
-    fill: #6fd000;
-}
-
-.switch:active {
-    fill: #6fd000;
 }
 
 .component text {

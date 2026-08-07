@@ -8,6 +8,7 @@ import {faChevronRight} from "@fortawesome/free-solid-svg-icons/faChevronRight";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import {Part} from "./Part";
+import {dragImageHotspot, PREVIEW_PADDING} from "../util/partPreview";
 import "../css/PartsDrawer.css"
 
 interface IProps {
@@ -36,10 +37,10 @@ class PartsDrawer extends React.Component<IProps, IState> {
     const element = component.render();
     const {label} = part
     let {left, top, width, height} = component.geometry.bounds;
-    left -= 2;
-    top -= 2;
-    width += 4;
-    height += 4;
+    left -= PREVIEW_PADDING;
+    top -= PREVIEW_PADDING;
+    width += 2 * PREVIEW_PADDING;
+    height += 2 * PREVIEW_PADDING;
 
     const id = label.replace(' ', '_');
     return (
@@ -66,9 +67,15 @@ class PartsDrawer extends React.Component<IProps, IState> {
 
     const elem = document.getElementById(id) as HTMLElement;
 
-    const {x, y} = part.component.geometry.bounds.center;
+    // Where the cursor sits within the drag image: the same point the drop places the component by,
+    // its body centre, converted from board coordinates into pixels within the preview.
+    //
+    // The preview's own origin is its padded top-left, not the board origin, so that has to be
+    // subtracted. Skipping it left the ghost a pin's length adrift on every component whose pins
+    // extend to the left of its body.
+    const {x, y} = dragImageHotspot(part.component);
 
-    e.dataTransfer.setDragImage(elem, x+2, y+2);
+    e.dataTransfer.setDragImage(elem, x, y);
     e.dataTransfer.effectAllowed = "move";
 
   }

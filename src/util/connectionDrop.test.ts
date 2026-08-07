@@ -56,7 +56,7 @@ describe('dropping a connection', () => {
     // overlap and a drop in that overlap is in range of both. Taking the first match resolved it by
     // creation order, which handed the connection to whichever pin was made earlier.
     const board = new LogicBoard();
-    const display = new SegmentDisplay({scope: board.scope, subtype: 1});
+    const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
     place(board, display);
     const source = driver(board);
 
@@ -85,7 +85,7 @@ describe('dropping a connection', () => {
     const board = new LogicBoard();
     const splitter = new Splitter({scope: board.scope, subtype: 0, width: 2});
     place(board, splitter);
-    const display = new SegmentDisplay({scope: board.scope, subtype: 1});
+    const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
     place(board, display);
     const source = driver(board);
 
@@ -105,7 +105,7 @@ describe('dropping a connection', () => {
     // The catch area and the drawn circle are the same affordance. While the hit test was three
     // times the radius of the circle, a drop could register on a pin the user never touched.
     const board = new LogicBoard();
-    const display = new SegmentDisplay({scope: board.scope, subtype: 1});
+    const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
     place(board, display);
     const target = display.inputPins[0];
     const at = anchorOf(target);
@@ -118,7 +118,7 @@ describe('dropping a connection', () => {
 
   test('connects nothing when the drop is not near any pin', () => {
     const board = new LogicBoard();
-    const display = new SegmentDisplay({scope: board.scope, subtype: 1});
+    const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
     place(board, display);
     const source = driver(board);
 
