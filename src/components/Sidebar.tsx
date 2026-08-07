@@ -101,7 +101,10 @@ class Sidebar extends React.Component<IProps, IState> {
         {icon}
       </Box>}
          value={label} {...a11yProps(index)}
-         sx={railTabSx}
+         // The rule the tab sits above. It belongs to the tab rather than being a Divider between
+         // tabs, because Tabs injects its own props into whatever children it is given, and a
+         // Divider passes the ones it does not recognise straight through to the DOM.
+         sx={{...railTabSx, borderBottom: 1, borderColor: 'divider'}}
          onClick={this.handleTabClick.bind(this, label)}/>
     );
   }
@@ -119,9 +122,7 @@ class Sidebar extends React.Component<IProps, IState> {
                     width: `${RAIL_WIDTH}px`}}
           >
             {this.renderTab("Project", 0, <ProjectIcon/>)}
-            <Divider/>
             {this.renderTab("Parts", 1, <PartsIcon/>)}
-            <Divider/>
           </Tabs>
           <Divider orientation="vertical" sx={{zIndex: 'drawer'}}/>
           {/* Anchored on both edges rather than sized at 100%: a full-width box offset by the rail

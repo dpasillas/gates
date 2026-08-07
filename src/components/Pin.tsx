@@ -60,7 +60,7 @@ class Pin extends React.Component<PinProps, IState> {
                 <g key={this.props.pin.uuid} className={classNames.join(' ')}
                     onMouseDown={this.props.handlers?.onPinMouseDown}
                     onMouseUp={this.props.handlers?.onPinMouseUp}
-                    onContextMenu={() => console.log("context p!")}
+                    onContextMenu={this.props.handlers?.onPinContextMenu}
                 >
                     <circle className="anchor" cx={anchor.x} cy={anchor.y} r={5} />
                     <path {...pathAttributes} />

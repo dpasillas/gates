@@ -32,6 +32,9 @@ class App extends React.Component<IProps , IState>{
       ]],
       ["Output", [
         new Part({type: PartType.OUTPUT, subtype: 0, label:"Bulb"}),
+        new Part({type: PartType.OUTPUT, subtype: 1, label:"7-Segment"}),
+        new Part({type: PartType.OUTPUT, subtype: 2, label:"14-Segment"}),
+        new Part({type: PartType.OUTPUT, subtype: 3, label:"16-Segment"}),
       ]],
       ["Gates", [
         new Part({type: PartType.GATE, subtype: GateType.AND, label:"AND"}),
@@ -42,6 +45,11 @@ class App extends React.Component<IProps , IState>{
         new Part({type: PartType.GATE, subtype: GateType.XNOR, label:"XNOR"}),
         new Part({type: PartType.GATE, subtype: GateType.BUF, label:"BUF"}),
         new Part({type: PartType.GATE, subtype: GateType.NOT, label:"NOT"}),
+        new Part({type: PartType.GATE, subtype: GateType.TRI, label:"Tri-State"}),
+      ]],
+      ["Bus", [
+        new Part({type: PartType.BUS, subtype: 0, label: "Splitter"}),
+        new Part({type: PartType.BUS, subtype: 1, label: "Joiner"}),
       ]],
       ["Other", [
         new Part({type: PartType.COMPOSITE_BUILT_IN, subtype: 0, label: "Half-Adder"}),
@@ -58,7 +66,6 @@ class App extends React.Component<IProps , IState>{
   }
 
   setTheme(theme: Theme) {
-    console.log(`Setting theme (${theme.palette.mode})...`)
     this.setState({theme: theme});
   }
 

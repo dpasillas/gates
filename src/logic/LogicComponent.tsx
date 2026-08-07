@@ -20,6 +20,8 @@ import {ComponentProperty} from "./ComponentProperty";
 export interface InteractionParams {
   adjustableWidth?: boolean;
   adjustableFieldWidth?: boolean;
+  minWidth?: number;
+  maxWidth?: number;
   minFieldWidth?: number;
   maxFieldWidth?: number;
   canMerge?: boolean;
@@ -93,10 +95,12 @@ abstract class LogicComponent {
 
   readonly adjustableWidth: boolean;
   readonly adjustableFieldWidth: boolean;
+  readonly minWidth: number;
+  readonly maxWidth: number;
   readonly minFieldWidth: number;
   readonly maxFieldWidth: number;
   readonly canMerge: boolean;
-  isMerged: boolean;
+  private __isMerged: boolean;
   readonly isMux: boolean;
   readonly hasDelay: boolean;
 
@@ -122,10 +126,14 @@ abstract class LogicComponent {
 
     this.adjustableWidth = params.adjustableWidth ?? false;
     this.adjustableFieldWidth = params.adjustableFieldWidth ?? false;
+    this.minWidth = params.minWidth ?? 1;
+    this.maxWidth = params.maxWidth ?? 32;
     this.minFieldWidth = params.minFieldWidth ?? 1;
     this.maxFieldWidth = params.maxFieldWidth ?? 1;
     this.canMerge = params.canMerge ?? false;
-    this.isMerged = (params.isMerged ?? false) && this.canMerge;
+    // Assigned directly rather than through the setter, which rebuilds geometry that does not exist
+    // yet at this point in construction.
+    this.__isMerged = (params.isMerged ?? false) && this.canMerge;
     this.isMux = params.isMux ?? false;
     this.hasDelay = params.hasDelay ?? true;
 
@@ -270,6 +278,27 @@ abstract class LogicComponent {
     return this.__width;
   }
 
+  get isMerged(): boolean {
+    return this.__isMerged;
+  }
+
+  /**
+   * Collapses this component's per-bit pins into one bussed pin, or expands them again.
+   *
+   * Unlike the width setters, the new value is stored before the rebuild: pin layout is a direct
+   * function of it, so {@link setUpPins} has to see the value it is building for.
+   */
+  set isMerged(isMerged: boolean) {
+    if (!this.canMerge || this.__isMerged === isMerged) {
+      return;
+    }
+    this.__isMerged = isMerged;
+    this.clearPins();
+    this.updateGeometry({});
+    this.reset();
+    this.updateSelf && this.updateSelf();
+  }
+
   /**
    * Properties specific to this kind of component, shown above its position in the panel.
    *
@@ -284,8 +313,8 @@ abstract class LogicComponent {
       // Components which do not declare an adjustable width are pinned to whatever they were built
       // with, so the row still shows but cannot be edited.
       editable: this.adjustableWidth,
-      min: 1,
-      max: 32,
+      min: this.minWidth,
+      max: this.maxWidth,
       setValue: (width: number) => {this.width = width},
     }];
 
@@ -298,6 +327,17 @@ abstract class LogicComponent {
         min: this.minFieldWidth,
         max: this.maxFieldWidth,
         setValue: (fieldWidth: number) => {this.fieldWidth = fieldWidth},
+      });
+    }
+
+    if (this.canMerge) {
+      properties.push({
+        key: "merged",
+        label: "Merge Inputs",
+        kind: "boolean",
+        value: this.isMerged ? 1 : 0,
+        editable: true,
+        setValue: (merged: number) => {this.isMerged = merged !== 0},
       });
     }
 

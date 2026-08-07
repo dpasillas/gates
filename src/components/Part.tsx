@@ -10,6 +10,10 @@ import {Switch} from "../logic/Switch";
 import paper from "paper";
 import {Adder} from "../logic/Adder";
 import {Ground} from "../logic/Ground";
+import {Joiner} from "../logic/Joiner";
+import {SegmentDisplay} from "../logic/SegmentDisplay";
+import {Splitter} from "../logic/Splitter";
+import {TriStateBuffer} from "../logic/TriStateBuffer";
 
 interface PartParams {
   type: PartType,
@@ -38,14 +42,45 @@ class Part {
     const scope = board?.scope ?? GLOBAL_SCOPE;
     switch (this.type) {
       case PartType.GATE:
-        return new LogicGate({subtype: this.subtype, scope: scope, board: board});
+        // Tri-state buffering is not something a primitive gate can express, so it has its own
+        // component even though it belongs with the gates in the parts list.
+        return this.subtype === GateType.TRI
+          ? new TriStateBuffer({scope: scope, board: board})
+          : new LogicGate({subtype: this.subtype, scope: scope, board: board});
       case PartType.OUTPUT:
-        return new Bulb({subtype: 0, board: board, scope: scope});
+        return this.makeOutput(this.subtype, scope, board);
       case PartType.INPUT:
         return this.makeInput(this.subtype, scope, board);
+      case PartType.BUS:
+        return this.makeBus(this.subtype, scope, board);
       case PartType.COMPOSITE_BUILT_IN:
         return this.makeComposite(this.subtype, scope, board);
 
+      default:
+        throw new Error("Unsupported Part Type");
+    }
+  }
+
+  makeOutput(subtype: number, scope: paper.PaperScope, board?: LogicBoard) {
+    switch (subtype) {
+      case 0:
+        return new Bulb({subtype: 0, board: board, scope: scope});
+      // Intentional fall through: the subtype selects the segment layout.
+      case 1:
+      case 2:
+      case 3:
+        return new SegmentDisplay({subtype: this.subtype, board: board, scope: scope});
+      default:
+        throw new Error("Unsupported Part Type");
+    }
+  }
+
+  makeBus(subtype: number, scope: paper.PaperScope, board?: LogicBoard) {
+    switch (subtype) {
+      case 0:
+        return new Splitter({subtype: 0, scope: scope, board: board});
+      case 1:
+        return new Joiner({subtype: 1, scope: scope, board: board});
       default:
         throw new Error("Unsupported Part Type");
     }

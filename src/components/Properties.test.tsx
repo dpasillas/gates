@@ -1,5 +1,5 @@
 import React from 'react';
-import {render, screen, within} from '@testing-library/react';
+import {fireEvent, render, screen, within} from '@testing-library/react';
 
 import {Properties} from './Properties';
 import {LogicBoard} from '../logic/LogicBoard';
@@ -7,6 +7,7 @@ import {LogicComponent} from '../logic/LogicComponent';
 import {LogicGate} from '../logic/LogicGate';
 import {Clock} from '../logic/Clock';
 import {Bulb} from '../logic/Bulb';
+import {SegmentDisplay} from '../logic/SegmentDisplay';
 import {GateType} from '../enums/GateType';
 import {GLOBAL_SCOPE} from '../Constants';
 
@@ -66,6 +67,84 @@ describe('Properties panel', () => {
     // Locked, so it renders as text and has no input to label.
     expect(screen.queryByLabelText('Duty Cycle (%)')).toBeNull();
     expect(valueOf('Duty Cycle (%)')).toBe('50');
+  });
+
+  describe('editing a value', () => {
+    test('shows the value it just applied', () => {
+      const component = gate(GateType.AND);
+      renderWithSelection(component);
+
+      fireEvent.change(screen.getByLabelText('Bit Width'), {target: {value: '2'}});
+
+      expect(component.width).toBe(2);
+      expect(valueOf('Bit Width')).toBe('2');
+    });
+
+    test('lets repeated nudges walk the value further than one step', () => {
+      // The arrow keys and the wheel each compute the next value from what the field is showing.
+      // While that stayed at the pre-edit value, every nudge landed on the same number.
+      const component = gate(GateType.AND);
+      renderWithSelection(component);
+
+      for (let expected = 2; expected <= 5; expected++) {
+        const field = screen.getByLabelText('Bit Width') as HTMLInputElement;
+        fireEvent.change(field, {target: {value: String(Number(field.value) + 1)}});
+
+        expect(component.width).toBe(expected);
+      }
+
+      expect(valueOf('Bit Width')).toBe('5');
+    });
+
+    test('shows a boolean it just toggled', () => {
+      const display = new SegmentDisplay({scope: GLOBAL_SCOPE, subtype: 1});
+      renderWithSelection(display);
+
+      fireEvent.click(screen.getByLabelText('Merge Inputs'));
+
+      expect((screen.getByLabelText('Merge Inputs') as HTMLInputElement).checked).toBe(true);
+    });
+  });
+
+  describe('boolean properties', () => {
+    function sevenSegment() {
+      return new SegmentDisplay({scope: GLOBAL_SCOPE, subtype: 1});
+    }
+
+    test('renders as a checkbox rather than a number field', () => {
+      renderWithSelection(sevenSegment());
+
+      const checkbox = screen.getByLabelText('Merge Inputs') as HTMLInputElement;
+      expect(checkbox.type).toBe('checkbox');
+      expect(checkbox.checked).toBe(false);
+    });
+
+    test('reflects the component it came from', () => {
+      const display = sevenSegment();
+      display.isMerged = true;
+      renderWithSelection(display);
+
+      expect((screen.getByLabelText('Merge Inputs') as HTMLInputElement).checked).toBe(true);
+    });
+
+    test('applies to the component when toggled', () => {
+      const display = sevenSegment();
+      renderWithSelection(display);
+
+      fireEvent.click(screen.getByLabelText('Merge Inputs'));
+
+      expect(display.isMerged).toBe(true);
+    });
+
+    test('shows a selection that disagrees as indeterminate rather than picking one', () => {
+      const merged = sevenSegment();
+      merged.isMerged = true;
+      renderWithSelection(merged, sevenSegment());
+
+      const checkbox = screen.getByLabelText('Merge Inputs');
+      expect(checkbox).toHaveAttribute('aria-checked', 'mixed');
+      expect(checkbox).toHaveAttribute('data-indeterminate', 'true');
+    });
   });
 
   describe('multiple selection', () => {

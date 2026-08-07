@@ -2,7 +2,9 @@ import {GateType} from "../enums/GateType";
 import {Add, Tuple, TruthEntry, TruthTable, TruthTableEntry, TruthValue} from "./Types";
 
 type UNARY_GATE_TYPES = GateType.BUF | GateType.NOT;
-type NON_BINARY_GATE_TYPES = UNARY_GATE_TYPES | GateType.UNKNOWN;
+// The tri-state buffer takes a data input and an enable, which is not the shape a two-input truth
+// table describes, so it is excluded along with the unary gates.
+type NON_BINARY_GATE_TYPES = UNARY_GATE_TYPES | GateType.UNKNOWN | GateType.TRI;
 export const BINARY_TRUTH_TABLES: Omit<Record<GateType, TruthTable<2>>, NON_BINARY_GATE_TYPES> = {
   [GateType.AND]: [
     [['0', '0'], '0'],
