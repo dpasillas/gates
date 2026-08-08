@@ -49,6 +49,13 @@ class LogicBoard {
   simulationStepSize: number = 1;
   updateApp: () => void = () => { };
   updateProperties: () => void = () => { };
+  /**
+   * Brings the properties panel up without the user having opened it.
+   *
+   * Used by the context menu, which shows the properties of whatever was right-clicked. The panel
+   * stays up until the selection goes away or the user closes it.
+   */
+  revealProperties: () => void = () => { };
   update: () => void = () => { };
 
   /**

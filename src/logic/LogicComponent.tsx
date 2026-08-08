@@ -194,9 +194,28 @@ abstract class LogicComponent {
       this.geometry.position = placedAt;
     }
 
+    // What each surviving pin was carrying before, so that a change of width can be noticed below.
+    const carried = new Map(this.pins().map(pin => [pin.uuid, pin.width]));
+
     this.setUpPins(fullParams);
     this.geometry.addChild(this.body);
     this.geometry.addChildren(this.pins().map(p => p.geometry as paper.Item));
+
+    // A pin that changed width can no longer be on the net or the wire it was on: both join pins of
+    // one width, and the pin at the far end has not changed with it.
+    for (const pin of this.pins()) {
+      const before = carried.get(pin.uuid);
+      if (before !== undefined && before !== pin.width) {
+        pin.disconnect();
+        pin.netName = "";
+      }
+    }
+
+    // Rebuilding moves pins about, and a wire is drawn from the pins at its ends, so every wire
+    // still attached has to be redrawn from where its pins have ended up.
+    this.pins()
+        .flatMap(pin => [...pin.connections.values()])
+        .forEach(connection => connection.update());
 
     this.__d = (this.body.exportSVG() as SVGElement).getAttribute('d')!;
 

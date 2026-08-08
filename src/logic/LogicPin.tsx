@@ -67,6 +67,18 @@ class LogicPin {
   pinType: PinType;
   state: LogicState;
   label?: string;
+  /**
+   * The net this pin belongs to, if it has been named.
+   *
+   * A name is a way of describing connections, not a thing connections are made of: pins sharing a
+   * name are wired to each other, and the name is bookkeeping for working out which wires to make.
+   * Clearing it takes an input off the net, and takes down the net an output drives.
+   */
+  netName: string = "";
+  /** The name this pin is exposed under when the board is used as a component. */
+  portName: string = "";
+  /** Whether this pin is exposed at all. A port must be named, and named uniquely. */
+  isPort: boolean = false;
   connections: Map<string /* UUID of connected pin */, LogicConnection> = new Map<string, LogicConnection>();
   /**
    * Callback which triggers a re-render on the rendered object
