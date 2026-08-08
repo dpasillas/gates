@@ -10,6 +10,7 @@ import {LogicState} from "./LogicState";
 import {LogicBoard} from "./LogicBoard";
 import {ComponentProperty} from "./ComponentProperty";
 import {bitMask} from "../util/bits";
+import {normalizeAngle} from "../util/angle";
 
 
 /**
@@ -373,7 +374,27 @@ abstract class LogicComponent {
     return properties;
   }
 
-  /** Every property surfaced in the properties panel, with position pinned last. */
+  /**
+   * How far the component is turned, in degrees, about the centre of its body.
+   *
+   * Reported as a single turn from zero, so that the panel does not jump between 350 and -10 for
+   * the same orientation. A selection of several components is turned by an offset rather than set
+   * to an angle, and reports that offset the shorter way round instead.
+   */
+  get angle(): number {
+    return normalizeAngle(this.geometry.rotation);
+  }
+
+  set angle(angle: number) {
+    this.geometry.rotation = angle;
+    this.update();
+    // Wires leave a pin along the pin, so turning a component changes every wire attached to it.
+    this.pins()
+        .flatMap(pin => [...pin.connections.values()])
+        .forEach(connection => connection.update());
+  }
+
+  /** Every property surfaced in the properties panel, with placement pinned last. */
   properties(): ComponentProperty[] {
     // The centre of the body, which is the point the component is anchored and placed by.
     const {x, y} = this.geometry.position;
@@ -382,6 +403,16 @@ abstract class LogicComponent {
       ...this.specificProperties(),
       {key: "x", label: "X", value: x, editable: false, precision: 1, setValue: () => {}},
       {key: "y", label: "Y", value: y, editable: false, precision: 1, setValue: () => {}},
+      {
+        // Deliberately unbounded. Bounds are a clamp in the panel, not a wrap, so a limit at zero
+        // would stop the angle winding backwards past it while it wound forwards past 360 freely.
+        // Any value is meaningful here; the getter brings it back into a single turn.
+        key: "angle",
+        label: "Angle",
+        value: this.angle,
+        editable: true,
+        setValue: (angle: number) => {this.angle = angle},
+      },
     ];
   }
 
@@ -403,6 +434,9 @@ abstract class LogicComponent {
 
   translate(delta: paper.Point) {
     this.geometry.translate(delta);
+    // Moving a component moves the centre its selection turns about. Turning deliberately does not
+    // invalidate that centre, so that repeated turns share one pivot.
+    this.board?.invalidateSelectionPivot();
     this.update();
     this.pins()
         .flatMap(pin => [...pin.connections.values()])

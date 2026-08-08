@@ -11,6 +11,10 @@ import {BinarySearchTree} from "../BinarySearchTree";
 import {LogicEvent} from "./LogicEvent";
 import {OperableSet} from "../util/OperableSet";
 import { ViewBox } from "../util/Types";
+import { smallestEnclosingCircle } from "../util/enclosingCircle";
+import { normalizeAngleOffset } from "../util/angle";
+import { WireStyle } from "../util/wireStyle";
+import { mergeProperties, MergedProperty } from "../util/mergeProperties";
 
 /**
  *
@@ -47,7 +51,124 @@ class LogicBoard {
   updateProperties: () => void = () => { };
   update: () => void = () => { };
 
+  /**
+   * How wires are drawn, for every connection on the board rather than per connection.
+   *
+   * Held here so that changing it redraws what is already there, not just what is drawn next.
+   */
+  wireStyle: WireStyle = "orthogonal";
+
   temporaryConnection?: { source: LogicPin, currentPos: paper.Point };
+
+  /**
+   * What a multiple selection turns about, and how far it has been turned.
+   *
+   * Held rather than recomputed so that turning a selection repeatedly pivots about one fixed
+   * point. Recomputing would nominally give the same answer — rotating a set of points about the
+   * centre of its enclosing circle leaves that centre where it is — but only to within rounding,
+   * and the error would accumulate over a drag of the dial.
+   */
+  private selectionPivot?: {members: string, centre: paper.Point, turned: number};
+
+  /** Identity of the current selection, so a change of membership can be noticed. */
+  private selectionMembers(): string {
+    return [...this.selectedComponents].map(c => c.uuid).sort().join(",");
+  }
+
+  /**
+   * The pivot for the current selection, computed on first use.
+   *
+   * The centre is that of the smallest circle enclosing the components' own centres, which sits in
+   * the middle of the selection's extent rather than being pulled around by how the components are
+   * distributed within it.
+   */
+  private pivotForSelection() {
+    const members = this.selectionMembers();
+
+    if (!this.selectionPivot || this.selectionPivot.members !== members) {
+      const centres = [...this.selectedComponents].map(c => c.geometry.position);
+      const {centre} = smallestEnclosingCircle(centres.map(({x, y}) => ({x, y})));
+
+      this.selectionPivot = {
+        members,
+        centre: new this.scope.Point(centre.x, centre.y),
+        turned: 0,
+      };
+    }
+
+    return this.selectionPivot;
+  }
+
+  /**
+   * Forgets the pivot, so the next turn is taken about a freshly measured centre.
+   *
+   * Called when the selection moves. Turning does not invalidate it — that is the whole point of
+   * keeping it — but anything that shifts the components underneath it does.
+   */
+  invalidateSelectionPivot() {
+    this.selectionPivot = undefined;
+  }
+
+  /** How far the selection has been turned from where it stood when it was selected. */
+  get selectionRotation(): number {
+    return normalizeAngleOffset(this.pivotForSelection().turned);
+  }
+
+  /**
+   * Turns the whole selection to the given offset from where it started.
+   *
+   * Each component turns about the shared centre, which both swings it around the group and turns
+   * it on the spot, so the selection moves as one piece.
+   */
+  set selectionRotation(turned: number) {
+    const pivot = this.pivotForSelection();
+    // Taken the shortest way round, so that winding the dial past half a turn keeps going the way
+    // it was going rather than unwinding almost all the way back.
+    const delta = normalizeAngleOffset(turned - pivot.turned);
+    if (delta === 0) {
+      return;
+    }
+
+    for (const component of this.selectedComponents) {
+      component.geometry.rotate(delta, pivot.centre);
+      component.update();
+    }
+
+    // A wire's shape follows the pins at both ends, and only one end may have moved.
+    for (const component of this.selectedComponents) {
+      component.pins()
+          .flatMap(pin => [...pin.connections.values()])
+          .forEach(connection => connection.update());
+    }
+
+    pivot.turned = normalizeAngleOffset(turned);
+    this.update();
+  }
+
+  /**
+   * The rows the properties panel shows for the current selection.
+   *
+   * A single component is described by its own properties. Several are described by what they have
+   * in common, except that turning them is offered as an amount to turn by rather than an angle to
+   * set: components at different angles have no shared angle to show, and setting them all to one
+   * value would flatten the arrangement rather than rotate it.
+   */
+  selectionProperties(): MergedProperty[] {
+    const components = [...this.selectedComponents];
+    const merged = mergeProperties(components.map(c => c.properties()));
+
+    if (components.length < 2) {
+      return merged;
+    }
+
+    return merged.map(property => property.key !== "angle" ? property : {
+      key: "angle",
+      label: "Rotate By",
+      value: this.selectionRotation,
+      editable: true,
+      apply: (turned: number) => {this.selectionRotation = turned},
+    });
+  }
 
   setTemporaryConnection(source: LogicPin, currentPos: paper.Point) {
     this.temporaryConnection = { source, currentPos };
@@ -182,6 +303,8 @@ class LogicBoard {
       p.selected = false;
     }
     this.selectedPins.clear()
+
+    this.invalidateSelectionPivot();
 
     // The properties panel renders from the selection, so it has to hear about this here rather
     // than relying on every caller to remember.

@@ -15,7 +15,7 @@ import OpenInNew from "@mui/icons-material/OpenInNew";
 import PushPin from "@mui/icons-material/PushPin";
 
 import {LogicBoard} from "../logic/LogicBoard";
-import {mergeProperties, MergedProperty} from "../util/mergeProperties";
+import {MergedProperty} from "../util/mergeProperties";
 import {PropertiesIcon} from "./RailIcons";
 import {RAIL_WIDTH, railTabSx, railLabelSx, railTextDownSx} from "./railStyle";
 import "../css/Properties.css"
@@ -146,7 +146,7 @@ class Properties extends React.Component<IProps, IState> {
       );
     }
 
-    const properties = mergeProperties(components.map(c => c.properties()));
+    const properties = this.props.board.selectionProperties();
 
     return (
       <Box className="properties-body">
