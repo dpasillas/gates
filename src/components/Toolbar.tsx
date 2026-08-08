@@ -11,9 +11,19 @@ import Stack from "@mui/material/Stack"
 // import SkipNext from "@mui/icons-material/SkipNext";
 // import Stop from "@mui/icons-material/Stop";
 
+import Tooltip from "@mui/material/Tooltip"
+
 import {LogicBoard} from "../logic/LogicBoard";
 import {ToggleThemeButton} from "./ToggleThemeButton";
+import {nextWireStyle, wireStyleLabel, WireStyle} from "../util/wireStyle";
 import "../css/Toolbar.css";
+
+/** A miniature of each wire style, drawn the way the style draws a wire. */
+const WIRE_GLYPHS: Record<WireStyle, string> = {
+  bezier: "M 1 13 C 6 13 10 3 15 3",
+  orthogonal: "M 1 13 H 8 V 3 H 15",
+  diagonal: "M 1 13 H 5 L 11 3 H 15",
+};
 
 interface IProps {
   board: LogicBoard;
@@ -54,6 +64,17 @@ class Toolbar extends React.Component<IProps, IState> {
             {/*</span>*/}
           </Box>
           <Box>
+            <Tooltip title={`Wire style: ${wireStyleLabel(this.props.board.wireStyle)}`}>
+              <IconButton onClick={this.onCycleWireStyle.bind(this)}
+                          aria-label={`Wire style: ${wireStyleLabel(this.props.board.wireStyle)}`}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+                     strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={WIRE_GLYPHS[this.props.board.wireStyle]}/>
+                </svg>
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Box>
             <ToggleThemeButton/>
           </Box>
         </Stack>
@@ -77,6 +98,13 @@ class Toolbar extends React.Component<IProps, IState> {
 
   onStep() {
     this.props.board.advanceSimulation()
+  }
+
+  onCycleWireStyle() {
+    this.props.board.wireStyle = nextWireStyle(this.props.board.wireStyle);
+    // Every wire already on the board is redrawn, not just the ones made from here on.
+    this.props.board.updateApp();
+    this.setState({});
   }
 }
 
