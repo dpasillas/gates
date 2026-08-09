@@ -1,13 +1,11 @@
 import React from "react";
 import Box from "@mui/material/Box"
-import List from "@mui/material/List"
-import ListSubheader from "@mui/material/ListSubheader"
 import Paper from "@mui/material/Paper"
 import Tab from "@mui/material/Tab"
 import Tabs from "@mui/material/Tabs"
 import {Part} from "./Part";
 
-import {PartsDrawer} from "./PartsDrawer";
+import {PartsPanel} from "./PartsPanel";
 import {ProjectIcon, PartsIcon} from "./RailIcons";
 import {RAIL_WIDTH, railTabSx, railLabelSx, railTextUpSx} from "./railStyle";
 import "../css/Sidebar.css"
@@ -66,13 +64,7 @@ class Sidebar extends React.Component<IProps, IState> {
     return (
         <Box className={classNames}>
           <Paper classes={{root: "sidebar-content"}} sx={{pointerEvents: "auto"}}>
-            <List
-                subheader={<ListSubheader>Parts</ListSubheader>}
-            >
-              {[...this.props.parts.entries()].map(([label, parts]) => (
-                <PartsDrawer key={label} label={label} parts={parts}/>
-                ))}
-            </List>
+            <PartsPanel parts={this.props.parts}/>
           </Paper>
         </Box>
     );

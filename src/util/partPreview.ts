@@ -26,5 +26,23 @@ function dragImageHotspot(component: LogicComponent): Hotspot {
   };
 }
 
-export {dragImageHotspot, PREVIEW_PADDING};
+/**
+ * A copy of a part's drawing at its natural size, put where the browser will actually draw it.
+ */
+function makeDragGhost(drawing: SVGSVGElement, width: number, height: number): SVGSVGElement {
+  const ghost = drawing.cloneNode(true) as SVGSVGElement;
+
+  ghost.setAttribute("width", String(width));
+  ghost.setAttribute("height", String(height));
+  ghost.style.position = "fixed";
+  ghost.style.top = "0";
+  ghost.style.left = "0";
+  ghost.style.zIndex = "-1";
+  ghost.style.pointerEvents = "none";
+  document.body.appendChild(ghost);
+
+  return ghost;
+}
+
+export {dragImageHotspot, makeDragGhost, PREVIEW_PADDING};
 export type {Hotspot};

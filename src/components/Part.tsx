@@ -19,6 +19,7 @@ interface PartParams {
   type: PartType,
   subtype: GateType,
   label?: string;
+  userDefined?: boolean;
 }
 
 /**
@@ -28,6 +29,8 @@ class Part {
   readonly subtype: GateType;
   readonly type: PartType;
   readonly label: string;
+  /** Whether this part came from the user's own subcircuit rather than the built-in set. */
+  readonly userDefined: boolean;
   static data?: Part;
   component: LogicComponent;
 
@@ -35,6 +38,7 @@ class Part {
     this.type = params.type;
     this.subtype = params.subtype;
     this.label = params.label ?? "<NO LABEL>";
+    this.userDefined = params.userDefined ?? false;
     this.component = this.make();
   }
 

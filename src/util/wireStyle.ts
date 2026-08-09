@@ -10,9 +10,12 @@ type WireStyle = "bezier" | "orthogonal" | "diagonal";
 /** The order the toolbar cycles through, and the name shown for each. */
 const WIRE_STYLES: ReadonlyArray<{style: WireStyle, label: string}> = [
   {style: "bezier", label: "Curved"},
-  {style: "orthogonal", label: "Square"},
   {style: "diagonal", label: "Angled"},
+  {style: "orthogonal", label: "Square"},
 ];
+
+/** Where the cycle starts. */
+const DEFAULT_WIRE_STYLE: WireStyle = WIRE_STYLES[0].style;
 
 /** The style after this one, wrapping round at the end. */
 function nextWireStyle(style: WireStyle): WireStyle {
@@ -26,5 +29,5 @@ function wireStyleLabel(style: WireStyle): string {
   return WIRE_STYLES.find(entry => entry.style === style)!.label;
 }
 
-export {WIRE_STYLES, nextWireStyle, wireStyleLabel};
+export {DEFAULT_WIRE_STYLE, WIRE_STYLES, nextWireStyle, wireStyleLabel};
 export type {WireStyle};

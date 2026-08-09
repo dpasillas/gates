@@ -13,7 +13,7 @@ import {OperableSet} from "../util/OperableSet";
 import { ViewBox } from "../util/Types";
 import { smallestEnclosingCircle } from "../util/enclosingCircle";
 import { normalizeAngleOffset } from "../util/angle";
-import { WireStyle } from "../util/wireStyle";
+import { DEFAULT_WIRE_STYLE, WireStyle } from "../util/wireStyle";
 import { mergeProperties, MergedProperty } from "../util/mergeProperties";
 
 /**
@@ -63,7 +63,7 @@ class LogicBoard {
    *
    * Held here so that changing it redraws what is already there, not just what is drawn next.
    */
-  wireStyle: WireStyle = "orthogonal";
+  wireStyle: WireStyle = DEFAULT_WIRE_STYLE;
 
   temporaryConnection?: { source: LogicPin, currentPos: paper.Point };
 
