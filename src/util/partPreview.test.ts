@@ -1,4 +1,4 @@
-import {dragImageHotspot, PREVIEW_PADDING} from './partPreview';
+import {dragImageHotspot, makeDragGhost, PREVIEW_PADDING} from './partPreview';
 import {LogicComponent} from '../logic/LogicComponent';
 import {LogicGate} from '../logic/LogicGate';
 import {SegmentDisplay} from '../logic/SegmentDisplay';
@@ -128,6 +128,41 @@ describe('drag image hotspot', () => {
     expect(hotspot.x).toBeLessThan(width + 2 * PREVIEW_PADDING);
     expect(hotspot.y).toBeGreaterThan(0);
     expect(hotspot.y).toBeLessThan(height + 2 * PREVIEW_PADDING);
+  });
+
+  test('the ghost is somewhere the browser will draw it', () => {
+    // setDragImage photographs the element in place, so a ghost parked inside the parts panel is
+    // clipped away by the panel's own overflow and the drag comes up with no image at all.
+    const panel = document.createElement('div');
+    panel.style.overflow = 'hidden';
+    const drawing = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    panel.appendChild(drawing);
+    document.body.appendChild(panel);
+
+    const ghost = makeDragGhost(drawing, 40, 20);
+
+    expect(ghost.parentElement).toBe(document.body);
+    expect(ghost.style.position).toBe('fixed');
+
+    ghost.remove();
+    panel.remove();
+  });
+
+  test('the ghost is drawn at the size the hotspot was measured in', () => {
+    // The tile scales its drawing to the grid; the hotspot is in board units, so a ghost at the
+    // tile's size would put the cursor somewhere other than where the component lands.
+    const drawing = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    drawing.setAttribute('width', '100%');
+    drawing.setAttribute('height', '30');
+    document.body.appendChild(drawing);
+
+    const ghost = makeDragGhost(drawing, 76, 36);
+
+    expect(ghost.getAttribute('width')).toBe('76');
+    expect(ghost.getAttribute('height')).toBe('36');
+
+    ghost.remove();
+    drawing.remove();
   });
 
   test('accounts for pins reaching left of the body', () => {

@@ -1,6 +1,7 @@
 import React from "react";
 import {LogicConnection} from "../logic/LogicConnection";
 import {diagonalRoute, orthogonalRoute, pathData} from "../util/orthogonalPath";
+import {DEFAULT_WIRE_STYLE} from "../util/wireStyle";
 
 interface IProps {
   connection: LogicConnection;
@@ -55,7 +56,7 @@ class Connection extends React.Component<IProps, IState> {
     const end2_2 = `A ${r} ${r} 180 0 0 ${ox - r} ${oy} `
     // The path of a connection is both endpoints drawn as circles, connected by the wire itself.
     const ends = [{point: ianchor, direction: idir}, {point: oanchor, direction: odir}] as const;
-    const route = this.props.connection.board?.wireStyle ?? "orthogonal";
+    const route = this.props.connection.board?.wireStyle ?? DEFAULT_WIRE_STYLE;
     const wire = route === "bezier"
       ? `M ${ix} ${iy} C ${icx} ${icy} ${ocx} ${ocy} ${ox} ${oy}`
       : pathData(route === "diagonal" ? diagonalRoute(...ends) : orthogonalRoute(...ends));

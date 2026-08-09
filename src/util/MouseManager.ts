@@ -254,12 +254,6 @@ class MouseManager {
       const sourcePin = this.targetComponent as unknown as LogicPin;
 
       // The pin nearest the drop, out of those it could legally connect to.
-      //
-      // Both halves of that matter. The snap radius is wider than the gap between pins on a display
-      // or a splitter, so several pins are typically in range and the nearest is the one aimed at;
-      // taking whichever came first put the connection on a neighbour. And filtering by what can
-      // actually connect first means an incompatible pin lying nearer â€” a single-bit channel beside
-      // a bus, say â€” no longer swallows the drop and leaves nothing connected.
       let target: LogicPin | undefined;
       let targetDistance = Infinity;
 
