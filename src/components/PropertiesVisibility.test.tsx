@@ -96,14 +96,17 @@ describe('showing the properties panel', () => {
     expect(screen.queryByLabelText('Hide panel')).toBeNull();
   });
 
-  test('docking is offered as an edge to sit against, not as a pin', () => {
+  test('docking is offered as floating undone, not as a pin', () => {
     render(<Properties board={board().logicBoard}/>);
     fireEvent.click(tab());
+    expect(screen.getByTestId('OpenInNewIcon')).toBeInTheDocument();
+
     fireEvent.click(floatButton());
 
     expect(screen.getByLabelText('Dock panel')).toBeInTheDocument();
     expect(screen.queryByTestId('PushPinIcon')).toBeNull();
-    expect(screen.getByTestId('AlignHorizontalRightIcon')).toBeInTheDocument();
+    expect(screen.queryByTestId('OpenInNewIcon')).toBeNull();
+    expect(screen.getByTestId('DockIcon')).toBeInTheDocument();
   });
 });
 

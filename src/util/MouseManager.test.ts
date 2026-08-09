@@ -169,6 +169,33 @@ describe('properties panel notifications', () => {
     manager.reset(board);
   });
 
+  test('a right-click on a pin does not select it', () => {
+    // The context menu handler leaves an existing selection alone when the pin clicked is already
+    // part of it. Selecting on the mouse down that precedes the menu made that always true, so a
+    // right-click could never replace the selection it was opening the menu for.
+    const {board, manager} = boardWithPanel();
+    const gate = new LogicGate({scope: GLOBAL_SCOPE, subtype: GateType.AND});
+
+    manager.handlePinMouseDown(board, gate.inputPins[0], mouseEvent(2, 100, 100));
+
+    expect(board.selectedPins.size).toBe(0);
+
+    manager.reset(board);
+  });
+
+  test('a right-click on a pin leaves the board ready for the next interaction', () => {
+    // It used to start a connection drag, which the manager then treated as still in progress.
+    const {board, manager} = boardWithPanel();
+    const gate = new LogicGate({scope: GLOBAL_SCOPE, subtype: GateType.AND});
+
+    manager.handlePinMouseDown(board, gate.inputPins[0], mouseEvent(2, 100, 100));
+    manager.handleBoardMouseDown(board, mouseEvent(0, 200, 200));
+
+    expect(manager.selectBox).toBeDefined();
+
+    manager.reset(board);
+  });
+
   test('the position it reports follows the drag', () => {
     const {board, manager} = boardWithPanel();
     const gate = new LogicGate({scope: GLOBAL_SCOPE, subtype: GateType.AND});

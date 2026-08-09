@@ -1,4 +1,4 @@
-import {OperableSet} from "./OperableSet";
+﻿import {OperableSet} from "./OperableSet";
 import {LogicComponent} from "../logic/LogicComponent";
 import {LogicPin} from "../logic/LogicPin";
 import paper from "paper";
@@ -207,6 +207,10 @@ class MouseManager {
   }
 
   handlePinMouseDown(board: LogicBoard, target: LogicPin, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
+    if (e.button !== BUTTON_LEFT) {
+      return
+    }
+
     // Drag-and-drop connections
     e.stopPropagation();
     e.preventDefault();
@@ -254,8 +258,8 @@ class MouseManager {
       // Both halves of that matter. The snap radius is wider than the gap between pins on a display
       // or a splitter, so several pins are typically in range and the nearest is the one aimed at;
       // taking whichever came first put the connection on a neighbour. And filtering by what can
-      // actually connect first means an incompatible pin lying nearer — a single-bit channel beside
-      // a bus, say — no longer swallows the drop and leaves nothing connected.
+      // actually connect first means an incompatible pin lying nearer â€” a single-bit channel beside
+      // a bus, say â€” no longer swallows the drop and leaves nothing connected.
       let target: LogicPin | undefined;
       let targetDistance = Infinity;
 

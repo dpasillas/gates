@@ -11,10 +11,10 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import AlignHorizontalRight from "@mui/icons-material/AlignHorizontalRight";
 import Close from "@mui/icons-material/Close";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 
+import {DockIcon} from "./DockIcon";
 import {LogicBoard} from "../logic/LogicBoard";
 import {MergedProperty} from "../util/mergeProperties";
 import {PinProperties} from "./PinProperties";
@@ -227,9 +227,7 @@ class Properties extends React.Component<IProps, IState> {
           <Tooltip title={floating ? "Dock panel" : "Float panel"}>
             <IconButton size="small" aria-label={floating ? "Dock panel" : "Float panel"}
                         onClick={() => this.setState({floating: !floating})}>
-              {/* An edge to sit against rather than a pin: the panel is being put back into the
-                  side of the window, not fastened where it is. */}
-              {floating ? <AlignHorizontalRight fontSize="small"/> : <OpenInNew fontSize="small"/>}
+              {floating ? <DockIcon fontSize="small"/> : <OpenInNew fontSize="small"/>}
             </IconButton>
           </Tooltip>
           {/* Floating, the rail tab is out of the way, so the panel carries its own way out. */}
