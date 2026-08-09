@@ -11,11 +11,13 @@ import TextField from "@mui/material/TextField";
 import ToggleButton from "@mui/material/ToggleButton";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
+import AlignHorizontalRight from "@mui/icons-material/AlignHorizontalRight";
+import Close from "@mui/icons-material/Close";
 import OpenInNew from "@mui/icons-material/OpenInNew";
-import PushPin from "@mui/icons-material/PushPin";
 
 import {LogicBoard} from "../logic/LogicBoard";
 import {MergedProperty} from "../util/mergeProperties";
+import {PinProperties} from "./PinProperties";
 import {PropertiesIcon} from "./RailIcons";
 import {RAIL_WIDTH, railTabSx, railLabelSx, railTextDownSx} from "./railStyle";
 import "../css/Properties.css"
@@ -28,8 +30,16 @@ interface IProps {
 }
 
 interface IState {
+  /** Held open by the rail tab, until the tab is used again. */
   open: boolean;
   floating: boolean;
+  /**
+   * Brought up by a right-click rather than by the tab.
+   *
+   * Lasts only as long as the selection it was opened to describe, so the panel gets out of the way
+   * on its own once that selection is gone.
+   */
+  revealed: boolean;
 }
 
 interface RowProps {
@@ -109,20 +119,48 @@ function PropertyRow({property, onApplied}: RowProps) {
  * be undocked into a floating card.
  */
 class Properties extends React.Component<IProps, IState> {
+  /** The floating panel's node, for Draggable to move without reaching into the DOM itself. */
+  private floating = React.createRef<HTMLDivElement>();
+
   constructor(props: Readonly<IProps>) {
     super(props);
     this.state = {
       open: false,
       floating: false,
+      revealed: false,
     }
   }
 
   componentDidMount() {
     this.props.board.updateProperties = () => this.setState({});
+    this.props.board.revealProperties = () => this.setState({revealed: true});
   }
 
   componentWillUnmount() {
     this.props.board.updateProperties = () => {};
+    this.props.board.revealProperties = () => {};
+  }
+
+  /** Whether anything is selected for the panel to describe. */
+  hasSelection(): boolean {
+    const {selectedComponents, selectedPins} = this.props.board;
+
+    return selectedComponents.size > 0 || selectedPins.size > 0;
+  }
+
+  /**
+   * Whether the panel is on screen, however it got there.
+   *
+   * A reveal only counts while its selection lasts; clearing the selection puts the panel away
+   * again unless the tab is holding it open.
+   */
+  visible(): boolean {
+    return this.state.open || (this.state.revealed && this.hasSelection());
+  }
+
+  /** Puts the panel away, whichever of the two things was keeping it up. */
+  hide() {
+    this.setState({open: false, revealed: false});
   }
 
   /** The selection's shared type name, or a placeholder when it is mixed. */
@@ -137,12 +175,24 @@ class Properties extends React.Component<IProps, IState> {
 
   renderBody() {
     const components = [...this.props.board.selectedComponents];
+    const pins = [...this.props.board.selectedPins];
 
-    if (components.length === 0) {
+    if (components.length === 0 && pins.length === 0) {
       return (
         <Box className="properties-body">
           <Typography variant="body2" color="text.secondary">No selection</Typography>
         </Box>
+      );
+    }
+
+    // Pins carry a fixed set of properties of their own. Keyed by the selection so that the fields,
+    // which hold what has been typed but not yet applied, start afresh when the selection changes.
+    if (components.length === 0) {
+      return (
+        <PinProperties key={pins.map(p => p.uuid).sort().join(",")}
+                       board={this.props.board}
+                       pins={pins}
+                       onApplied={() => this.setState({})}/>
       );
     }
 
@@ -173,18 +223,30 @@ class Properties extends React.Component<IProps, IState> {
       <Stack id="properties-handle" direction="row" alignItems="center" justifyContent="space-between"
              className={floating ? "properties-header draggable" : "properties-header"}>
         <Typography variant="subtitle2">Properties</Typography>
-        <Tooltip title={floating ? "Dock panel" : "Float panel"}>
-          <IconButton size="small" aria-label={floating ? "Dock panel" : "Float panel"}
-                      onClick={() => this.setState({floating: !floating})}>
-            {floating ? <PushPin fontSize="small"/> : <OpenInNew fontSize="small"/>}
-          </IconButton>
-        </Tooltip>
+        <Stack direction="row" alignItems="center">
+          <Tooltip title={floating ? "Dock panel" : "Float panel"}>
+            <IconButton size="small" aria-label={floating ? "Dock panel" : "Float panel"}
+                        onClick={() => this.setState({floating: !floating})}>
+              {/* An edge to sit against rather than a pin: the panel is being put back into the
+                  side of the window, not fastened where it is. */}
+              {floating ? <AlignHorizontalRight fontSize="small"/> : <OpenInNew fontSize="small"/>}
+            </IconButton>
+          </Tooltip>
+          {/* Floating, the rail tab is out of the way, so the panel carries its own way out. */}
+          {floating &&
+            <Tooltip title="Hide panel">
+              <IconButton size="small" aria-label="Hide panel" onClick={() => this.hide()}>
+                <Close fontSize="small"/>
+              </IconButton>
+            </Tooltip>}
+        </Stack>
       </Stack>
     );
   }
 
   render() {
-    const {open, floating} = this.state;
+    const {floating} = this.state;
+    const visible = this.visible();
 
     const panel = (
       <Paper className="properties-content" elevation={floating ? 8 : 0} sx={{pointerEvents: "auto"}}>
@@ -196,15 +258,20 @@ class Properties extends React.Component<IProps, IState> {
 
     return (
       <>
-        {/* Floating panels are detached from the rail, so the rail only reflects the docked state. */}
+        {/* Docked and floating are two places to put one panel, not two panels: whether it is shown
+            is the same question either way, and the rail tab answers it in both. */}
         <div className="properties-dock">
-          <div className={open && !floating ? "properties-panel" : "properties-panel properties-collapsed"}>
+          <div className={visible && !floating
+            ? "properties-panel"
+            : "properties-panel properties-collapsed"}>
             {!floating && panel}
           </div>
         </div>
-        {floating &&
-          <Draggable handle="#properties-handle" bounds="parent">
-            <div className="properties-floating">{panel}</div>
+        {visible && floating &&
+          // Handed the node directly, rather than letting Draggable look it up with findDOMNode,
+          // which React has deprecated and warns about every time the panel is shown.
+          <Draggable handle="#properties-handle" bounds="parent" nodeRef={this.floating}>
+            <div ref={this.floating} className="properties-floating">{panel}</div>
           </Draggable>}
         <Divider orientation="vertical" sx={{zIndex: 'drawer'}}/>
         {/*
@@ -216,8 +283,8 @@ class Properties extends React.Component<IProps, IState> {
                   display: 'flex', flexDirection: 'column'}}>
           <ToggleButton
             value="properties"
-            selected={open}
-            onChange={() => this.setState({open: !open})}
+            selected={visible}
+            onChange={() => visible ? this.hide() : this.setState({open: true})}
             aria-label="Properties panel"
             sx={{
               ...railTabSx,

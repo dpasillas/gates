@@ -4,6 +4,7 @@ import React from "react";
 import '../css/Board.css';
 import {Part} from "./Part";
 import {LogicComponent} from "../logic/LogicComponent";
+import {LogicPin} from "../logic/LogicPin";
 import { GateEventHandlers } from "./Component";
 import {LogicBoard} from "../logic/LogicBoard";
 import {MouseManager} from "../util/MouseManager";
@@ -293,6 +294,7 @@ class Board extends React.Component<IProps, IState> {
             onGateMouseDown: mm.handleGateMouseDown.bind(mm, this.props.board),
             onGateContextMenu: this.handleGateContextMenu.bind(this),
             onPinMouseDown: mm.handlePinMouseDown.bind(mm, this.props.board),
+            onPinContextMenu: this.handlePinContextMenu.bind(this),
         }
 
         const renderedConnections: JSX.Element[] = [];
@@ -508,10 +510,36 @@ class Board extends React.Component<IProps, IState> {
         if (e.shiftKey) {
             return;
         }
-        // TODO(dpasillas): Open a component context menu. Until then this only suppresses the
-        //   browser's own menu, which would otherwise cover the board.
+        // TODO(dpasillas): Open a component context menu. Until then this suppresses the browser's
+        //   own menu, which would otherwise cover the board, and shows what was clicked.
         e.stopPropagation();
         e.preventDefault();
+
+        const board = this.props.board;
+        if (!board.selectedComponents.has(logicComponent)) {
+            board.clearSelection();
+            logicComponent.selected = true;
+            board.selectedComponents.add(logicComponent);
+        }
+        board.updateProperties();
+        board.revealProperties();
+    }
+
+    handlePinContextMenu(pin: LogicPin, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
+        if (e.shiftKey) {
+            return;
+        }
+        e.stopPropagation();
+        e.preventDefault();
+
+        const board = this.props.board;
+        if (!board.selectedPins.has(pin)) {
+            board.clearSelection();
+            pin.selected = true;
+            board.selectedPins.add(pin);
+        }
+        board.updateProperties();
+        board.revealProperties();
     }
 
 }
