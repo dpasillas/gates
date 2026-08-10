@@ -15,6 +15,7 @@ import Tooltip from "@mui/material/Tooltip"
 
 import {LogicBoard} from "../logic/LogicBoard";
 import {ToggleThemeButton} from "./ToggleThemeButton";
+import {writeSettings} from "../storage/settings";
 import {nextWireStyle, wireStyleLabel, WireStyle} from "../util/wireStyle";
 import "../css/Toolbar.css";
 
@@ -102,6 +103,7 @@ class Toolbar extends React.Component<IProps, IState> {
 
   onCycleWireStyle() {
     this.props.board.wireStyle = nextWireStyle(this.props.board.wireStyle);
+    writeSettings({wireStyle: this.props.board.wireStyle});
     // Every wire already on the board is redrawn, not just the ones made from here on.
     this.props.board.updateApp();
     this.setState({});

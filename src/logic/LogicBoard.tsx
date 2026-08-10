@@ -4,6 +4,7 @@ import {Board} from "../components/Board";
 import {LogicComponent} from "./LogicComponent";
 import {LogicConnection} from "./LogicConnection";
 import paper from "paper";
+import { v4 as uuidv4 } from "uuid";
 import { makeAndSetupScope } from "../util/PaperHelp";
 import {LogicState} from "./LogicState";
 import {LogicPin} from "./LogicPin";
@@ -13,7 +14,8 @@ import {OperableSet} from "../util/OperableSet";
 import { ViewBox } from "../util/Types";
 import { smallestEnclosingCircle } from "../util/enclosingCircle";
 import { normalizeAngleOffset } from "../util/angle";
-import { DEFAULT_WIRE_STYLE, WireStyle } from "../util/wireStyle";
+import { WireStyle } from "../util/wireStyle";
+import { readSettings } from "../storage/settings";
 import { mergeProperties, MergedProperty } from "../util/mergeProperties";
 
 /**
@@ -26,6 +28,15 @@ class LogicBoard {
     width: 800,
     height: 600,
   };
+
+  /**
+   * Identity that survives being renamed.
+   *
+   * The board's file is named after this rather than after the board, so that renaming a board does
+   * not leave its old file behind or collide with another board's. Reassigned when a board is read
+   * back out of a project, which is the only way a board keeps the file it was written to.
+   */
+  id: string = uuidv4();
 
   /** What the board is called. Free text: it is not what its file is named. */
   name: string = "untitled";
@@ -64,9 +75,11 @@ class LogicBoard {
   /**
    * How wires are drawn, for every connection on the board rather than per connection.
    *
-   * Held here so that changing it redraws what is already there, not just what is drawn next.
+   * Held here so that changing it redraws what is already there, not just what is drawn next. It is
+   * not part of a board's file: it changes nothing about the circuit, so it is a preference of
+   * whoever is looking at it rather than something to carry to whoever opens it next.
    */
-  wireStyle: WireStyle = DEFAULT_WIRE_STYLE;
+  wireStyle: WireStyle = readSettings().wireStyle;
 
   temporaryConnection?: { source: LogicPin, currentPos: paper.Point };
 
