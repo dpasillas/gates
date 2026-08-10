@@ -96,6 +96,14 @@ class LogicBoard {
   temporaryConnection?: { source: LogicPin, currentPos: paper.Point };
 
   /**
+   * Where the pointer is on the board, in board coordinates, while it is over it.
+   *
+   * Written on every mouse move and read only when something has to happen where the user is
+   * pointing, so it is a plain field rather than anything the editor draws from.
+   */
+  pointer?: { x: number, y: number };
+
+  /**
    * What a multiple selection turns about, and how far it has been turned.
    *
    * Held rather than recomputed so that turning a selection repeatedly pivots about one fixed
