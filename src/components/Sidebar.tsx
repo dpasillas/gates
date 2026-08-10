@@ -22,6 +22,13 @@ function a11yProps(index: number) {
 
 interface IProps {
   parts: Map<string, Part[]>;
+  /**
+   * What the Project tab shows.
+   *
+   * Passed in already built rather than assembled here from the project and a handful of handlers,
+   * which the sidebar has no other use for.
+   */
+  projectView: React.ReactNode;
 }
 interface IState {
   open: boolean;
@@ -79,7 +86,7 @@ class Sidebar extends React.Component<IProps, IState> {
     return (
       <Box className={classNames}>
         <Paper classes={{root: "sidebar-content"}} sx={{pointerEvents: "auto"}}>
-          [Project View Placeholder]
+          {this.props.projectView}
         </Paper>
       </Box>
     );

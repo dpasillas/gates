@@ -6,7 +6,9 @@ import {Theme, ThemeProvider} from "@mui/material/styles"
 import {Sidebar} from "./Sidebar";
 import {Properties} from "./Properties";
 import {PARTS} from "./partsCatalogue";
+import {EditorTabs} from "./EditorTabs";
 import {MenuBar} from "./MenuBar";
+import {ProjectPanel} from "./ProjectPanel";
 import {NameDialog, OpenProjectDialog} from "./ProjectDialogs";
 import {buildMenus} from "./menus";
 import {LogicBoard} from "../logic/LogicBoard";
@@ -94,8 +96,8 @@ class App extends React.Component<IProps , IState>{
   /**
    * Hears about boards changing under their own steam.
    *
-   * Every board is listened to, not only the one in front: a simulation left running on a board
-   * that is not being shown still moves, and the toolbar reflects it.
+   * Every board is listened to, not only the one in front: a simulation left running on a board in
+   * another tab still moves, and the toolbar reflects it.
    */
   private watch(boards: LogicBoard[]) {
     boards.forEach(board => {board.updateApp = () => this.setState({})});
@@ -213,6 +215,58 @@ class App extends React.Component<IProps , IState>{
     });
   }
 
+  private handleRenameProject() {
+    this.askName({
+      title: "Rename Project",
+      label: "Project name",
+      confirm: "Rename",
+      initial: this.project.name,
+      submit: name => {
+        this.project.name = name;
+        this.setState({});
+      },
+    });
+  }
+
+  private handleAddBoard() {
+    this.askName({
+      title: "New Board",
+      label: "Board name",
+      confirm: "Create",
+      initial: `board ${this.project.boards.length + 1}`,
+      submit: name => {
+        this.watch([this.project.addBoard(name)]);
+        this.setState({});
+      },
+    });
+  }
+
+  private handleSelectBoard(board: LogicBoard) {
+    this.project.show(board);
+    this.setState({});
+  }
+
+  private handleCloseBoard(board: LogicBoard) {
+    this.project.closeBoard(board);
+    this.setState({});
+  }
+
+  private handleReorderTabs(moved: LogicBoard, index: number) {
+    this.project.moveTabTo(moved, index);
+    this.setState({});
+  }
+
+  private handleDeleteBoard(board: LogicBoard) {
+    const empty = board.components.size === 0;
+    if (!empty && !window.confirm(`Delete ${board.name} and everything on it?`)) {
+      return;
+    }
+
+    board.updateApp = () => {};
+    this.project.removeBoard(board);
+    this.setState({notice: `Deleted ${board.name}`});
+  }
+
   private handleExportBoard() {
     this.attempt(async () => `Exported ${await exportBoard(this.board)}`);
   }
@@ -298,6 +352,17 @@ class App extends React.Component<IProps , IState>{
     }
   }
 
+  renderProjectView() {
+    return (
+      <ProjectPanel project={this.project}
+                    onRename={this.handleRenameProject.bind(this)}
+                    onAddBoard={this.handleAddBoard.bind(this)}
+                    onImportBoard={this.handleImportBoard.bind(this)}
+                    onSelectBoard={this.handleSelectBoard.bind(this)}
+                    onDeleteBoard={this.handleDeleteBoard.bind(this)}/>
+    );
+  }
+
   render()
   {
     const deleteSelection = this.hasSelection ? this.handleDelete.bind(this) : undefined;
@@ -324,14 +389,19 @@ class App extends React.Component<IProps , IState>{
                 <Toolbar board={this.board}
                          onSave={this.handleSave.bind(this)}
                          onDelete={deleteSelection}/>
+                <EditorTabs project={this.project}
+                            onSelect={this.handleSelectBoard.bind(this)}
+                            onClose={this.handleCloseBoard.bind(this)}
+                            onAdd={this.handleAddBoard.bind(this)}
+                            onReorder={this.handleReorderTabs.bind(this)}/>
               </div>
               {/* Relative so that the side panels, which overlay the board, anchor to this row. */}
               <Box sx={{bgcolor: 'background.default', width: "100%", height: "100%", display: "flex",
                         position: "relative"}}>
-                <Sidebar parts={PARTS}>
+                <Sidebar parts={PARTS} projectView={this.renderProjectView()}>
                 </Sidebar>
                 {this.board.render()}
-                {/* Keyed with the board so that a change of board gives the panel the new one to
+                {/* Keyed with the board so that switching tabs gives the panel the new board to
                     report on rather than leaving it wired to the old one. Qualified, because the
                     editor beside it is keyed by the same board and siblings may not share a key. */}
                 <Properties key={`properties-${this.board.id}`} board={this.board}/>

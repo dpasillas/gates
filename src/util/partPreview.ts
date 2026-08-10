@@ -1,4 +1,5 @@
 import {LogicComponent} from "../logic/LogicComponent";
+import {parkForDragImage} from "./dragImage";
 
 /** Blank space left around a component in its parts-panel preview. */
 const PREVIEW_PADDING = 2;
@@ -34,14 +35,8 @@ function makeDragGhost(drawing: SVGSVGElement, width: number, height: number): S
 
   ghost.setAttribute("width", String(width));
   ghost.setAttribute("height", String(height));
-  ghost.style.position = "fixed";
-  ghost.style.top = "0";
-  ghost.style.left = "0";
-  ghost.style.zIndex = "-1";
-  ghost.style.pointerEvents = "none";
-  document.body.appendChild(ghost);
 
-  return ghost;
+  return parkForDragImage(ghost);
 }
 
 export {dragImageHotspot, makeDragGhost, PREVIEW_PADDING};
