@@ -132,12 +132,12 @@ class Properties extends React.Component<IProps, IState> {
   }
 
   componentDidMount() {
-    this.props.board.updateProperties = () => this.setState({});
+    this.props.board.onPropertiesChanged = () => this.setState({});
     this.props.board.revealProperties = () => this.setState({revealed: true});
   }
 
   componentWillUnmount() {
-    this.props.board.updateProperties = () => {};
+    this.props.board.onPropertiesChanged = () => {};
     this.props.board.revealProperties = () => {};
   }
 
