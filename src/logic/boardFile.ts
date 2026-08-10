@@ -66,12 +66,21 @@ interface ConnectionData {
   sink: PinRef;
 }
 
-interface BoardData {
+/**
+ * Some components and the wiring among them, without saying where they came from.
+ *
+ * A whole board is one of these; so is a selection lifted off one. Both are put back the same way,
+ * which is what keeps a pasted component and a component read out of a file the same thing.
+ */
+interface ComponentSet {
+  components: ComponentData[];
+  connections: ConnectionData[];
+}
+
+interface BoardData extends ComponentSet {
   format: typeof BOARD_FORMAT;
   version: number;
   name: string;
-  components: ComponentData[];
-  connections: ConnectionData[];
 }
 
 function round(value: number): number {
@@ -131,20 +140,21 @@ function serializeComponent(component: LogicComponent): ComponentData {
 }
 
 /**
- * Everything about a board that is not a consequence of running it.
+ * Some components and the wires that run between them.
  *
- * Components, the wires between their pins, and the settings on both. Simulation time and the logic
- * states riding on the pins are left out: they follow from the components' own power-up state, so a
- * board reopened is a board freshly powered up rather than one caught mid-run.
+ * A wire is only kept when both of its ends are in the set. One leading away to a component that
+ * was left out describes a connection to something that will not be there, so it is dropped rather
+ * than written as a reference to nothing.
  */
-function serializeBoard(board: LogicBoard): BoardData {
-  const components = [...board.components.values()];
-
+function serializeComponents(board: LogicBoard, components: LogicComponent[]): ComponentSet {
   const where = new Map<string, PinRef>();
   components.forEach((component, index) => {
     component.pins().forEach((pin, pinIndex) => where.set(pin.uuid, {component: index, pin: pinIndex}));
   });
 
+  // Taken from the wires the board is drawing rather than from the pins' own lists, which also hold
+  // arrangements the board knows nothing about — a clock drives itself through a connection that
+  // exists only to make it tick.
   const connections: ConnectionData[] = [];
   for (const connection of board.connections.values()) {
     const source = where.get(connection.source.uuid);
@@ -154,12 +164,22 @@ function serializeBoard(board: LogicBoard): BoardData {
     }
   }
 
+  return {components: components.map(serializeComponent), connections};
+}
+
+/**
+ * Everything about a board that is not a consequence of running it.
+ *
+ * Components, the wires between their pins, and the settings on both. Simulation time and the logic
+ * states riding on the pins are left out: they follow from the components' own power-up state, so a
+ * board reopened is a board freshly powered up rather than one caught mid-run.
+ */
+function serializeBoard(board: LogicBoard): BoardData {
   return {
     format: BOARD_FORMAT,
     version: BOARD_FORMAT_VERSION,
     name: board.name,
-    components: components.map(serializeComponent),
-    connections,
+    ...serializeComponents(board, [...board.components.values()]),
   };
 }
 
@@ -204,18 +224,14 @@ function applyComponentData(component: LogicComponent, data: ComponentData) {
 }
 
 /**
- * Rebuilds a board from a file, in place.
- *
- * The board is filled rather than replaced because everything already pointing at it — the panels,
- * the renderer, the simulation callbacks — is holding the instance itself.
+ * Puts a set of components onto a board, wired to each other, leaving what is there alone.
  *
  * Widths are restored before any wire is drawn: a pin that changes width drops the wire it was on,
  * so components have to reach their final shape while there is still nothing attached to lose.
+ *
+ * The board is not reset, so this can be used on one that is running.
  */
-function loadBoard(board: LogicBoard, data: BoardData) {
-  board.clear();
-  board.name = data.name;
-
+function addComponents(board: LogicBoard, data: ComponentSet): LogicComponent[] {
   const components = data.components.map(entry => {
     const type = partTypeNamed(entry.type);
     if (type === undefined) {
@@ -246,6 +262,21 @@ function loadBoard(board: LogicBoard, data: BoardData) {
       board.addConnection(connection);
     }
   }
+
+  return components;
+}
+
+/**
+ * Rebuilds a board from a file, in place.
+ *
+ * The board is filled rather than replaced because everything already pointing at it — the panels,
+ * the renderer, the simulation callbacks — is holding the instance itself.
+ */
+function loadBoard(board: LogicBoard, data: BoardData) {
+  board.clear();
+  board.name = data.name;
+
+  addComponents(board, data);
 
   // Brings the board up from power-up rather than from whatever the wiring above happened to
   // propagate, which is what makes a loaded board equivalent to one just built by hand.
@@ -291,5 +322,5 @@ function parseBoardFile(text: string): BoardData {
   };
 }
 
-export {loadBoard, parseBoardFile, serializeBoard};
-export type {BoardData};
+export {addComponents, loadBoard, parseBoardFile, serializeBoard, serializeComponents};
+export type {BoardData, ComponentSet};

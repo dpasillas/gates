@@ -147,6 +147,17 @@ class Board extends React.Component<IProps, IState> {
         this.mouseManager.reset(this.props.board);
     }
 
+    /**
+     * Notes where the pointer is, for the actions that happen where the user is pointing.
+     *
+     * Written straight onto the board rather than into state: this runs on every mouse move, and
+     * nothing on screen depends on it until something asks.
+     */
+    trackPointer(e: React.MouseEvent<SVGElement, MouseEvent>) {
+        const {x, y} = this.getViewCoordinates(e);
+        this.props.board.pointer = {x, y};
+    }
+
     /** SVG definitions referenced by other svg elements. */
     defs() {
         return (
@@ -334,6 +345,8 @@ class Board extends React.Component<IProps, IState> {
                     xmlns="http://www.w3.org/2000/svg"
                     onWheel={(e) => this.handleWheel(e)}
                     onMouseDown={mm.handleBoardMouseDown.bind(mm, this.props.board)}
+                    onMouseMove={(e) => this.trackPointer(e)}
+                    onMouseLeave={() => {this.props.board.pointer = undefined}}
                     onDragEnter={this.handleDragEnter.bind(this)}
                     onDragOver={(e) => this.handleDragOver(e)}
                     onDrop={(e) => this.handleDrop(e)}

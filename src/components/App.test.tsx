@@ -245,6 +245,21 @@ describe('the app', () => {
     expect(itemIn('Edit', 'Undo')).toHaveAttribute('aria-disabled', 'true');
   });
 
+  test('offers the editing actions only once there is something to act on', () => {
+    render(<App/>);
+
+    for (const action of ['Cut', 'Copy', 'Paste']) {
+      expect(screen.getByRole('button', {name: action})).toBeDisabled();
+    }
+
+    // Read from one opening of the menu: an open one covers the bar that would open it again.
+    fireEvent.click(screen.getByRole('button', {name: 'Edit'}));
+    for (const action of ['Cut', 'Copy', 'Paste', 'Duplicate Selection']) {
+      expect(screen.getByText(action).closest('[role="menuitem"]'))
+          .toHaveAttribute('aria-disabled', 'true');
+    }
+  });
+
   test('offers deleting a selection only while there is one', () => {
     render(<App/>);
 

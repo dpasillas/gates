@@ -14,6 +14,9 @@ import Stack from "@mui/material/Stack"
 import Tooltip from "@mui/material/Tooltip"
 import Save from "@mui/icons-material/Save";
 import Delete from "@mui/icons-material/Delete";
+import ContentCut from "@mui/icons-material/ContentCut";
+import ContentCopy from "@mui/icons-material/ContentCopy";
+import ContentPaste from "@mui/icons-material/ContentPaste";
 
 import {LogicBoard} from "../logic/LogicBoard";
 import {ToggleThemeButton} from "./ToggleThemeButton";
@@ -33,11 +36,34 @@ interface IProps {
   onSave: () => void;
   /** Absent while there is no selection to delete. */
   onDelete?: () => void;
+  /** Absent while there are no components selected to take. */
+  onCut?: () => void;
+  onCopy?: () => void;
+  /** Absent while nothing has been copied. */
+  onPaste?: () => void;
 }
 
 interface IState {}
 
 class Toolbar extends React.Component<IProps, IState> {
+  /**
+   * A button for an action that is not always available.
+   *
+   * The tooltip is wrapped because a disabled button reports no pointer events, and a tooltip that
+   * never hears one never appears — including on the button that most needs to say what it is for.
+   */
+  action(label: string, hint: string, icon: React.ReactElement, run?: () => void) {
+    return (
+      <Tooltip title={hint}>
+        <span>
+          <IconButton onClick={run} disabled={!run} aria-label={label}>
+            {icon}
+          </IconButton>
+        </span>
+      </Tooltip>
+    );
+  }
+
   render() {
     const running = this.props.board.simulationRunning;
     const stopped = !running && this.props.board.simulationStopped;
@@ -88,18 +114,14 @@ class Toolbar extends React.Component<IProps, IState> {
             </Tooltip>
           </Box>
           <Box>
-            <Tooltip title="Delete selection (Del)">
-              {/* Wrapped because a disabled button reports no pointer events, and a tooltip that
-                  never hears one never appears — including on the button that most needs to say
-                  why it is disabled. */}
-              <span>
-                <IconButton onClick={this.props.onDelete}
-                            disabled={!this.props.onDelete}
-                            aria-label="Delete selection">
-                  <Delete fontSize="small"/>
-                </IconButton>
-              </span>
-            </Tooltip>
+            {this.action("Cut", "Cut (Ctrl+X)", <ContentCut fontSize="small"/>, this.props.onCut)}
+            {this.action("Copy", "Copy (Ctrl+C)", <ContentCopy fontSize="small"/>, this.props.onCopy)}
+            {this.action("Paste", "Paste (Ctrl+V)", <ContentPaste fontSize="small"/>,
+                         this.props.onPaste)}
+          </Box>
+          <Box>
+            {this.action("Delete selection", "Delete selection (Del)", <Delete fontSize="small"/>,
+                         this.props.onDelete)}
           </Box>
           <Box>
             <ToggleThemeButton/>

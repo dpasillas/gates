@@ -13,6 +13,8 @@ import {NameDialog, OpenProjectDialog} from "./ProjectDialogs";
 import {buildMenus} from "./menus";
 import {LogicBoard} from "../logic/LogicBoard";
 import {Project} from "../logic/Project";
+import {ComponentSet} from "../logic/boardFile";
+import {copySelection, duplicateSelection, pasteAnchor, pasteInto} from "../logic/clipboard";
 import {Toolbar} from "./Toolbar";
 import {exportBoard, importBoard} from "../storage/boardStore";
 import {
@@ -65,6 +67,17 @@ function isTyping(target: EventTarget | null): boolean {
 class App extends React.Component<IProps , IState>{
   private project: Project = new Project();
   private readonly onKeyDown = this.handleKeyDown.bind(this);
+
+  /**
+   * What was last copied, as data rather than as a hold on the components.
+   *
+   * Kept here rather than in the browser's own clipboard, which cannot be read back without a
+   * permission prompt and cannot be read at all from a menu.
+   */
+  private clipboard?: ComponentSet;
+
+  /** Where the last paste landed, so that repeats at the same point step along instead of stacking. */
+  private lastPaste?: {x: number, y: number, repeat: number};
 
   constructor(props: IProps) {
     super(props);
@@ -307,6 +320,40 @@ class App extends React.Component<IProps , IState>{
     this.setState({});
   }
 
+  private handleCopy() {
+    this.clipboard = copySelection(this.board);
+    // A fresh copy starts a fresh run of pastes, so the next one lands where it is aimed rather
+    // than carrying on from where the previous copy's pastes had reached.
+    this.lastPaste = undefined;
+    this.setState({});
+  }
+
+  private handleCut() {
+    this.handleCopy();
+    this.board.deleteSelection();
+    this.setState({});
+  }
+
+  private handlePaste() {
+    if (!this.clipboard) {
+      return;
+    }
+
+    const at = pasteAnchor(this.board);
+    const landing = this.lastPaste?.x === at.x && this.lastPaste?.y === at.y
+        ? this.lastPaste.repeat + 1
+        : 0;
+
+    pasteInto(this.board, this.clipboard, {...at, repeat: landing});
+    this.lastPaste = {...at, repeat: landing};
+    this.setState({});
+  }
+
+  private handleDuplicate() {
+    duplicateSelection(this.board);
+    this.setState({});
+  }
+
   private handleWireStyle(style: WireStyle) {
     this.board.wireStyle = style;
     writeSettings({wireStyle: style});
@@ -348,6 +395,22 @@ class App extends React.Component<IProps , IState>{
         e.preventDefault();
         this.handleOpenProject();
         break;
+      case "c":
+        e.preventDefault();
+        this.handleCopy();
+        break;
+      case "x":
+        e.preventDefault();
+        this.handleCut();
+        break;
+      case "v":
+        e.preventDefault();
+        this.handlePaste();
+        break;
+      case "d":
+        e.preventDefault();
+        this.handleDuplicate();
+        break;
       default:
     }
   }
@@ -366,6 +429,14 @@ class App extends React.Component<IProps , IState>{
   render()
   {
     const deleteSelection = this.hasSelection ? this.handleDelete.bind(this) : undefined;
+    // Copying takes components; a selection holding nothing but pins has nothing to take.
+    const hasComponents = this.board.selectedComponents.size > 0;
+    const editing = {
+      cut: hasComponents ? this.handleCut.bind(this) : undefined,
+      copy: hasComponents ? this.handleCopy.bind(this) : undefined,
+      paste: this.clipboard ? this.handlePaste.bind(this) : undefined,
+      duplicate: hasComponents ? this.handleDuplicate.bind(this) : undefined,
+    };
     const menus = buildMenus({
       newProject: this.handleNewProject.bind(this),
       openProject: this.handleOpenProject.bind(this),
@@ -376,6 +447,7 @@ class App extends React.Component<IProps , IState>{
       importBoard: this.handleImportBoard.bind(this),
       importProject: this.handleImportProject.bind(this),
       deleteSelection,
+      ...editing,
       wireStyle: this.board.wireStyle,
       setWireStyle: this.handleWireStyle.bind(this),
     });
@@ -388,7 +460,10 @@ class App extends React.Component<IProps , IState>{
                 <MenuBar menus={menus} title={`${this.project.name} — ${this.board.name}`}/>
                 <Toolbar board={this.board}
                          onSave={this.handleSave.bind(this)}
-                         onDelete={deleteSelection}/>
+                         onDelete={deleteSelection}
+                         onCut={editing.cut}
+                         onCopy={editing.copy}
+                         onPaste={editing.paste}/>
                 <EditorTabs project={this.project}
                             onSelect={this.handleSelectBoard.bind(this)}
                             onClose={this.handleCloseBoard.bind(this)}

@@ -21,6 +21,12 @@ interface MenuCommands {
   importProject: () => void;
   /** Absent while there is no selection to delete. */
   deleteSelection?: () => void;
+  /** Absent while there are no components selected to take. */
+  cut?: () => void;
+  copy?: () => void;
+  duplicate?: () => void;
+  /** Absent while nothing has been copied. */
+  paste?: () => void;
   wireStyle: WireStyle;
   setWireStyle: (style: WireStyle) => void;
 }
@@ -60,10 +66,10 @@ function editMenu(commands: MenuCommands): MenuItemSpec[] {
   return [
     {label: "Undo", shortcut: "Ctrl+Z"},
     {label: "Redo", shortcut: "Ctrl+Y"},
-    {label: "Cut", shortcut: "Ctrl+X", separated: true},
-    {label: "Copy", shortcut: "Ctrl+C"},
-    {label: "Paste", shortcut: "Ctrl+V"},
-    {label: "Duplicate Selection", shortcut: "Ctrl+D", separated: true},
+    {label: "Cut", shortcut: "Ctrl+X", separated: true, run: commands.cut},
+    {label: "Copy", shortcut: "Ctrl+C", run: commands.copy},
+    {label: "Paste", shortcut: "Ctrl+V", run: commands.paste},
+    {label: "Duplicate Selection", shortcut: "Ctrl+D", separated: true, run: commands.duplicate},
     {label: "Select All", shortcut: "Ctrl+A"},
     {label: "Delete Selection", shortcut: "Del", run: commands.deleteSelection},
     {
