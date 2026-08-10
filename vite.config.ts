@@ -15,5 +15,8 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/setupTests.ts'],
+    // Stylesheets are stubbed out under test by default, which would leave the board's styles empty
+    // where they are read as text to be carried inside an exported image.
+    css: true,
   },
 })
