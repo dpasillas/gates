@@ -62,7 +62,8 @@ class LogicBoard {
   /** Controls how many time units pass per simulation interval **/
   simulationStepSize: number = 1;
   updateApp: () => void = () => { };
-  updateProperties: () => void = () => { };
+  /** Set by the properties panel, which draws itself from the selection. */
+  onPropertiesChanged: () => void = () => { };
   /**
    * Brings the properties panel up without the user having opened it.
    *
@@ -71,6 +72,17 @@ class LogicBoard {
    */
   revealProperties: () => void = () => { };
   update: () => void = () => { };
+
+  /**
+   * Says that the selection, or something about it, has changed.
+   *
+   * The app is told as well as the panel: the toolbar offers actions that apply to a selection, and
+   * has to know when there stops being one to apply them to.
+   */
+  updateProperties() {
+    this.onPropertiesChanged();
+    this.updateApp();
+  }
 
   /**
    * How wires are drawn, for every connection on the board rather than per connection.
@@ -211,9 +223,17 @@ class LogicBoard {
     this._viewBox = viewbox;
   }
 
+  /**
+   * Keyed by the board's identity so that switching tabs builds a new editor.
+   *
+   * The editor hands the board its redraw callback as it mounts, which only happens if React treats
+   * a different board as a different element rather than as the same one with new props. The key is
+   * qualified because the panel beside it is keyed by the same board, and two siblings sharing a
+   * key leave React unable to tell which of them it is replacing.
+   */
   render(): React.ReactElement {
     return (
-      <Board board={this} />
+      <Board key={`board-${this.id}`} board={this} />
     )
   }
 
@@ -314,6 +334,31 @@ class LogicBoard {
   /** Removes a connection from being tracked and rendered */
   removePin(uuid: string) {
     this.pins.delete(uuid);
+  }
+
+  /**
+   * Removes the selected components, and unwires the selected pins.
+   *
+   * The two are different things to delete: a component goes away entirely, while a pin belongs to
+   * its component and can only lose what it is attached to. Pins of a component being removed are
+   * left to it, since disconnecting them separately would be undone a moment later anyway.
+   */
+  deleteSelection(): {components: number, pins: number} {
+    const components = [...this.selectedComponents];
+    const going = new Set(components.flatMap(component => component.pins()).map(pin => pin.uuid));
+    const pins = [...this.selectedPins].filter(pin => !going.has(pin.uuid));
+
+    for (const component of components) {
+      component.remove();
+    }
+    for (const pin of pins) {
+      pin.disconnect();
+    }
+
+    this.clearSelection();
+    this.update();
+
+    return {components: components.length, pins: pins.length};
   }
 
   /** Takes everything off the board and stops the simulation, leaving it as it starts up. */

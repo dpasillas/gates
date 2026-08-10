@@ -1,0 +1,47 @@
+.menu-bar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 32px;
+    padding: 0 6px;
+    flex-shrink: 0;
+}
+
+.menu-bar .menu-button {
+    min-width: 0;
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 400;
+    text-transform: none;
+    line-height: 1.4;
+}
+
+.menu-title {
+    padding-left: 16px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.menu-item {
+    min-width: 220px;
+    gap: 8px;
+}
+
+/* Reserved whether or not the item is ticked, so labels line up down the menu. */
+.menu-tick {
+    display: flex;
+    align-items: center;
+    width: 16px;
+    font-size: 16px;
+}
+
+.menu-shortcut {
+    margin-left: 24px;
+    opacity: 0.6;
+}
+
+.menu-chevron {
+    margin-right: -6px;
+    opacity: 0.6;
+}

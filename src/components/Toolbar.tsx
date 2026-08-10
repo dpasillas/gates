@@ -12,6 +12,8 @@ import Stack from "@mui/material/Stack"
 // import Stop from "@mui/icons-material/Stop";
 
 import Tooltip from "@mui/material/Tooltip"
+import Save from "@mui/icons-material/Save";
+import Delete from "@mui/icons-material/Delete";
 
 import {LogicBoard} from "../logic/LogicBoard";
 import {ToggleThemeButton} from "./ToggleThemeButton";
@@ -28,6 +30,9 @@ const WIRE_GLYPHS: Record<WireStyle, string> = {
 
 interface IProps {
   board: LogicBoard;
+  onSave: () => void;
+  /** Absent while there is no selection to delete. */
+  onDelete?: () => void;
 }
 
 interface IState {}
@@ -45,6 +50,13 @@ class Toolbar extends React.Component<IProps, IState> {
                spacing={1}
                divider={<Divider orientation="vertical" variant="middle" flexItem/>}
                direction="row">
+          <Box>
+            <Tooltip title="Save (Ctrl+S)">
+              <IconButton onClick={this.props.onSave} aria-label="Save">
+                <Save fontSize="small"/>
+              </IconButton>
+            </Tooltip>
+          </Box>
           <Box flexDirection="row">
             <IconButton className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
               {/*<PlayArrow className="default" sx={{position:"fixed"}}/>*/}
@@ -73,6 +85,20 @@ class Toolbar extends React.Component<IProps, IState> {
                   <path d={WIRE_GLYPHS[this.props.board.wireStyle]}/>
                 </svg>
               </IconButton>
+            </Tooltip>
+          </Box>
+          <Box>
+            <Tooltip title="Delete selection (Del)">
+              {/* Wrapped because a disabled button reports no pointer events, and a tooltip that
+                  never hears one never appears — including on the button that most needs to say
+                  why it is disabled. */}
+              <span>
+                <IconButton onClick={this.props.onDelete}
+                            disabled={!this.props.onDelete}
+                            aria-label="Delete selection">
+                  <Delete fontSize="small"/>
+                </IconButton>
+              </span>
             </Tooltip>
           </Box>
           <Box>

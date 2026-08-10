@@ -109,7 +109,7 @@ describe('middle-mouse pan', () => {
 function boardWithPanel() {
   const board = new LogicBoard();
   const counter = {notifications: 0};
-  board.updateProperties = () => {counter.notifications++};
+  board.onPropertiesChanged = () => {counter.notifications++};
 
   const manager = new MouseManager();
   manager.getViewCoordinates = viewCoordinateMapper(board);

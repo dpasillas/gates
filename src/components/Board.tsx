@@ -73,6 +73,8 @@ class Board extends React.Component<IProps, IState> {
      */
     private ref: React.RefObject<HTMLDivElement>;
     private resizeObserver?: ResizeObserver;
+    /** Whether this editor is still on screen, for callbacks that can outlive it. */
+    private mounted = false;
 
     constructor(props: Readonly<IProps>) {
         super(props);
@@ -92,6 +94,12 @@ class Board extends React.Component<IProps, IState> {
 
     /** Resize handler to make sure the board doesn't scale up when the window is resized */
     onResize(entries: ResizeObserverEntry[]) {
+        // Switching boards takes this editor down, and a resize already in flight when it goes
+        // arrives afterwards with nothing left to tell about it.
+        if (!this.mounted) {
+            return;
+        }
+
         const { width, height } = entries[0].contentRect;
 
         const board = this.props.board;
@@ -119,6 +127,7 @@ class Board extends React.Component<IProps, IState> {
      * @see {@link https://reactjs.org/docs/react-component.html#componentdidmount componentDidMount}
      * */
     componentDidMount() {
+        this.mounted = true;
         this.props.board.update = () => this.setState({})
         this.setState({});
         const board = this.ref.current!;
@@ -133,6 +142,7 @@ class Board extends React.Component<IProps, IState> {
      * Generally used to clean up any bindings set up in {@link componentDidMount}, and other stray bindings.
      * @see {@link https://reactjs.org/docs/react-component.html#componentwillunmount componentWillUnmount} */
     componentWillUnmount() {
+        this.mounted = false;
         this.resizeObserver?.disconnect();
         this.mouseManager.reset(this.props.board);
     }
