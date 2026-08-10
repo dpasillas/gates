@@ -1,0 +1,109 @@
+.project-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 8px 0;
+    overflow: hidden;
+}
+
+.project-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 4px 8px 4px 16px;
+}
+
+.project-name {
+    flex-grow: 1;
+    font-size: 15px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.project-rename {
+    flex-shrink: 0;
+    min-width: 0;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: none;
+}
+
+.project-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    padding: 4px 16px 12px;
+}
+
+.project-actions button {
+    flex: 1;
+    padding: 3px 8px;
+    font-size: 12px;
+    text-transform: none;
+}
+
+.project-section-label {
+    flex-shrink: 0;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.project-rows {
+    overflow-y: auto;
+}
+
+.project-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    /* Carried by every row so that marking the current one does not shift the rest. */
+    border-left: 2px solid transparent;
+}
+
+.project-row-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+    opacity: 0.6;
+}
+
+.project-row-name {
+    flex-grow: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* Out of the way until the row is reached for, so that a list of boards does not read as a row of
+   buttons. Faded rather than hidden: a hidden control leaves the keyboard's reach and the
+   accessibility tree, and this is the only way to delete a board. */
+.project-row-delete {
+    flex-shrink: 0;
+    opacity: 0;
+    padding: 2px;
+    font-size: 15px;
+}
+
+.project-row:hover .project-row-delete,
+.project-row-delete:focus-visible {
+    opacity: 1;
+}
+
+.project-badge {
+    flex-shrink: 0;
+    padding: 0 4px;
+    border: 1px solid;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: 0.04em;
+}

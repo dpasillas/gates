@@ -135,4 +135,4 @@ class PartsPanel extends React.Component<IProps, IState> {
   }
 }
 
-export {PartsPanel, RECENT_LIMIT};
+export {PartsPanel};

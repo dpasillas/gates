@@ -1,0 +1,72 @@
+.editor-tabs {
+    display: flex;
+    align-items: stretch;
+    flex-shrink: 0;
+    height: 35px;
+    padding: 0 4px;
+    overflow-x: auto;
+    border-bottom: 1px solid;
+}
+
+.editor-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    max-width: 220px;
+    padding: 0 6px 0 12px;
+    font-size: 13px;
+    cursor: pointer;
+    /* Drawn on every tab so the active one's accent does not shift the row by a pixel. */
+    border-bottom: 2px solid transparent;
+}
+
+.editor-tab.active {
+    border-bottom-color: currentColor;
+}
+
+/* Out of the row entirely while it is being carried, rather than merely faded: what the cursor
+   holds is the tab, and leaving a copy behind would show it in two places at once. */
+.editor-tab.lifted {
+    display: none;
+}
+
+/* The space it would drop into, held at the tab's own width so the row does not change length as
+   the gap moves along it. */
+.editor-tab-gap {
+    flex-shrink: 0;
+    align-self: center;
+    height: 26px;
+    border: 1px dashed;
+    border-radius: 4px;
+}
+
+.editor-tab-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.editor-tab-badge {
+    flex-shrink: 0;
+    padding: 0 4px;
+    border: 1px solid;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 13px;
+    letter-spacing: 0.04em;
+}
+
+.editor-tab-close {
+    /* Held to the text size so closing a tab does not make the row taller than the tabs in it. */
+    font-size: 14px;
+    padding: 2px;
+}
+
+.editor-tab-add {
+    align-self: center;
+    margin-left: 4px;
+    font-size: 16px;
+    padding: 3px;
+}
