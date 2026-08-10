@@ -27,6 +27,9 @@ class LogicBoard {
     height: 600,
   };
 
+  /** What the board is called. Free text: it is not what its file is named. */
+  name: string = "untitled";
+
   /** All components which should be rendered on screen */
   components: Map<string, LogicComponent> = new Map();
   /** All connections which may be rendered */
@@ -298,6 +301,21 @@ class LogicBoard {
   /** Removes a connection from being tracked and rendered */
   removePin(uuid: string) {
     this.pins.delete(uuid);
+  }
+
+  /** Takes everything off the board and stops the simulation, leaving it as it starts up. */
+  clear() {
+    this.stopSimulation();
+
+    // Removing a component takes its pins and their wires with it, which drains all three maps.
+    for (const component of [...this.components.values()]) {
+      component.remove();
+    }
+    this.components.clear();
+    this.connections.clear();
+    this.pins.clear();
+
+    this.clearSelection();
   }
 
   clearSelection() {
