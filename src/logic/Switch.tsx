@@ -94,6 +94,31 @@ class Switch extends LogicComponent {
                           (_, bit) => pin(1, this.rowCentre(bit, width, height)));
     }
 
+    /**
+     * Which toggles are on, a bit each, the least significant at the bottom.
+     *
+     * This is the bank's own setting rather than a logic state: it is where the user left the
+     * switches, so it is saved with the board where the values on the pins are not.
+     */
+    get toggles(): number {
+        if (this.isMerged) {
+            return this.outputPins[0]?.state.v ?? 0;
+        }
+
+        return this.outputPins.reduce((bits, pin, bit) => bits | ((pin.state.v & 1) << bit), 0);
+    }
+
+    set toggles(bits: number) {
+        if (this.isMerged) {
+            this.outputPins[0]?.setLogicState(new LogicState({v: bits & this.bitMask()}));
+
+            return;
+        }
+
+        this.outputPins.forEach((pin, bit) =>
+            pin.setLogicState(new LogicState({v: (bits >> bit) & 1})));
+    }
+
     /** Whether the toggle for the given bit is on. */
     private isOn(bit: number): boolean {
         const pin = this.isMerged ? this.outputPins[0] : this.outputPins[bit];
