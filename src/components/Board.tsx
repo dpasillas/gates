@@ -101,7 +101,18 @@ class Board extends React.Component<IProps, IState> {
         }
 
         const { width, height } = entries[0].contentRect;
+        this.fitToViewPort(width, height);
+    }
 
+    /**
+     * Brings the region the board is showing into line with the editor showing it.
+     *
+     * The board holds which part of itself is on screen, while the editor holds how far it is
+     * zoomed, and neither is any use without the other: a region that does not match the shape of
+     * the element drawing it is both drawn at the wrong scale and pointed at in the wrong place,
+     * since a click is mapped through the region as though it filled the element exactly.
+     */
+    fitToViewPort(width: number, height: number) {
         const board = this.props.board;
         this.setState((state) => {
             board.viewBox = {
@@ -134,6 +145,30 @@ class Board extends React.Component<IProps, IState> {
         this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
         this.resizeObserver.observe(board)
         this.mouseManager.getViewCoordinates = this.getViewCoordinates.bind(this);
+    }
+
+    /**
+     * Takes over a board handed to this editor in place of the one it was showing.
+     *
+     * A board keeps its identity across being saved and read back, so opening the project that is
+     * already open hands the editor a new board object under the same key and React keeps the
+     * editor it built for the old one. Nothing else would then tell the arriving board how large
+     * the editor is or how far it is zoomed, and it would be drawn and clicked through the size it
+     * was constructed with.
+     */
+    componentDidUpdate(previous: Readonly<IProps>) {
+        if (previous.board === this.props.board) {
+            return;
+        }
+
+        this.mouseManager.reset(previous.board);
+        previous.board.update = () => {};
+        this.props.board.update = () => this.setState({});
+
+        const rect = this.ref.current?.getBoundingClientRect();
+        if (rect) {
+            this.fitToViewPort(rect.width, rect.height);
+        }
     }
 
     /**

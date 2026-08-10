@@ -39,6 +39,11 @@ class LogicConnection {
     this.source.connections.delete(this.sink.uuid);
     this.sink.connections.delete(this.source.uuid);
     this.board?.removeConnection(this.uuid);
+
+    // Nothing drives the far end any more, so it falls back to high impedance and its component
+    // works out what that means. Left alone it keeps the last value it was handed and goes on
+    // behaving as though the wire were still there.
+    this.sink.reset();
   }
 
   render() {

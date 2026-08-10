@@ -132,10 +132,19 @@ class LogicPin {
     }
   }
 
-  /** Removes all connections associated with this pin */
+  /**
+   * Removes every wire attached to this pin.
+   *
+   * A pin joined to itself is left where it is. That is not a wire to anything the user drew, it is
+   * a component's own arrangement — a clock drives itself through one, and taking it away stops the
+   * clock for good.
+   */
   disconnect() {
-    this.connections.forEach((c) => c.remove());
-    this.connections.clear();
+    for (const connection of [...this.connections.values()]) {
+      if (connection.source !== connection.sink) {
+        connection.remove();
+      }
+    }
   }
 
   /** Indicates whether this pin may be connected to another */
