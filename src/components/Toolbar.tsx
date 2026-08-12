@@ -11,8 +11,11 @@ import Stack from "@mui/material/Stack"
 // import SkipNext from "@mui/icons-material/SkipNext";
 // import Stop from "@mui/icons-material/Stop";
 
+import SvgIcon from "@mui/material/SvgIcon"
 import Tooltip from "@mui/material/Tooltip"
 import Save from "@mui/icons-material/Save";
+import GridOn from "@mui/icons-material/GridOn";
+import GridOff from "@mui/icons-material/GridOff";
 import Delete from "@mui/icons-material/Delete";
 import ContentCut from "@mui/icons-material/ContentCut";
 import ContentCopy from "@mui/icons-material/ContentCopy";
@@ -22,6 +25,7 @@ import {LogicBoard} from "../logic/LogicBoard";
 import {ToggleThemeButton} from "./ToggleThemeButton";
 import {writeSettings} from "../storage/settings";
 import {nextWireStyle, wireStyleLabel, WireStyle} from "../util/wireStyle";
+import {nextSnapMode, snapModeLabel, SnapMode} from "../util/grid";
 import "../css/Toolbar.css";
 
 /** A miniature of each wire style, drawn the way the style draws a wire. */
@@ -30,6 +34,27 @@ const WIRE_GLYPHS: Record<WireStyle, string> = {
   orthogonal: "M 1 13 H 8 V 3 H 15",
   diagonal: "M 1 13 H 5 L 11 3 H 15",
 };
+
+/**
+ * A 2x2 grid, for the coarse spacing, drawn to match the Material grid icons beside it.
+ *
+ * Those are filled rather than stroked: a rounded frame wound one way with the cells wound the
+ * other, so the lines are what is left between them. Keeping to their 24-unit box and 2-unit lines
+ * is what makes this read as the same icon with fewer divisions rather than a different one.
+ */
+const COARSE_GRID = "M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
+    + "M11 11H4V4h7v7z M20 11h-7V4h7v7z M11 20H4v-7h7v7z M20 20h-7v-7h7v7z";
+
+function snapIcon(mode: SnapMode) {
+  switch (mode) {
+    case "off":
+      return <GridOff fontSize="small"/>;
+    case "fine":
+      return <GridOn fontSize="small"/>;
+    case "coarse":
+      return <SvgIcon fontSize="small"><path d={COARSE_GRID}/></SvgIcon>;
+  }
+}
 
 interface IProps {
   board: LogicBoard;
@@ -60,6 +85,22 @@ class Toolbar extends React.Component<IProps, IState> {
             {icon}
           </IconButton>
         </span>
+      </Tooltip>
+    );
+  }
+
+  /** Steps through the grid spacings a component can be placed on, shown pressed while on one. */
+  snapToGridButton() {
+    const mode = this.props.board.snapMode;
+    const label = `Snap to grid: ${snapModeLabel(mode)}`;
+
+    return (
+      <Tooltip title={label}>
+        <IconButton className={mode === "off" ? "" : "pressed"}
+                    onClick={this.onCycleSnapMode.bind(this)}
+                    aria-label={label} aria-pressed={mode !== "off"}>
+          {snapIcon(mode)}
+        </IconButton>
       </Tooltip>
     );
   }
@@ -112,6 +153,7 @@ class Toolbar extends React.Component<IProps, IState> {
                 </svg>
               </IconButton>
             </Tooltip>
+            {this.snapToGridButton()}
           </Box>
           <Box>
             {this.action("Cut", "Cut (Ctrl+X)", <ContentCut fontSize="small"/>, this.props.onCut)}
@@ -147,6 +189,13 @@ class Toolbar extends React.Component<IProps, IState> {
 
   onStep() {
     this.props.board.advanceSimulation()
+  }
+
+  onCycleSnapMode() {
+    this.props.board.snapMode = nextSnapMode(this.props.board.snapMode);
+    writeSettings({snapMode: this.props.board.snapMode});
+    // Nothing already on the board moves, so only this button has anything to redraw.
+    this.setState({});
   }
 
   onCycleWireStyle() {

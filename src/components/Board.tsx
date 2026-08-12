@@ -8,6 +8,7 @@ import {LogicPin} from "../logic/LogicPin";
 import { GateEventHandlers } from "./Component";
 import {LogicBoard} from "../logic/LogicBoard";
 import {MouseManager} from "../util/MouseManager";
+import {snapTo} from "../util/grid";
 
 // import Properties from "./Properties";
 
@@ -498,7 +499,11 @@ class Board extends React.Component<IProps, IState> {
         // Components are anchored at the centre of their body, so the drop point is the position.
         // Offsetting by a fixed amount put anything that was not a 32-unit gate down off the cursor,
         // by more the further its size differed.
-        component.geometry.position = new paper.Point(x, y);
+        //
+        // Snapped on the way down as well as while being carried, so that a component put on the
+        // board is already lined up with the ones already there.
+        const size = this.props.board.snapSize;
+        component.geometry.position = new paper.Point(snapTo(x, size), snapTo(y, size));
 
         this.props.board.addComponent(component);
 
