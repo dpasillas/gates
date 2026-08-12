@@ -30,6 +30,31 @@ class OperableSet<T> extends Set<T> {
     return result
   }
 
+  equals(other: Set<T>): boolean {
+    if (this.size !== other.size) {
+      return false
+    }
+
+    for (const value of this) {
+      if (!other.has(value)) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  difference(other: Set<T>): OperableSet<T> {
+    const result = new OperableSet<T>();
+    for (const value of this) {
+      if (!other.has(value)) {
+        result.add(value)
+      }
+    }
+
+    return result
+  }
+
   xor(other: Set<T>): OperableSet<T> {
     return this.symmetricDifference(other);
   }

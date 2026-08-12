@@ -384,22 +384,65 @@ class LogicBoard {
     this.clearSelection();
   }
 
-  clearSelection() {
-    for (const c of this.selectedComponents) {
-      c.selected = false;
-    }
-    this.selectedComponents.clear()
+  /**
+   * Makes the given components the selection, and takes any pins out of it.
+   *
+   * Components and pins are never selected at once. The two are deleted differently, described
+   * differently by the properties panel, and copied differently, so a selection holding both has no
+   * single answer to what an action on it should do.
+   */
+  setSelectedComponents(components: Iterable<LogicComponent>) {
+    const next = new Set(components);
 
-    for (const p of this.selectedPins) {
-      p.selected = false;
+    for (const component of this.selectedComponents) {
+      if (!next.has(component)) {
+        component.selected = false;
+      }
     }
-    this.selectedPins.clear()
+    for (const pin of this.selectedPins) {
+      pin.selected = false;
+    }
+    for (const component of next) {
+      component.selected = true;
+    }
+
+    this.selectedComponents.clear();
+    this.selectedComponents.addAll(next);
+    this.selectedPins.clear();
 
     this.invalidateSelectionPivot();
 
     // The properties panel renders from the selection, so it has to hear about this here rather
     // than relying on every caller to remember.
     this.updateProperties();
+  }
+
+  /** Makes the given pins the selection, and takes any components out of it. */
+  setSelectedPins(pins: Iterable<LogicPin>) {
+    const next = new Set(pins);
+
+    for (const pin of this.selectedPins) {
+      if (!next.has(pin)) {
+        pin.selected = false;
+      }
+    }
+    for (const component of this.selectedComponents) {
+      component.selected = false;
+    }
+    for (const pin of next) {
+      pin.selected = true;
+    }
+
+    this.selectedPins.clear();
+    this.selectedPins.addAll(next);
+    this.selectedComponents.clear();
+
+    this.invalidateSelectionPivot();
+    this.updateProperties();
+  }
+
+  clearSelection() {
+    this.setSelectedComponents([]);
   }
 }
 
