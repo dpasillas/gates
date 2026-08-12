@@ -6,6 +6,7 @@ import React from "react";
 import {LogicBoard} from "../logic/LogicBoard";
 import {MouseEventMapping} from "./MouseEventMapping";
 import { MouseEventHandler, MouseEventName } from "./Types";
+import { SelectionMode, selectionModeFor } from "./selectionMode";
 
 
 enum MouseAction {
@@ -13,8 +14,6 @@ enum MouseAction {
   PAN,
   DRAG,
   SELECT,
-  SELECT_APPEND,
-  SELECT_XOR,
   CONNECT,
 }
 
@@ -28,13 +27,6 @@ const BUTTON_RIGHT = 2;
 const BUTTON_BROWSER_BACK = 3;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BUTTON_BROWSER_FORWARD = 4;
-
-
-enum SelectionType {
-  NONE,
-  COMPONENT,
-  PIN,
-}
 
 
 /**
@@ -60,9 +52,16 @@ class MouseManager {
 
   private handlers: Map<MouseEventName, MouseEventHandler> = new Map();
 
-  private priorSelectionType: SelectionType = SelectionType.NONE;
-  private priorSelection: OperableSet<LogicComponent | LogicPin> = new OperableSet();
-  private currentSelection: OperableSet<LogicComponent | LogicPin> = new OperableSet();
+  /** How the interaction under way combines what it picks up with what was already selected. */
+  private mode: SelectionMode = SelectionMode.REPLACE;
+  /**
+   * What was selected when the current interaction began.
+   *
+   * A rubber band is redrawn on every move, so each move has to build its answer from the selection
+   * the band started with rather than from the one the previous move left behind.
+   */
+  private priorComponents: OperableSet<LogicComponent> = new OperableSet();
+  private priorPins: OperableSet<LogicPin> = new OperableSet();
 
   // This needs to be computed by the mounted board because we need the bounding box of the mounted component on screen.
   getViewCoordinates?: (e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) => MouseEventMapping;
@@ -96,9 +95,9 @@ class MouseManager {
       this.pPoint = undefined;
     }
 
-    this.priorSelectionType = SelectionType.NONE;
-    this.priorSelection.clear();
-    this.currentSelection.clear();
+    this.mode = SelectionMode.REPLACE;
+    this.priorComponents.clear();
+    this.priorPins.clear();
     board.update()
   }
 
@@ -116,14 +115,20 @@ class MouseManager {
 
     this.mouseButton = e.button
 
-    if (e.button === BUTTON_LEFT && !e.altKey) {
-      this.currentSelection.clear()
-      if (e.getModifierState("Shift") && this.priorSelection.size > 0) {
-        this.action = MouseAction.SELECT_APPEND;
-      } else if (e.getModifierState("Control") && this.priorSelection.size > 0) {
-        this.action = MouseAction.SELECT_XOR;
-      } else {
-        this.action = MouseAction.SELECT
+    if (e.button === BUTTON_LEFT) {
+      this.action = MouseAction.SELECT;
+      this.mode = selectionModeFor(e);
+      this.priorComponents = new OperableSet(board.selectedComponents);
+      this.priorPins = new OperableSet(board.selectedPins);
+
+      // A plain press on the board is the start of a new selection, so what was selected goes now
+      // rather than once the band has been drawn. The other modes build on what is there, and it
+      // has to stay on screen while they do.
+      //
+      // Asked first because clearing re-renders the app whether or not there was anything to clear,
+      // which put that cost on every press of the button on an empty board.
+      if (this.mode === SelectionMode.REPLACE
+          && (this.priorComponents.size > 0 || this.priorPins.size > 0)) {
         board.clearSelection();
       }
 
@@ -140,7 +145,9 @@ class MouseManager {
       this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
     }
 
-    if (e.button === BUTTON_MIDDLE || (e.button === 0 && e.altKey)) {
+    // Middle mouse only. Alt with the left button used to pan as well, and now takes things out of
+    // the selection instead.
+    if (e.button === BUTTON_MIDDLE) {
       this.action = MouseAction.PAN;
       // Add handlers directly to the window to ensure that events aren't dropped once the cursor moves out of the
       // widget's rendered area.  Dropping these events would lead to an inconsistent mouse state.
@@ -171,39 +178,56 @@ class MouseManager {
     const { x, y } = this.getViewCoordinates!(e);
     this.pPoint = new board.scope.Point(x, y);
 
-    const selected = board.selectedComponents;
-
-    if (e.getModifierState("Control")) {
-      if (target.selected) {
-        target.selected = false
-        selected.delete(target)
-      } else {
-        target.selected = true
-        selected.add(target)
-      }
-    } else if (e.getModifierState("Shift")) {
-      if (!target.selected) {
-        target.selected = true
-        selected.add(target)
-      }
-    } else if (!selected.has(target)) {
-      board.clearSelection()
-      target.selected = true
-      selected.add(target)
+    // Clicking a component selects it, which the properties panel renders from. Installing the
+    // selection is what tells the panel; the click is only reported directly when it leaves the
+    // selection as it stands and so installs nothing.
+    const next = MouseManager.clicked(selectionModeFor(e), board.selectedComponents, target,
+        board.selectedPins.size > 0);
+    if (next) {
+      board.setSelectedComponents(next);
     } else {
-      if (!target.selected) {
-        target.selected = true
-        selected.add(target)
-      }
+      board.updateProperties();
     }
-
-    // Clicking a component selects it, which the properties panel renders from.
-    board.updateProperties();
 
     // Add handlers directly to the window to ensure that events aren't dropped once the cursor moves out of the
     // widget's rendered area.  Dropping these events would lead to an inconsistent mouse state.
-    this.addHandler('mousemove', this.handleMouseMoveDrag.bind(this, board))
+    //
+    // Only what is selected can be dragged, so a click that took the component out of the selection
+    // leaves it where it is rather than putting it straight back.
+    if (target.selected) {
+      this.addHandler('mousemove', this.handleMouseMoveDrag.bind(this, board))
+    }
     this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
+  }
+
+  /**
+   * What clicking one thing leaves selected, or nothing if it leaves the selection as it stands.
+   *
+   * A plain click on something already selected keeps the whole selection, so that a group can be
+   * picked up by any of its members without first falling apart. Anything else it lands on becomes
+   * the selection on its own — which is also what a modifier does when what is selected is of the
+   * other kind, since the two cannot be selected together and so cannot be added to each other.
+   */
+  private static clicked<T>(mode: SelectionMode, selected: OperableSet<T>, target: T,
+      otherKindSelected: boolean): OperableSet<T> | undefined {
+    const one = new OperableSet<T>([target]);
+
+    if (mode === SelectionMode.SUBTRACT) {
+      return selected.has(target) ? selected.difference(one) : undefined;
+    }
+
+    if (otherKindSelected) {
+      return one;
+    }
+
+    switch (mode) {
+      case SelectionMode.ADD:
+        return selected.union(one);
+      case SelectionMode.TOGGLE:
+        return selected.symmetricDifference(one);
+      case SelectionMode.REPLACE:
+        return selected.has(target) ? undefined : one;
+    }
   }
 
   handlePinMouseDown(board: LogicBoard, target: LogicPin, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
@@ -217,20 +241,28 @@ class MouseManager {
 
     this.mouseButton = e.button;
 
-    // Start connection drag
-    this.action = MouseAction.CONNECT;
-    this.targetComponent = target as unknown as LogicComponent; // Hack because targetComponent is LogicComponent type but we store Pin
-    const { x, y } = this.getViewCoordinates!(e);
-    this.pPoint = new board.scope.Point(x, y);
+    const mode = selectionModeFor(e);
+    const next = MouseManager.clicked(mode, board.selectedPins, target,
+        board.selectedComponents.size > 0);
+    if (next) {
+      board.setSelectedPins(next);
+    } else {
+      board.updateProperties();
+    }
 
     // Add handlers directly to the window to ensure that events aren't dropped
-    this.addHandler('mousemove', this.handleMouseMoveConnect.bind(this, board))
-    this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
+    //
+    // A held modifier means the click is editing the selection, so it does not also start drawing a
+    // wire from the pin it lands on.
+    if (mode === SelectionMode.REPLACE) {
+      this.action = MouseAction.CONNECT;
+      this.targetComponent = target as unknown as LogicComponent; // Hack because targetComponent is LogicComponent type but we store Pin
+      const { x, y } = this.getViewCoordinates!(e);
+      this.pPoint = new board.scope.Point(x, y);
 
-    // Select the pin as well
-    target.selected = true;
-    board.selectedPins.add(target)
-    board.updateProperties();
+      this.addHandler('mousemove', this.handleMouseMoveConnect.bind(this, board))
+    }
+    this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
   }
 
   makeConnection(board: LogicBoard, a: LogicPin, b: LogicPin) {
@@ -272,14 +304,6 @@ class MouseManager {
       if (target) {
         this.makeConnection(board, sourcePin, target);
       }
-    }
-
-    if (board.selectedComponents.size > 0) {
-      this.priorSelectionType = SelectionType.NONE; // Changed to NONE to avoid sticky state issues
-      this.priorSelection.addAll(board.selectedComponents)
-    } else if (board.selectedPins.size > 0) {
-      this.priorSelectionType = SelectionType.NONE;
-      this.priorSelection.addAll(board.selectedPins)
     }
 
     this.reset(board)
@@ -338,104 +362,91 @@ class MouseManager {
       this.selectBox.segments[3].point.y = y
     }
 
-    board.selectedComponents.clear();
-    board.selectedPins.clear();
-
-    const components = [...board.components.values()];
-    const pins = [...board.pins.values()];
-
-    if (this.action === MouseAction.SELECT) {
-      this.currentSelection.clear();
-
-      for (const component of components) {
-        if (component.collides(this.selectBox)) {
-          this.currentSelection.add(component);
-        }
-      }
-
-      if (this.currentSelection.size > 0) {
-        board.selectedComponents.clear();
-        board.selectedComponents.addAll(this.currentSelection as Set<LogicComponent>);
-      } else {
-        const pins = [...board.pins.values()];
-
-        for (const pin of pins) {
-          if (pin.collides(this.selectBox)) {
-            this.currentSelection.add(pin);
-          }
-        }
-
-        board.selectedPins.clear();
-        board.selectedPins.addAll(this.currentSelection as Set<LogicPin>)
-      }
-    } else {
-      this.currentSelection.clear()
-
-      if (this.priorSelectionType === SelectionType.COMPONENT) {
-        const components = [...board.components.values()];
-        for (const component of components) {
-          if (component.collides(this.selectBox)) {
-            this.currentSelection.add(component);
-          }
-        }
-
-        if (this.action === MouseAction.SELECT_APPEND) {
-          board.selectedComponents.addAll(this.currentSelection.union(this.priorSelection) as Set<LogicComponent>);
-        } else if (this.action === MouseAction.SELECT_XOR) {
-          board.selectedComponents.addAll(this.currentSelection.xor(this.priorSelection) as Set<LogicComponent>);
-        } else {
-          throw new Error("Inconsistent selection state");
-        }
-      } else if (this.priorSelectionType === SelectionType.PIN) {
-        const pins = [...board.pins.values()];
-        for (const pin of pins) {
-          if (pin.collides(this.selectBox)) {
-            this.currentSelection.add(pin);
-          }
-        }
-
-        if (this.action === MouseAction.SELECT_APPEND) {
-          board.selectedPins.addAll(this.currentSelection.union(this.priorSelection) as Set<LogicPin>);
-        } else if (this.action === MouseAction.SELECT_XOR) {
-          board.selectedPins.addAll(this.currentSelection.xor(this.priorSelection) as Set<LogicPin>);
-        } else {
-          throw new Error("Inconsistent selection state");
-        }
-      } else {
-        throw new Error("Inconsistent selection state");
-      }
-    }
-
-    if (board.selectedComponents.size > 0) {
-      for (const component of components) {
-        component.selected = board.selectedComponents.has(component);
-      }
-
-      for (const pin of pins) {
-        pin.selected = false
-      }
-    } else if (board.selectedPins.size > 0) {
-      for (const pin of pins) {
-        pin.selected = board.selectedPins.has(pin)
-      }
-
-      for (const component of components) {
-        component.selected = false;
-      }
-    } else {
-      for (const component of components) {
-        component.selected = false;
-      }
-
-      for (const pin of pins) {
-        pin.selected = false
-      }
-    }
+    this.applyBand(board);
 
     // This update is required to update the selection box.
     // TODO: refactor the selection box as a widget so it can be updated independently of the rest of the board.
+    //
+    // Only the box. Whether the selection changed is applyBand's to report, and telling the panel
+    // again here re-rendered the whole app a second time on every move of the pointer.
     board.update();
-    board.updateProperties();
+  }
+
+  /** Everything the band currently encloses, of one kind. */
+  private enclosed<T extends {collides(select: paper.Item): boolean}>(items: Iterable<T>): OperableSet<T> {
+    const hit = new OperableSet<T>();
+    for (const item of items) {
+      if (item.collides(this.selectBox!)) {
+        hit.add(item);
+      }
+    }
+
+    return hit;
+  }
+
+  /**
+   * Works the band's current extent into the selection.
+   *
+   * With a modifier held, the kind of thing already selected is the kind the band picks up: what it
+   * is being added to or taken from decides, since a selection cannot hold both. Without one, or
+   * with nothing to build on, components win wherever the band covers any, and pins are offered
+   * only where it covers none — a pin sits on the edge of its component, so a band drawn over a
+   * circuit almost always covers both.
+   */
+  private applyBand(board: LogicBoard) {
+    const building = this.mode !== SelectionMode.REPLACE
+        && (this.priorComponents.size > 0 || this.priorPins.size > 0);
+
+    if (!building) {
+      const components = this.enclosed(board.components.values());
+      if (components.size > 0) {
+        MouseManager.selectComponents(board, components);
+      } else {
+        MouseManager.selectPins(board, this.enclosed(board.pins.values()));
+      }
+    } else if (this.priorComponents.size > 0) {
+      MouseManager.selectComponents(board,
+          this.combine(this.priorComponents, this.enclosed(board.components.values())));
+    } else {
+      MouseManager.selectPins(board, this.combine(this.priorPins, this.enclosed(board.pins.values())));
+    }
+  }
+
+  /**
+   * Installs a selection, unless it is the one already in place.
+   *
+   * The band works out the whole selection afresh on every move of the pointer, and most of those
+   * moves stretch it across empty board and arrive at the answer it already had. Installing it
+   * again re-renders the app, which is far and away the most expensive thing a move can do.
+   */
+  private static selectComponents(board: LogicBoard, next: OperableSet<LogicComponent>) {
+    if (board.selectedPins.size === 0 && next.equals(board.selectedComponents)) {
+      return;
+    }
+
+    board.setSelectedComponents(next);
+  }
+
+  private static selectPins(board: LogicBoard, next: OperableSet<LogicPin>) {
+    if (board.selectedComponents.size === 0 && next.equals(board.selectedPins)) {
+      return;
+    }
+
+    board.setSelectedPins(next);
+  }
+
+  /** Puts what the band encloses together with what was selected when it was started. */
+  private combine<T>(prior: OperableSet<T>, hit: OperableSet<T>): OperableSet<T> {
+    switch (this.mode) {
+      case SelectionMode.ADD:
+        return prior.union(hit);
+      case SelectionMode.SUBTRACT:
+        return prior.difference(hit);
+      case SelectionMode.TOGGLE:
+        return prior.symmetricDifference(hit);
+      default:
+        return hit;
+    }
   }
 
   handleMouseMovePan(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
@@ -483,19 +494,6 @@ class MouseManager {
     this.pPoint = currentPoint;
   }
 
-  isSelect(): boolean {
-    const { SELECT, SELECT_APPEND, SELECT_XOR } = MouseAction;
-    return [SELECT, SELECT_APPEND, SELECT_XOR].includes(this.action)
-  }
-
-  getSelection<T extends LogicComponent | LogicPin>(current: OperableSet<T>): OperableSet<T> {
-    if (this.action === MouseAction.SELECT_APPEND) {
-      return current.union(this.priorSelection as OperableSet<T>)
-    } else if (this.action === MouseAction.SELECT_XOR) {
-      return current.symmetricDifference(this.priorSelection as OperableSet<T>)
-    }
-    throw new Error("Inconsistent Selection State");
-  }
 }
 
 export {MouseManager};
