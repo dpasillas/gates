@@ -15,6 +15,7 @@ import { ViewBox } from "../util/Types";
 import { smallestEnclosingCircle } from "../util/enclosingCircle";
 import { normalizeAngleOffset } from "../util/angle";
 import { WireStyle } from "../util/wireStyle";
+import { snapSizeFor, SnapMode } from "../util/grid";
 import { readSettings } from "../storage/settings";
 import { mergeProperties, MergedProperty } from "../util/mergeProperties";
 
@@ -92,6 +93,19 @@ class LogicBoard {
    * whoever is looking at it rather than something to carry to whoever opens it next.
    */
   wireStyle: WireStyle = readSettings().wireStyle;
+
+  /**
+   * Whether a component being placed lands on the grid, and how coarse that grid is.
+   *
+   * Held here for the same reason as the wire style: it is how this person likes to work rather
+   * than anything about the circuit, so it is not written to a board's file.
+   */
+  snapMode: SnapMode = readSettings().snapMode;
+
+  /** How far apart the positions a component may be placed on are, or zero while snapping is off. */
+  get snapSize(): number {
+    return snapSizeFor(this.snapMode);
+  }
 
   temporaryConnection?: { source: LogicPin, currentPos: paper.Point };
 

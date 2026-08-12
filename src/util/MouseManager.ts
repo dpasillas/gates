@@ -7,6 +7,7 @@ import {LogicBoard} from "../logic/LogicBoard";
 import {MouseEventMapping} from "./MouseEventMapping";
 import { MouseEventHandler, MouseEventName } from "./Types";
 import { SelectionMode, selectionModeFor } from "./selectionMode";
+import { snapTo } from "./grid";
 
 
 enum MouseAction {
@@ -34,7 +35,17 @@ const BUTTON_BROWSER_FORWARD = 4;
  * */
 class MouseManager {
   private sPoint?: paper.Point;
-  private pPoint?: paper.Point;
+  /**
+   * Where the pointer was when a component was picked up, and where that component was standing.
+   *
+   * A drag is measured from these rather than from the previous position of the pointer. Snapping
+   * means the component does not go exactly where the pointer went, so the difference between one
+   * move and the next is not the distance the component should travel: a run of moves too small to
+   * reach the next grid position would each round away to nothing and the component would never
+   * move at all, however far the pointer had been carried.
+   */
+  private grabPoint?: paper.Point;
+  private grabOrigin?: paper.Point;
   /**
    * The board coordinate grabbed at the start of a pan.
    *
@@ -87,12 +98,13 @@ class MouseManager {
     this.mouseButton = undefined;
     this.action = MouseAction.NONE;
     this.panAnchor = undefined;
+    this.grabPoint = undefined;
+    this.grabOrigin = undefined;
 
     if (this.selectBox) {
       this.selectBox.remove();
       this.selectBox = undefined;
       this.sPoint = undefined;
-      this.pPoint = undefined;
     }
 
     this.mode = SelectionMode.REPLACE;
@@ -137,7 +149,6 @@ class MouseManager {
       this.sPoint = new Point(x, y);
       const rect = new Rectangle(this.sPoint, new Size(0, 0))
       this.selectBox = new Path.Rectangle(rect)
-      this.pPoint = this.sPoint;
 
       // Add handlers directly to the window to ensure that events aren't dropped once the cursor moves out of the
       // widget's rendered area.  Dropping these events would lead to an inconsistent mouse state.
@@ -176,7 +187,8 @@ class MouseManager {
     this.mouseButton = e.button;
     this.targetComponent = target;
     const { x, y } = this.getViewCoordinates!(e);
-    this.pPoint = new board.scope.Point(x, y);
+    this.grabPoint = new board.scope.Point(x, y);
+    this.grabOrigin = target.geometry.position.clone();
 
     // Clicking a component selects it, which the properties panel renders from. Installing the
     // selection is what tells the panel; the click is only reported directly when it leaves the
@@ -239,6 +251,13 @@ class MouseManager {
     e.stopPropagation();
     e.preventDefault();
 
+    // A press arriving while an interaction is already running would attach a second set of window
+    // handlers over the first, which addHandler refuses. That happens whenever a release goes
+    // astray, as it does when the button comes up outside the window.
+    if (this.action !== MouseAction.NONE) {
+      return
+    }
+
     this.mouseButton = e.button;
 
     const mode = selectionModeFor(e);
@@ -250,18 +269,18 @@ class MouseManager {
       board.updateProperties();
     }
 
-    // Add handlers directly to the window to ensure that events aren't dropped
-    //
     // A held modifier means the click is editing the selection, so it does not also start drawing a
-    // wire from the pin it lands on.
-    if (mode === SelectionMode.REPLACE) {
-      this.action = MouseAction.CONNECT;
-      this.targetComponent = target as unknown as LogicComponent; // Hack because targetComponent is LogicComponent type but we store Pin
-      const { x, y } = this.getViewCoordinates!(e);
-      this.pPoint = new board.scope.Point(x, y);
-
-      this.addHandler('mousemove', this.handleMouseMoveConnect.bind(this, board))
+    // wire from the pin it lands on. That leaves nothing running once the click is over, so it
+    // takes no handlers either: the release has nothing to finish.
+    if (mode !== SelectionMode.REPLACE) {
+      return
     }
+
+    this.action = MouseAction.CONNECT;
+    this.targetComponent = target as unknown as LogicComponent; // Hack because targetComponent is LogicComponent type but we store Pin
+
+    // Add handlers directly to the window to ensure that events aren't dropped
+    this.addHandler('mousemove', this.handleMouseMoveConnect.bind(this, board))
     this.addHandler('mouseup', this.handleMouseUp.bind(this, board))
   }
 
@@ -307,7 +326,6 @@ class MouseManager {
     }
 
     this.reset(board)
-    this.pPoint = undefined;
   }
 
   handleMouseMoveConnect(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
@@ -470,28 +488,40 @@ class MouseManager {
   }
 
   handleMouseMoveDrag(board: LogicBoard, e: React.MouseEvent<SVGElement, MouseEvent> | MouseEvent) {
-    const { x, y } = this.getViewCoordinates!(e)
-    const currentPoint = new board.scope.Point(x, y);
-
     if (!this.targetComponent?.selected) {
       this.targetComponent!.selected = true;
       board.selectedComponents.add(this.targetComponent!)
     }
 
-    if (this.pPoint) {
-      const dx = currentPoint.x - this.pPoint.x;
-      const dy = currentPoint.y - this.pPoint.y;
-
-      for (const component of board.selectedComponents) {
-        component.translate(new board.scope.Point(dx, dy))
-      }
-
-      // Only the panel needs telling: the components redraw themselves as they translate, so a
-      // full board update on every mouse move would be wasted work.
-      board.updateProperties();
+    if (!this.grabPoint || !this.grabOrigin) {
+      return;
     }
 
-    this.pPoint = currentPoint;
+    const { x, y } = this.getViewCoordinates!(e)
+
+    // Where the component the user took hold of would stand if it followed the pointer exactly,
+    // and then where it is allowed to stand.
+    const size = board.snapSize;
+    const target = new board.scope.Point(
+        snapTo(this.grabOrigin.x + (x - this.grabPoint.x), size),
+        snapTo(this.grabOrigin.y + (y - this.grabPoint.y), size));
+
+    // The rest of the selection travels the same distance, so a group keeps its shape and only the
+    // component actually being carried is put on the grid.
+    const here = this.targetComponent!.geometry.position;
+    const dx = target.x - here.x;
+    const dy = target.y - here.y;
+    if (dx === 0 && dy === 0) {
+      return;
+    }
+
+    for (const component of board.selectedComponents) {
+      component.translate(new board.scope.Point(dx, dy))
+    }
+
+    // Only the panel needs telling: the components redraw themselves as they translate, so a
+    // full board update on every mouse move would be wasted work.
+    board.updateProperties();
   }
 
 }

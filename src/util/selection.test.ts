@@ -324,6 +324,49 @@ describe('what the selection is left as', () => {
   });
 });
 
+describe('a press arriving while an interaction is already running', () => {
+  // A release outside the browser window never reaches the board, leaving the handlers from that
+  // interaction attached. Registering a second set over them throws, and the board then threw on
+  // every press that followed until the page was reloaded.
+  test('does not throw when the board was left mid-band', () => {
+    const {board, manager} = setup();
+    const gate = place(board, 100);
+    manager.handleBoardMouseDown(board, mouseEvent(0, 300, 300));
+
+    expect(() => manager.handlePinMouseDown(board, gate.inputPins[0], mouseEvent(0, 80, 100)))
+        .not.toThrow();
+
+    manager.reset(board);
+  });
+
+  test('does not throw when the board was left mid-wire', () => {
+    const {board, manager} = setup();
+    const gate = place(board, 100);
+    manager.handlePinMouseDown(board, gate.inputPins[0], mouseEvent(0, 80, 100));
+
+    expect(() => manager.handlePinMouseDown(board, gate.inputPins[1], mouseEvent(0, 80, 110)))
+        .not.toThrow();
+
+    manager.reset(board);
+  });
+
+  test('does not throw on a run of modifier clicks with no release between them', () => {
+    // These start nothing, so each has to leave the board as ready as it found it.
+    const {board, manager} = setup();
+    const gate = place(board, 100);
+
+    expect(() => {
+      for (let i = 0; i < 5; i++) {
+        manager.handlePinMouseDown(board, gate.inputPins[i % 2], mouseEvent(0, 80, 100, 'Shift'));
+      }
+    }).not.toThrow();
+
+    expect(board.selectedPins.size).toBe(2);
+
+    manager.reset(board);
+  });
+});
+
 describe('the properties panel', () => {
   test('hears about a selection edited by modifier', () => {
     const {board, manager} = setup();

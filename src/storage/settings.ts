@@ -1,4 +1,5 @@
 import {DEFAULT_WIRE_STYLE, WIRE_STYLES, WireStyle} from "../util/wireStyle";
+import {isSnapMode, SnapMode} from "../util/grid";
 
 /**
  * Preferences that belong to this browser rather than to any board.
@@ -22,12 +23,15 @@ interface RecentProject {
 
 interface Settings {
   wireStyle: WireStyle;
+  /** Whether a component being placed lands on the grid, and how coarse that grid is. */
+  snapMode: SnapMode;
   /** Most recently opened first. */
   recentProjects: RecentProject[];
 }
 
 const DEFAULTS: Settings = {
   wireStyle: DEFAULT_WIRE_STYLE,
+  snapMode: "off",
   recentProjects: [],
 };
 
@@ -67,6 +71,7 @@ function readSettings(): Settings {
 
   return {
     wireStyle: isWireStyle(settings.wireStyle) ? settings.wireStyle : DEFAULTS.wireStyle,
+    snapMode: isSnapMode(settings.snapMode) ? settings.snapMode : DEFAULTS.snapMode,
     recentProjects: Array.isArray(settings.recentProjects)
         ? settings.recentProjects.filter(isRecentProject).slice(0, RECENT_PROJECT_LIMIT)
         : [],
