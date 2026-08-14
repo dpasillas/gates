@@ -16,6 +16,18 @@ describe('settings kept in the browser', () => {
   test('start at their defaults', () => {
     expect(readSettings().wireStyle).toBe(DEFAULT_WIRE_STYLE);
     expect(readSettings().recentProjects).toEqual([]);
+    expect(readSettings().snapMode).toBe('off');
+  });
+
+  test('offer connect-on-click from the first visit', () => {
+    // On until someone turns it off: a way of working nobody meets is one nobody has.
+    expect(readSettings().connectOnClick).toBe(true);
+  });
+
+  test('keep connect-on-click off once it has been turned off', () => {
+    writeSettings({connectOnClick: false});
+
+    expect(readSettings().connectOnClick).toBe(false);
   });
 
   test('come back as they were left', () => {

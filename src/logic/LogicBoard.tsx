@@ -106,8 +106,9 @@ class LogicBoard {
   /**
    * Whether clicking a pin the selection can reach wires it up instead of selecting it.
    *
-   * Off unless asked for. It changes what clicking a pin does, and a mode nobody turned on is one
-   * they have no reason to suspect when a click does something they did not expect.
+   * One of several ways to join pins, and on to begin with because a way of working nobody meets
+   * is one nobody has: the toolbar button turns it off, and by being there says it is there at all.
+   * What joining pins amounts to is described in nets.ts.
    */
   connectOnClick: boolean = readSettings().connectOnClick;
 

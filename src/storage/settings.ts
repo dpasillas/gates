@@ -34,7 +34,7 @@ interface Settings {
 const DEFAULTS: Settings = {
   wireStyle: DEFAULT_WIRE_STYLE,
   snapMode: "off",
-  connectOnClick: false,
+  connectOnClick: true,
   recentProjects: [],
 };
 
