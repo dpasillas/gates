@@ -16,6 +16,21 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+
+  /* The interface is made of controls rather than of prose: its labels, headings and the writing on
+     the board are there to be read, and dragging across them should move what is under the pointer
+     instead of highlighting what is written on it. On the body rather than the app's own root, so
+     that it reaches the menus and dialogs the framework hangs off the end of the document. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* What the user typed is theirs to select, copy and correct. */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 code {

@@ -25,6 +25,8 @@ interface Settings {
   wireStyle: WireStyle;
   /** Whether a component being placed lands on the grid, and how coarse that grid is. */
   snapMode: SnapMode;
+  /** Whether clicking a pin the selection can reach wires it up instead of selecting it. */
+  connectOnClick: boolean;
   /** Most recently opened first. */
   recentProjects: RecentProject[];
 }
@@ -32,6 +34,7 @@ interface Settings {
 const DEFAULTS: Settings = {
   wireStyle: DEFAULT_WIRE_STYLE,
   snapMode: "off",
+  connectOnClick: false,
   recentProjects: [],
 };
 
@@ -72,6 +75,9 @@ function readSettings(): Settings {
   return {
     wireStyle: isWireStyle(settings.wireStyle) ? settings.wireStyle : DEFAULTS.wireStyle,
     snapMode: isSnapMode(settings.snapMode) ? settings.snapMode : DEFAULTS.snapMode,
+    connectOnClick: typeof settings.connectOnClick === "boolean"
+        ? settings.connectOnClick
+        : DEFAULTS.connectOnClick,
     recentProjects: Array.isArray(settings.recentProjects)
         ? settings.recentProjects.filter(isRecentProject).slice(0, RECENT_PROJECT_LIMIT)
         : [],

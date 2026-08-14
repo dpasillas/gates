@@ -85,19 +85,77 @@ describe('the recent section', () => {
     });
   }
 
-  test('is absent until a part has been reached for', () => {
+  test('is there before any part has been reached for', () => {
+    // It used to appear only once it had something in it, so the first drag of a session made it
+    // arrive and pushed every section below it down.
     render(<PartsPanel parts={parts()}/>);
 
-    expect(screen.queryByRole('button', {name: /recent/i})).toBeNull();
+    expect(section('Recent')).toBeInTheDocument();
   });
 
   test('holds the parts a drag started from', () => {
     render(<PartsPanel parts={parts()}/>);
     fireEvent.click(section('Gates'));
+    fireEvent.click(section('Recent'));
 
     drag('OR');
 
-    expect(section('Recent')).toBeInTheDocument();
+    expect(screen.getAllByText('OR')).toHaveLength(2);
+  });
+
+  test('holds a single row of parts', () => {
+    render(<PartsPanel parts={parts()}/>);
+    fireEvent.click(section('Gates'));
+    fireEvent.click(section('Recent'));
+
+    // Four different parts reached for, of which the section keeps the three most recent.
+    ['AND', 'OR', 'NAND'].forEach(drag);
+    fireEvent.click(section('Input'));
+    drag('Clock');
+
+    // Each surviving part appears twice, once in its own section and once here.
+    expect(screen.getAllByText('Clock')).toHaveLength(2);
+    expect(screen.getAllByText('NAND')).toHaveLength(2);
+    expect(screen.getAllByText('OR')).toHaveLength(2);
+    // The oldest has been pushed out, leaving it only in its own section.
+    expect(screen.getAllByText('AND')).toHaveLength(1);
+  });
+
+  test('keeps the height of a full row while it is empty', () => {
+    // The part arriving must not move what is below it: that is what pulls a tile out from under
+    // the pointer partway through the drag that put it there.
+    const {container} = render(<PartsPanel parts={parts()}/>);
+    fireEvent.click(section('Recent'));
+    expect(container.querySelectorAll('.parts-grid .part')).toHaveLength(1);
+    expect(container.querySelector('.part-placeholder')).toBeInTheDocument();
+
+    fireEvent.click(section('Gates'));
+    drag('OR');
+
+    // The placeholder gives way to the real tile, one cell for one cell.
+    expect(container.querySelector('.parts-grid .part-placeholder')).toBeNull();
+    expect(container.querySelectorAll('.parts-grid')[0].querySelectorAll('.part')).toHaveLength(1);
+  });
+
+  test('reserves nothing in the other sections', () => {
+    const {container} = render(<PartsPanel parts={parts()}/>);
+
+    fireEvent.click(section('Recent'));
+    fireEvent.click(section('Gates'));
+
+    // Recent is the first section, and the only one holding a cell open.
+    const grids = container.querySelectorAll('.parts-grid');
+    expect(grids[0].querySelector('.part-placeholder')).toBeInTheDocument();
+    expect(grids[1].querySelector('.part-placeholder')).toBeNull();
+  });
+
+  test('gives way to a filter that it does not match', () => {
+    render(<PartsPanel parts={parts()}/>);
+
+    fireEvent.change(filter(), {target: {value: 'zzz'}});
+
+    expect(screen.queryByRole('button', {name: /recent/i})).toBeNull();
+    expect(screen.getByText(/No parts match/)).toBeInTheDocument();
   });
 
   test('can be turned off from the options', () => {

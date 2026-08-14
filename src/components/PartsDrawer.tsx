@@ -16,6 +16,13 @@ interface IProps {
   parts: Array<Part>,
   /** Held open by the panel while a filter is narrowing the list. */
   forceOpen?: boolean,
+  /**
+   * Whether an empty section still stands as tall open as a full one would.
+   *
+   * Set on a section that fills while the user is doing something else, so that its first part
+   * arriving does not move everything below it out from under the pointer.
+   */
+  reserveRow?: boolean,
   /** Called with the part a drag started from. */
   onPartDragStart?: (part: Part) => void,
 }
@@ -127,6 +134,10 @@ class PartsDrawer extends React.Component<IProps, IState> {
                 <PartTile key={part.component.uuid} part={part}
                           onDragStart={this.props.onPartDragStart}/>
               ))}
+              {/* One empty cell holds the row open. A tile rather than a measurement, so the space
+                  kept is whatever a tile turns out to occupy. */}
+              {this.props.reserveRow && this.props.parts.length === 0 &&
+                <div className="part part-placeholder" aria-hidden="true"/>}
             </div>
           </Collapse>
         </>

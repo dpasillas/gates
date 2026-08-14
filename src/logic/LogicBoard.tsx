@@ -16,6 +16,7 @@ import { smallestEnclosingCircle } from "../util/enclosingCircle";
 import { normalizeAngleOffset } from "../util/angle";
 import { WireStyle } from "../util/wireStyle";
 import { snapSizeFor, SnapMode } from "../util/grid";
+import { leaveNets } from "./nets";
 import { readSettings } from "../storage/settings";
 import { mergeProperties, MergedProperty } from "../util/mergeProperties";
 
@@ -101,6 +102,14 @@ class LogicBoard {
    * than anything about the circuit, so it is not written to a board's file.
    */
   snapMode: SnapMode = readSettings().snapMode;
+
+  /**
+   * Whether clicking a pin the selection can reach wires it up instead of selecting it.
+   *
+   * Off unless asked for. It changes what clicking a pin does, and a mode nobody turned on is one
+   * they have no reason to suspect when a click does something they did not expect.
+   */
+  connectOnClick: boolean = readSettings().connectOnClick;
 
   /** How far apart the positions a component may be placed on are, or zero while snapping is off. */
   get snapSize(): number {
@@ -376,6 +385,9 @@ class LogicBoard {
     for (const pin of pins) {
       pin.disconnect();
     }
+    // Unwiring a pin takes it off its net, since being on one is what says it is wired to the rest.
+    // The pins at the far end are left as they are: they were not what was deleted.
+    leaveNets(pins);
 
     this.clearSelection();
     this.update();
