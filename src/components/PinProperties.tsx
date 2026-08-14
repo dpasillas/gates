@@ -19,20 +19,13 @@ import {checkNetName, checkPortName, isConnectableGroup, setNetName, setPort} fr
 /** Shown in place of a value when the selection does not agree on one. */
 const MIXED = "-";
 
-/** The net name field, named so that the board can put the caret in it. */
+/** Exported so the board can put the caret in it. */
 const NET_NAME_FIELD = "pin-net-name";
 
-/** How pins are joined, which nothing else on screen says. */
 const CONNECT_HINT = "Select an output and the inputs it should drive, then press Space to wire "
     + "them together and name the net.";
 
-/**
- * Commits a field on Enter, where its own button would have.
- *
- * Enter in a lone text field usually means "that is my answer", and here the answer is only taken
- * once the button beside it is pressed. Reading the same disabled state the button does keeps the
- * two from disagreeing about whether the value can be applied at all.
- */
+/** Commits on Enter, reading the same disabled state as the button so the two cannot disagree. */
 function applyOnEnter(disabled: boolean, apply: () => void) {
   return (e: React.KeyboardEvent) => {
     if (e.key !== "Enter" || disabled) {
@@ -46,7 +39,6 @@ function applyOnEnter(disabled: boolean, apply: () => void) {
 interface IProps {
   board: LogicBoard;
   pins: LogicPin[];
-  /** Called once something has been applied, so the panel can re-read what it changed. */
   onApplied: () => void;
 }
 
@@ -54,24 +46,16 @@ interface IState {
   netName: string;
   portName: string;
   isPort: boolean;
-  /**
-   * What the pins said when the fields were last filled from them.
-   *
-   * The fields hold a draft rather than the pins themselves, since neither is applied until it is
-   * committed. Keeping what the draft was taken from is what tells a value the user has typed and
-   * not yet applied apart from one that has since changed underneath them.
-   */
+  /** What the pins said when the fields were last filled, telling a draft from an outside change. */
   taken: Values;
 }
 
-/** The three things the fields describe, as they stand on the pins. */
 interface Values {
   netName: string;
   portName: string;
   isPort: boolean;
 }
 
-/** What the fields would hold if they were filled from the pins now. */
 function valuesOf(pins: LogicPin[]): Values {
   const [pin] = pins;
 
@@ -89,7 +73,7 @@ function shared<T>(pins: LogicPin[], of: (pin: LogicPin) => T): T | undefined {
   return values.size === 1 ? [...values][0] : undefined;
 }
 
-/** One labelled row, matching the layout the component properties use. */
+/** Matches the component properties layout, which sits alongside this. */
 function Row({label, children}: {label: string, children: React.ReactNode}) {
   return (
     <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
@@ -99,15 +83,7 @@ function Row({label, children}: {label: string, children: React.ReactNode}) {
   );
 }
 
-/**
- * The properties of the selected pins.
- *
- * Pins have a fixed set of properties, unlike components, so these are laid out directly rather
- * than described by the property system the components share.
- *
- * The two editable ones are applied by a button rather than as they are typed: both rewire or
- * rename things elsewhere on the board, which is not something to do to a half-typed name.
- */
+/** Net and port names are applied on commit, not as typed: both rewire or rename things elsewhere. */
 class PinProperties extends React.Component<IProps, IState> {
   constructor(props: Readonly<IProps>) {
     super(props);
@@ -117,14 +93,9 @@ class PinProperties extends React.Component<IProps, IState> {
   }
 
   /**
-   * Fills the fields again when the pins change underneath them.
+   * Wiring a pin up moves its net, which the fields have to pick up.
    *
-   * Wiring a pin up moves it onto the net its driver is on, which the panel has to show: it was
-   * reading the pins once, when it was built, so a name changed by anything but the panel itself
-   * sat there stale until the panel was rebuilt.
-   *
-   * A draft the user is part-way through typing survives, since only a value that has moved on the
-   * pins replaces it.
+   * Only a value that moved on the pins replaces one being typed.
    */
   static getDerivedStateFromProps(props: IProps, state: IState): Partial<IState> | null {
     const now = valuesOf(props.pins);
@@ -138,7 +109,6 @@ class PinProperties extends React.Component<IProps, IState> {
     return {...now, taken: now};
   }
 
-  /** A net takes one output at most, so a selection with two describes no possible net. */
   netEditable(): boolean {
     return this.props.pins.length === 1 || isConnectableGroup(this.props.pins);
   }
@@ -154,13 +124,6 @@ class PinProperties extends React.Component<IProps, IState> {
     this.props.onApplied();
   }
 
-  /**
-   * The button that commits a field's value, sitting inside the field itself.
-   *
-   * A field wide enough to type a name into, its own label, and a separate button do not fit across
-   * the panel together. Naming the field with the input's own label and tucking the action inside it
-   * leaves the whole width for the value.
-   */
   renderApply(label: string, disabled: boolean, apply: () => void) {
     return (
       <InputAdornment position="end">
@@ -200,17 +163,13 @@ class PinProperties extends React.Component<IProps, IState> {
           placeholder={shared(this.props.pins, p => p.netName) === undefined ? MIXED : ""}
           onChange={e => this.setState({netName: e.target.value})}
           onKeyDown={applyOnEnter(cannotApply, () => this.applyNetName())}
-          // A field has an error state but no warning one. MUI's way of colouring a field from the
-          // rest of the palette is to name the colour and hold the field in its focused look, since
-          // that look is the one the colour shows through.
+          // MUI fields have no warning state; the colour only shows through the focused look.
           color={warned ? "warning" : undefined}
           focused={warned || undefined}
           InputProps={{
             endAdornment: this.renderApply(
               "Set net name", cannotApply, () => this.applyNetName()),
           }}/>
-        {/* A clash with another output is worth saying but not worth blocking, and the colour alone
-            does not say what is wrong with the value. */}
         {(check.error || check.warning) &&
           <Typography variant="caption" color={check.error ? "error" : "warning.main"}>
             {check.error ?? check.warning}
@@ -230,8 +189,6 @@ class PinProperties extends React.Component<IProps, IState> {
 
     return (
       <>
-        {/* The checkbox belongs with the field it governs, rather than on a line of its own under a
-            heading that would only repeat what the field is already labelled. */}
         <Stack direction="row" alignItems="flex-end" spacing={0.5}>
           <Checkbox size="small" checked={this.state.isPort}
                     inputProps={{"aria-label": "Port"}}
@@ -252,8 +209,6 @@ class PinProperties extends React.Component<IProps, IState> {
                 "Set port name", cannotApply, () => this.applyPort()),
             }}/>
         </Stack>
-        {/* One line, saying whatever stands between this pin and being a port: what is missing, what
-            clashes, or — when nothing does — the rule that has to keep holding. */}
         {this.state.isPort &&
           <Typography variant="caption" color={problem ? "error" : "text.secondary"}>
             {problem ?? "Port names must be unique across the board."}
@@ -262,12 +217,6 @@ class PinProperties extends React.Component<IProps, IState> {
     );
   }
 
-  /**
-   * Says how pins are wired without a wire.
-   *
-   * The panel can show a net once it has a name, but nothing on screen says how a set of pins is
-   * turned into one in the first place, and a key nobody presses teaches nobody anything.
-   */
   renderConnectHint() {
     return (
       <Tooltip title={CONNECT_HINT}>

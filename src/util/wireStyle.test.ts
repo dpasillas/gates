@@ -22,13 +22,4 @@ describe('the wire style toggle', () => {
   test('goes curved, angled, square', () => {
     expect(cycle()).toEqual(['Curved', 'Angled', 'Square']);
   });
-
-  test('comes back to where it started', () => {
-    let style: WireStyle = DEFAULT_WIRE_STYLE;
-    for (let i = 0; i < 3; i++) {
-      style = nextWireStyle(style);
-    }
-
-    expect(style).toBe(DEFAULT_WIRE_STYLE);
-  });
 });

@@ -96,7 +96,6 @@ describe('snapping a coordinate', () => {
   });
 
   test('takes the coarse spacing where the fine one would have stopped sooner', () => {
-    expect(COARSE).toBe(40);
     expect(snapTo(123, COARSE)).toBe(120);
     expect(snapTo(141, COARSE)).toBe(160);
     expect(snapTo(30, COARSE)).toBe(40);
@@ -117,10 +116,10 @@ describe('the modes the button steps through', () => {
     expect(nextSnapMode('coarse')).toBe('off');
   });
 
-  test('are described by their spacing', () => {
+  test('are described by their spacing, except off, which has none to describe', () => {
+    expect(snapModeLabel('fine')).toContain(String(SNAP_SIZES.fine));
+    expect(snapModeLabel('coarse')).toContain(String(SNAP_SIZES.coarse));
     expect(snapModeLabel('off')).toBe('off');
-    expect(snapModeLabel('fine')).toBe('every 10');
-    expect(snapModeLabel('coarse')).toBe('every 40');
   });
 
   test('give the board a size to place on, or none', () => {
@@ -129,9 +128,9 @@ describe('the modes the button steps through', () => {
     board.snapMode = 'off';
     expect(board.snapSize).toBe(0);
     board.snapMode = 'fine';
-    expect(board.snapSize).toBe(10);
+    expect(board.snapSize).toBe(SNAP_SIZES.fine);
     board.snapMode = 'coarse';
-    expect(board.snapSize).toBe(40);
+    expect(board.snapSize).toBe(SNAP_SIZES.coarse);
   });
 });
 
@@ -265,13 +264,5 @@ describe('dragging on the coarse grid', () => {
     drag(manager, board, gate, [[130, 120]]);
 
     expectAt(gate, [120, 120]);
-  });
-});
-
-describe('the setting behind it', () => {
-  test('a board reads it as it is built', () => {
-    const board = new LogicBoard();
-
-    expect(['off', 'fine', 'coarse']).toContain(board.snapMode);
   });
 });

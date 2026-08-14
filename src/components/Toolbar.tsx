@@ -6,11 +6,6 @@ import Divider from "@mui/material/Divider"
 import IconButton from "@mui/material/IconButton"
 import Stack from "@mui/material/Stack"
 
-// import PlayArrow from "@mui/icons-material/PlayArrow";
-// import Pause from "@mui/icons-material/Pause";
-// import SkipNext from "@mui/icons-material/SkipNext";
-// import Stop from "@mui/icons-material/Stop";
-
 import SvgIcon from "@mui/material/SvgIcon"
 import Tooltip from "@mui/material/Tooltip"
 import Save from "@mui/icons-material/Save";
@@ -38,11 +33,8 @@ const WIRE_GLYPHS: Record<WireStyle, string> = {
 };
 
 /**
- * A 2x2 grid, for the coarse spacing, drawn to match the Material grid icons beside it.
- *
- * Those are filled rather than stroked: a rounded frame wound one way with the cells wound the
- * other, so the lines are what is left between them. Keeping to their 24-unit box and 2-unit lines
- * is what makes this read as the same icon with fewer divisions rather than a different one.
+ * Filled, not stroked: the frame is wound against the cells so the lines are the gaps between them.
+ * Keep the 24-unit box and 2-unit lines, or it stops matching the Material grid icons beside it.
  */
 const COARSE_GRID = "M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"
     + "M11 11H4V4h7v7z M20 11h-7V4h7v7z M11 20H4v-7h7v7z M20 20h-7v-7h7v7z";
@@ -73,12 +65,6 @@ interface IProps {
 interface IState {}
 
 class Toolbar extends React.Component<IProps, IState> {
-  /**
-   * A button for an action that is not always available.
-   *
-   * The tooltip is wrapped because a disabled button reports no pointer events, and a tooltip that
-   * never hears one never appears — including on the button that most needs to say what it is for.
-   */
   action(label: string, hint: string, icon: React.ReactElement, run?: () => void) {
     return (
       <Tooltip title={hint}>
@@ -91,7 +77,6 @@ class Toolbar extends React.Component<IProps, IState> {
     );
   }
 
-  /** Steps through the grid spacings a component can be placed on, shown pressed while on one. */
   snapToGridButton() {
     const mode = this.props.board.snapMode;
     const label = `Snap to grid: ${snapModeLabel(mode)}`;
@@ -107,13 +92,6 @@ class Toolbar extends React.Component<IProps, IState> {
     );
   }
 
-  /**
-   * Whether clicking a pin the selection can reach wires it up.
-   *
-   * A toggle rather than something that just happens, so that there is somewhere for the feature to
-   * be found: the tooltip is where a user who has never made a connection this way is told it can
-   * be done at all.
-   */
   connectOnClickButton() {
     const on = this.props.board.connectOnClick;
     const label = on
@@ -151,22 +129,15 @@ class Toolbar extends React.Component<IProps, IState> {
           </Box>
           <Box flexDirection="row">
             <IconButton className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>
-              {/*<PlayArrow className="default" sx={{position:"fixed"}}/>*/}
-              {/*<Pause className="active"/>*/}
               <FontAwesomeIcon className="default" size="xs" icon={faPlay} style={{position: "fixed"}}/>
               <FontAwesomeIcon className="active" size="xs" icon={faPause}/>
             </IconButton>
             <IconButton onClick={this.onStop.bind(this)} disabled={stopped}>
-              {/*<Stop/>*/}
               <FontAwesomeIcon size="xs" icon={faStop}/>
             </IconButton>
             <IconButton onClick={this.onStep.bind(this)} disabled={running}>
-              {/*<SkipNext/>*/}
               <FontAwesomeIcon size="xs" icon={faStepForward}/>
             </IconButton>
-            {/*<span>*/}
-            {/*  {this.props.board.simulationCurrentTime}*/}
-            {/*</span>*/}
           </Box>
           <Box>
             <Tooltip title={`Wire style: ${wireStyleLabel(this.props.board.wireStyle)}`}>
@@ -220,21 +191,19 @@ class Toolbar extends React.Component<IProps, IState> {
   onToggleConnectOnClick() {
     this.props.board.connectOnClick = !this.props.board.connectOnClick;
     writeSettings({connectOnClick: this.props.board.connectOnClick});
-    // Nothing on the board changes, so only this button has anything to redraw.
     this.setState({});
   }
 
   onCycleSnapMode() {
     this.props.board.snapMode = nextSnapMode(this.props.board.snapMode);
     writeSettings({snapMode: this.props.board.snapMode});
-    // Nothing already on the board moves, so only this button has anything to redraw.
     this.setState({});
   }
 
   onCycleWireStyle() {
     this.props.board.wireStyle = nextWireStyle(this.props.board.wireStyle);
     writeSettings({wireStyle: this.props.board.wireStyle});
-    // Every wire already on the board is redrawn, not just the ones made from here on.
+    // Redraws the wires already on the board, not only the ones made from here on.
     this.props.board.updateApp();
     this.setState({});
   }
