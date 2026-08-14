@@ -122,6 +122,15 @@
     cursor: grabbing;
 }
 
+/* Occupies its cell without drawing or catching anything, so the row it holds open is empty.
+   Carries the border a real tile is given so that it stands exactly as tall as the tile that will
+   replace it, which is the whole point of it being here. */
+.part-placeholder {
+    visibility: hidden;
+    pointer-events: none;
+    border: 1px solid transparent;
+}
+
 .part-image {
     display: flex;
     align-items: center;

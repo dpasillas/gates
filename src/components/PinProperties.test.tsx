@@ -155,3 +155,67 @@ describe('pin properties', () => {
     expect(screen.getByText(/must be unique/)).toBeInTheDocument();
   });
 });
+
+describe('committing a field with Enter', () => {
+  test('sets the net name, as the button beside it would', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).outputPins[0];
+    showing(logicBoard, pin);
+
+    fireEvent.change(field('Net Name'), {target: {value: 'clk'}});
+    fireEvent.keyDown(field('Net Name'), {key: 'Enter'});
+
+    expect(pin.netName).toBe('clk');
+  });
+
+  test('sets the port name', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).inputPins[0];
+    showing(logicBoard, pin);
+
+    fireEvent.click(screen.getByLabelText('Port'));
+    fireEvent.change(field('Port Name'), {target: {value: 'Reset'}});
+    fireEvent.keyDown(field('Port Name'), {key: 'Enter'});
+
+    expect(pin.isPort).toBe(true);
+    expect(pin.portName).toBe('Reset');
+  });
+
+  test('does nothing while the value is unchanged, matching the disabled button', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).outputPins[0];
+    showing(logicBoard, pin);
+    let applied = 0;
+    const update = logicBoard.update;
+    logicBoard.update = () => {applied++; update()};
+
+    expect(setNet()).toBeDisabled();
+    fireEvent.keyDown(field('Net Name'), {key: 'Enter'});
+
+    expect(applied).toBe(0);
+  });
+
+  test('does nothing while the value is refused', () => {
+    // Two outputs describe a net that cannot exist, so neither the button nor Enter applies it.
+    const {logicBoard, gate} = board();
+    const [a, b] = [gate(GateType.AND).outputPins[0], gate(GateType.OR).outputPins[0]];
+    showing(logicBoard, a, b);
+
+    fireEvent.change(field('Net Name'), {target: {value: 'bus'}});
+    fireEvent.keyDown(field('Net Name'), {key: 'Enter'});
+
+    expect(a.netName).toBe('');
+    expect(b.netName).toBe('');
+  });
+
+  test('leaves other keys to the field', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).outputPins[0];
+    showing(logicBoard, pin);
+
+    fireEvent.change(field('Net Name'), {target: {value: 'clk'}});
+    fireEvent.keyDown(field('Net Name'), {key: 'a'});
+
+    expect(pin.netName).toBe('');
+  });
+});

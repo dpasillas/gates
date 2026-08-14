@@ -107,27 +107,95 @@ function checkNetName(board: LogicBoard, pins: LogicPin[], name: string): NetNam
 }
 
 /**
- * Wires a net up: its one output driving each of its inputs.
+ * Wires a set of pins up: the one output among them driving each of the inputs.
  *
- * The width check refuses a net that would mix widths, so the guard below should never fire; it is
- * there because connecting pins that cannot be connected would otherwise fail silently.
+ * Says how many wires it made, and draws nothing itself, so a caller can tell whether the board is
+ * worth redrawing. Pins it cannot join are passed over: a set with no output has nothing to drive
+ * it, and the width check refuses a net that would mix widths, so the guard below should never
+ * fire for a named net — it is there because connecting pins that cannot be connected would
+ * otherwise fail silently.
  */
-function rewireNet(board: LogicBoard, name: string) {
-  const members = pinsOnNet(board, name);
-  const driver = members.find(pin => pin.pinType === PinType.OUTPUT);
-  if (!driver) {
-    return;
+function connectPins(board: LogicBoard, pins: LogicPin[]): number {
+  const driver = pins.find(pin => pin.pinType === PinType.OUTPUT);
+  if (!driver || !isConnectableGroup(pins)) {
+    return 0;
   }
 
-  for (const pin of members) {
+  let made = 0;
+  for (const pin of pins) {
     if (pin === driver || pin.pinType !== PinType.INPUT || !pin.canConnect(driver)) {
       continue;
     }
     const connection = pin.connectTo(driver);
     if (connection) {
       board.addConnection(connection);
+      adoptNet(driver, pin);
+      made++;
     }
   }
+
+  return made;
+}
+
+/**
+ * Takes pins off their nets, for wires the user has cut.
+ *
+ * Sharing a net name is the same thing as being connected, so a pin unwired on purpose has to stop
+ * claiming the name as well. Only the pins the user picked out: the ones at the far end were not
+ * what was deleted, they keep both their name and each other, and a net that has lost its driver
+ * is still a net to be on.
+ *
+ * Only for wires removed on purpose. Connecting an input disconnects it first, since an input takes
+ * one source at a time, so clearing names on every disconnection would wipe the name a pin was just
+ * given as it was being wired up under it.
+ */
+function leaveNets(pins: Iterable<LogicPin>) {
+  for (const pin of pins) {
+    pin.netName = "";
+  }
+}
+
+/**
+ * Puts the far end of a new wire onto the net its driver is on.
+ *
+ * Two pins that are wired together are on one net and so answer to one name, and an output is its
+ * net: the input takes whatever the output is called, or comes off the net it was on when the
+ * output is on none.
+ */
+function adoptNet(source: LogicPin, sink: LogicPin) {
+  sink.netName = source.netName;
+}
+
+/**
+ * Whether wiring this pin to the given ones would actually join it to them.
+ *
+ * Asked of a pin the user is pointing at, so it has to be about that pin rather than about the set
+ * as a whole: a target the set cannot reach must read as unreachable even where the set holds
+ * pins that could be joined to each other.
+ */
+function wouldConnect(pins: LogicPin[], target: LogicPin): boolean {
+  if (pins.length === 0 || pins.includes(target)) {
+    return false;
+  }
+
+  const all = [...pins, target];
+  if (!isConnectableGroup(all)) {
+    return false;
+  }
+
+  const driver = all.find(pin => pin.pinType === PinType.OUTPUT);
+  if (!driver) {
+    return false;
+  }
+
+  return target === driver
+    ? pins.some(pin => pin.pinType === PinType.INPUT && pin.canConnect(driver))
+    : target.pinType === PinType.INPUT && target.canConnect(driver);
+}
+
+/** Wires a net up: its one output driving each of its inputs. */
+function rewireNet(board: LogicBoard, name: string) {
+  connectPins(board, pinsOnNet(board, name));
 }
 
 /**
@@ -197,6 +265,7 @@ function setPort(board: LogicBoard, pin: LogicPin, isPort: boolean, name: string
 }
 
 export {
-  checkNetName, checkPortName, connectedGroup, isConnectableGroup, pinsOnNet, setNetName, setPort,
+  adoptNet, checkNetName, checkPortName, connectedGroup, connectPins, isConnectableGroup,
+  leaveNets, pinsOnNet, setNetName, setPort, wouldConnect,
 };
 export type {NetNameCheck};

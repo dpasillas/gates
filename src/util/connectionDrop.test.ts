@@ -101,19 +101,66 @@ describe('dropping a connection', () => {
     expect(source.isConnectedTo(aimedAt)).toBe(true);
   });
 
-  test('accepts a drop exactly as far out as the circle it draws', () => {
-    // The catch area and the drawn circle are the same affordance. While the hit test was three
-    // times the radius of the circle, a drop could register on a pin the user never touched.
+  test('reaches exactly as far past the pin as the circle it draws', () => {
+    // Away from the pin the circle is the whole of the catch area, and it is the size it looks.
+    // While the hit test was three times the radius drawn, a drop could register on a pin the user
+    // never touched.
     const board = new LogicBoard();
     const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
     place(board, display);
     const target = display.inputPins[0];
     const at = anchorOf(target);
 
-    const inset = (offset: number) => new board.scope.Point(at.x, at.y - offset);
+    // Out along the pin, away from the component, where nothing but the circle covers.
+    const beyond = (offset: number) => new board.scope.Point(at.x - offset, at.y);
 
-    expect(target.isOver(inset(LogicPin.ANCHOR_RADIUS - 0.5))).toBe(true);
-    expect(target.isOver(inset(LogicPin.ANCHOR_RADIUS + 0.5))).toBe(false);
+    expect(target.isOver(beyond(LogicPin.ANCHOR_RADIUS - 0.5))).toBe(true);
+    expect(target.isOver(beyond(LogicPin.ANCHOR_RADIUS + 0.5))).toBe(false);
+  });
+
+  test('accepts a drop on the pin itself, well clear of the circle', () => {
+    // The circle extends the pin's reach rather than replacing it, so the length of the pin between
+    // the circle and the component body takes a drop too.
+    const board = new LogicBoard();
+    const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
+    place(board, display);
+    const target = display.inputPins[0];
+    const at = anchorOf(target);
+
+    // Back along the pin towards the body, past anything the circle covers.
+    const along = new board.scope.Point(at.x + LogicPin.ANCHOR_RADIUS * 2, at.y);
+
+    expect(target.distanceTo(along)).toBeGreaterThan(LogicPin.ANCHOR_RADIUS);
+    expect(target.covers(along)).toBe(true);
+    expect(target.isOver(along)).toBe(true);
+  });
+
+  test('connects a wire dropped on the pin rather than on its circle', () => {
+    const board = new LogicBoard();
+    const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
+    place(board, display);
+    const source = driver(board);
+    const target = display.inputPins[0];
+    const at = anchorOf(target);
+
+    dropAt(board, source, {x: at.x + LogicPin.ANCHOR_RADIUS * 2, y: at.y});
+
+    expect(source.isConnectedTo(target)).toBe(true);
+  });
+
+  test('still refuses a drop beside the pin, off both the pin and its circle', () => {
+    const board = new LogicBoard();
+    const display = new SegmentDisplay({scope: board.scope, subtype: 1, isMerged: false});
+    place(board, display);
+    const target = display.inputPins[0];
+    const at = anchorOf(target);
+
+    // Alongside the pin rather than on it, further out than the circle reaches.
+    const beside = new board.scope.Point(at.x + LogicPin.ANCHOR_RADIUS * 2,
+                                         at.y + LogicPin.ANCHOR_RADIUS * 3);
+
+    expect(target.covers(beside)).toBe(false);
+    expect(target.isOver(beside)).toBe(false);
   });
 
   test('connects nothing when the drop is not near any pin', () => {

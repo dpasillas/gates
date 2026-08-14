@@ -5,6 +5,8 @@ import {Theme, ThemeProvider} from "@mui/material/styles"
 
 import {Sidebar} from "./Sidebar";
 import {Properties} from "./Properties";
+import {NET_NAME_FIELD} from "./PinProperties";
+import {connectPins} from "../logic/nets";
 import {PARTS} from "./partsCatalogue";
 import {EditorTabs} from "./EditorTabs";
 import {MenuBar} from "./MenuBar";
@@ -67,6 +69,7 @@ function isTyping(target: EventTarget | null): boolean {
 class App extends React.Component<IProps , IState>{
   private project: Project = new Project();
   private readonly onKeyDown = this.handleKeyDown.bind(this);
+  private readonly onMouseDown = this.handleMouseDown.bind(this);
 
   /**
    * What was last copied, as data rather than as a hold on the components.
@@ -98,12 +101,14 @@ class App extends React.Component<IProps , IState>{
   componentDidMount() {
     this.watch(this.project.boards);
     window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("mousedown", this.onMouseDown, true);
     this.reopenLast();
   }
 
   componentWillUnmount() {
     this.project.boards.forEach(board => {board.updateApp = () => {}});
     window.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("mousedown", this.onMouseDown, true);
   }
 
   /**
@@ -349,6 +354,76 @@ class App extends React.Component<IProps , IState>{
     this.setState({});
   }
 
+  /**
+   * Wires the selected pins together and offers to name what they now form.
+   *
+   * The wires are only half of it: a net is worth a name, and the name is what lets the same net be
+   * added to later without drawing to it. So the panel is brought up whether or not there was
+   * anything to wire — a set of inputs has no output to drive it, and putting them on a named net
+   * is exactly how that gets one.
+   */
+  private handleConnectPins() {
+    // A selection that could not share a net wires nothing, and the panel about to come up says so
+    // against the field itself — which is a better place for it than a notice that flies past.
+    if (connectPins(this.board, [...this.board.selectedPins]) > 0) {
+      this.board.update();
+    }
+
+    this.board.revealProperties();
+    this.setState({});
+    // The panel may only now be expanding, so the field is looked for after this render rather
+    // than during it. Its contents are taken as well as the caret: the name a pin already carries
+    // is what the user is most likely replacing, and selecting it means typing does that.
+    window.setTimeout(() => {
+      const field = document.getElementById(NET_NAME_FIELD);
+      if (field instanceof HTMLInputElement) {
+        field.focus();
+        field.select();
+      }
+    }, 0);
+  }
+
+  /**
+   * Puts down whatever the user had hold of: the caret in a panel field, and the selection.
+   *
+   * Left alone while a menu or dialog is up, where Escape already means "close this" and the
+   * selection is not what is being escaped from.
+   */
+  /**
+   * Lets go of a panel field when the user goes to work somewhere else.
+   *
+   * The board suppresses the browser's own handling of a press, so that a drag cannot move focus
+   * part-way through the gesture. That also means nothing takes focus off a field left behind, and
+   * a field that still has the caret goes on swallowing the keys the board answers to.
+   *
+   * Taken on the way down rather than on the way back up: the board stops a press from travelling
+   * any further once it has one, so waiting for it to bubble here would be waiting for good.
+   */
+  private handleMouseDown(e: MouseEvent) {
+    if (e.target instanceof Element && e.target.closest(".properties-content")) {
+      return;
+    }
+
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && focused.closest(".properties-content")) {
+      focused.blur();
+    }
+  }
+
+  private handleEscape() {
+    if (document.querySelector(".MuiModal-root")) {
+      return;
+    }
+
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && focused.closest(".properties-content")) {
+      focused.blur();
+    }
+
+    this.board.clearSelection();
+    this.setState({});
+  }
+
   private handleDuplicate() {
     duplicateSelection(this.board);
     this.setState({});
@@ -367,6 +442,14 @@ class App extends React.Component<IProps , IState>{
    * Ignored while a field has focus, where the same keys belong to the text being edited.
    */
   private handleKeyDown(e: KeyboardEvent) {
+    // Before the check below, unlike every other key here: stepping out of a field is most of what
+    // Escape is for, so it is the one key that has to reach this while a field has the caret.
+    if (e.key === "Escape") {
+      this.handleEscape();
+
+      return;
+    }
+
     if (isTyping(e.target)) {
       return;
     }
@@ -374,6 +457,15 @@ class App extends React.Component<IProps , IState>{
     if (e.key === "Delete") {
       e.preventDefault();
       this.handleDelete();
+
+      return;
+    }
+
+    // One pin has nothing to be wired to, but naming it is the other half of what this does, and
+    // that is worth reaching by the same key.
+    if (e.key === " " && this.board.selectedPins.size > 0) {
+      e.preventDefault();
+      this.handleConnectPins();
 
       return;
     }

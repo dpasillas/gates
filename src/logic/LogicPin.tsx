@@ -347,8 +347,28 @@ class LogicPin {
     return this.transform(anchor).getDistance(point)
   }
 
+  /**
+   * Whether a board point is close enough to drop a connection on this pin.
+   *
+   * The circle at the end of the pin adds to what the pin already covers rather than standing in
+   * for it: it is there to make the point a wire attaches to easier to hit than the width of the
+   * pin allows, so aiming at the pin itself has to work too.
+   */
   isOver(point: paper.Point): boolean {
-    return this.distanceTo(point) < LogicPin.ANCHOR_RADIUS
+    return this.distanceTo(point) < LogicPin.ANCHOR_RADIUS || this.covers(point);
+  }
+
+  /** Whether a board point falls on the pin as drawn. */
+  covers(point: paper.Point): boolean {
+    if (!this.geometry) {
+      return false;
+    }
+
+    // The pin's geometry is held in its component's frame, which is where the point has to be
+    // brought to be compared against it.
+    const local = this.parent.geometry.matrix.inverted().transform(point);
+
+    return this.geometry.contains(local);
   }
 
   /**

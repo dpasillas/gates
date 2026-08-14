@@ -16,6 +16,8 @@ import Tooltip from "@mui/material/Tooltip"
 import Save from "@mui/icons-material/Save";
 import GridOn from "@mui/icons-material/GridOn";
 import GridOff from "@mui/icons-material/GridOff";
+import Link from "@mui/icons-material/Link";
+import LinkOff from "@mui/icons-material/LinkOff";
 import Delete from "@mui/icons-material/Delete";
 import ContentCut from "@mui/icons-material/ContentCut";
 import ContentCopy from "@mui/icons-material/ContentCopy";
@@ -105,6 +107,29 @@ class Toolbar extends React.Component<IProps, IState> {
     );
   }
 
+  /**
+   * Whether clicking a pin the selection can reach wires it up.
+   *
+   * A toggle rather than something that just happens, so that there is somewhere for the feature to
+   * be found: the tooltip is where a user who has never made a connection this way is told it can
+   * be done at all.
+   */
+  connectOnClickButton() {
+    const on = this.props.board.connectOnClick;
+    const label = on
+      ? "Connect on click: on — click a compatible pin to wire it to the selection"
+      : "Connect on click: off — select pins, then click a compatible pin to wire them";
+
+    return (
+      <Tooltip title={label}>
+        <IconButton className={on ? "pressed" : ""} onClick={this.onToggleConnectOnClick.bind(this)}
+                    aria-label={label} aria-pressed={on}>
+          {on ? <Link fontSize="small"/> : <LinkOff fontSize="small"/>}
+        </IconButton>
+      </Tooltip>
+    );
+  }
+
   render() {
     const running = this.props.board.simulationRunning;
     const stopped = !running && this.props.board.simulationStopped;
@@ -154,6 +179,7 @@ class Toolbar extends React.Component<IProps, IState> {
               </IconButton>
             </Tooltip>
             {this.snapToGridButton()}
+            {this.connectOnClickButton()}
           </Box>
           <Box>
             {this.action("Cut", "Cut (Ctrl+X)", <ContentCut fontSize="small"/>, this.props.onCut)}
@@ -189,6 +215,13 @@ class Toolbar extends React.Component<IProps, IState> {
 
   onStep() {
     this.props.board.advanceSimulation()
+  }
+
+  onToggleConnectOnClick() {
+    this.props.board.connectOnClick = !this.props.board.connectOnClick;
+    writeSettings({connectOnClick: this.props.board.connectOnClick});
+    // Nothing on the board changes, so only this button has anything to redraw.
+    this.setState({});
   }
 
   onCycleSnapMode() {

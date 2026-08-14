@@ -17,9 +17,11 @@ import "../css/PartsDrawer.css"
 /**
  * How many parts the Recent section holds.
  *
- * Three to a row, so this is two rows of them.
+ * Three to a row, so this is one row of them, and the section is the same height however many it
+ * is holding. A second row would grow the section as it filled, pushing everything below it down
+ * mid-drag — which is how the part being dragged ends up out from under the cursor.
  */
-const RECENT_LIMIT = 6;
+const RECENT_LIMIT = 3;
 
 const RECENT = "Recent";
 
@@ -62,14 +64,17 @@ class PartsPanel extends React.Component<IProps, IState> {
     const admits = (part: Part) => !query || part.label.toLowerCase().includes(query);
 
     const all: Array<[string, Part[]]> = [];
-    if (this.state.showRecent && this.state.recent.length > 0) {
+    if (this.state.showRecent) {
       all.push([RECENT, this.state.recent]);
     }
     all.push(...this.props.parts);
 
     return all
       .map(([label, parts]): [string, Part[]] => [label, parts.filter(admits)])
-      .filter(([, parts]) => parts.length > 0);
+      // Recent is a fixed part of the panel and stays whether or not it is holding anything, since
+      // a section that comes and goes moves everything under it. It gives way only to a filter,
+      // where a section with no matches is noise like any other.
+      .filter(([label, parts]) => parts.length > 0 || (!query && label === RECENT));
   }
 
   renderOptions() {
@@ -123,6 +128,7 @@ class PartsPanel extends React.Component<IProps, IState> {
             // Sections are opened by the filter rather than by the user, so a section closed
             // before the search would otherwise hide the very parts that matched it.
             <PartsDrawer key={label} label={label} parts={parts} forceOpen={filtering}
+                         reserveRow={label === RECENT}
                          onPartDragStart={part => this.recordUse(part)}/>
           ))}
           {sections.length === 0 &&

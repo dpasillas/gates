@@ -8,6 +8,7 @@ import {MouseEventMapping} from "./MouseEventMapping";
 import { MouseEventHandler, MouseEventName } from "./Types";
 import { SelectionMode, selectionModeFor } from "./selectionMode";
 import { snapTo } from "./grid";
+import { adoptNet, connectPins, wouldConnect } from "../logic/nets";
 
 
 enum MouseAction {
@@ -261,6 +262,20 @@ class MouseManager {
     this.mouseButton = e.button;
 
     const mode = selectionModeFor(e);
+
+    // With connect-on-click on, a plain click on a pin the selection can reach joins them instead
+    // of selecting it. The selection stays, so an output can be clicked out to one input after
+    // another without being picked up again each time.
+    if (board.connectOnClick && mode === SelectionMode.REPLACE
+        && wouldConnect([...board.selectedPins], target)) {
+      if (connectPins(board, [...board.selectedPins, target]) > 0) {
+        board.update();
+      }
+      board.updateProperties();
+
+      return;
+    }
+
     const next = MouseManager.clicked(mode, board.selectedPins, target,
         board.selectedComponents.size > 0);
     if (next) {
@@ -288,6 +303,7 @@ class MouseManager {
     const connection = a.connectTo(b);
     if (connection) {
       board.addConnection(connection);
+      adoptNet(connection.source, connection.sink);
       board.update();
     }
   }
