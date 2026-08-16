@@ -113,6 +113,49 @@ describe('pin properties', () => {
     expect(screen.queryByLabelText('Port')).toBeNull();
   });
 
+  test('makes a pin a port only once the name is set', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).inputPins[0];
+    showing(logicBoard, pin);
+
+    fireEvent.click(screen.getByLabelText('Port'));
+    fireEvent.change(field('Port Name'), {target: {value: 'clk'}});
+
+    // Ticking the box is a statement of intent; the port is not one until it has a name to check.
+    expect(pin.isPort).toBe(false);
+
+    fireEvent.click(setPortName());
+
+    expect(pin.isPort).toBe(true);
+    expect(pin.portName).toBe('clk');
+  });
+
+  test('stops a pin being a port as soon as the box is cleared', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).inputPins[0];
+    pin.isPort = true;
+    pin.portName = 'clk';
+    showing(logicBoard, pin);
+
+    // No name to give and nothing to check, so there is nothing for a set action to wait for.
+    fireEvent.click(screen.getByLabelText('Port'));
+
+    expect(pin.isPort).toBe(false);
+    expect(pin.portName).toBe('');
+  });
+
+  test('clears the name field along with the port it belonged to', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).inputPins[0];
+    pin.isPort = true;
+    pin.portName = 'clk';
+    showing(logicBoard, pin);
+
+    fireEvent.click(screen.getByLabelText('Port'));
+
+    expect(field('Port Name').value).toBe('');
+  });
+
   test('will not take a port name an output already drives', () => {
     const {logicBoard, gate} = board();
     const taken = gate(GateType.AND).outputPins[0];

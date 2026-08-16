@@ -27,6 +27,8 @@ interface Settings {
   snapMode: SnapMode;
   /** Whether clicking a pin the selection can reach wires it up instead of selecting it. */
   connectOnClick: boolean;
+  /** Whether the board picks its ports out and fades everything else. */
+  highlightPorts: boolean;
   /** Most recently opened first. */
   recentProjects: RecentProject[];
 }
@@ -35,6 +37,7 @@ const DEFAULTS: Settings = {
   wireStyle: DEFAULT_WIRE_STYLE,
   snapMode: "off",
   connectOnClick: true,
+  highlightPorts: false,
   recentProjects: [],
 };
 
@@ -78,6 +81,9 @@ function readSettings(): Settings {
     connectOnClick: typeof settings.connectOnClick === "boolean"
         ? settings.connectOnClick
         : DEFAULTS.connectOnClick,
+    highlightPorts: typeof settings.highlightPorts === "boolean"
+        ? settings.highlightPorts
+        : DEFAULTS.highlightPorts,
     recentProjects: Array.isArray(settings.recentProjects)
         ? settings.recentProjects.filter(isRecentProject).slice(0, RECENT_PROJECT_LIMIT)
         : [],

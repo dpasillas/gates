@@ -29,6 +29,8 @@ interface MenuCommands {
   paste?: () => void;
   wireStyle: WireStyle;
   setWireStyle: (style: WireStyle) => void;
+  highlightPorts: boolean;
+  toggleHighlightPorts: () => void;
 }
 
 function fileMenu(commands: MenuCommands): MenuItemSpec[] {
@@ -105,7 +107,11 @@ function viewMenu(commands: MenuCommands): MenuItemSpec[] {
     },
     {label: "Show Pin Names", separated: true},
     {label: "Show Values"},
-    {label: "Highlight Ports"},
+    {
+      label: "Highlight Ports",
+      checked: commands.highlightPorts,
+      run: commands.toggleHighlightPorts,
+    },
     {label: "Show Status Bar"},
     {label: "Zoom In", shortcut: "Ctrl+=", separated: true},
     {label: "Zoom Out", shortcut: "Ctrl+-"},

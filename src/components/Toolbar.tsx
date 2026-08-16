@@ -60,6 +60,7 @@ interface IProps {
   onCopy?: () => void;
   /** Absent while nothing has been copied. */
   onPaste?: () => void;
+  onToggleHighlightPorts: () => void;
 }
 
 interface IState {}
@@ -87,6 +88,25 @@ class Toolbar extends React.Component<IProps, IState> {
                     onClick={this.onCycleSnapMode.bind(this)}
                     aria-label={label} aria-pressed={mode !== "off"}>
           {snapIcon(mode)}
+        </IconButton>
+      </Tooltip>
+    );
+  }
+
+  highlightPortsButton() {
+    const on = this.props.board.highlightPorts;
+    const label = "Highlight Ports";
+
+    return (
+      <Tooltip title={label}>
+        <IconButton className={on ? "pressed" : ""} onClick={this.props.onToggleHighlightPorts}
+                    aria-label={label} aria-pressed={on}>
+          {/* A ring around a filled centre: the same mark a driving port carries on the board. */}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor"
+               strokeWidth="1.4">
+            <circle cx="8" cy="8" r="5"/>
+            <circle cx="8" cy="8" r="1.8" fill="currentColor" stroke="none"/>
+          </svg>
         </IconButton>
       </Tooltip>
     );
@@ -151,6 +171,7 @@ class Toolbar extends React.Component<IProps, IState> {
             </Tooltip>
             {this.snapToGridButton()}
             {this.connectOnClickButton()}
+            {this.highlightPortsButton()}
           </Box>
           <Box>
             {this.action("Cut", "Cut (Ctrl+X)", <ContentCut fontSize="small"/>, this.props.onCut)}

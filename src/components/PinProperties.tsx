@@ -124,6 +124,24 @@ class PinProperties extends React.Component<IProps, IState> {
     this.props.onApplied();
   }
 
+  /**
+   * Taking a pin off the boundary happens on the spot; putting it on waits to be set.
+   *
+   * A port needs a name, so making one is only complete once there is a name to check. Taking one
+   * away needs neither, and holding it behind the same commit would leave the box showing a state
+   * the board is not in — with nothing to type, there is nothing to change one's mind about.
+   */
+  togglePort(isPort: boolean) {
+    if (isPort) {
+      this.setState({isPort});
+
+      return;
+    }
+
+    setPort(this.props.board, this.props.pins[0], false, "");
+    this.props.onApplied();
+  }
+
   renderApply(label: string, disabled: boolean, apply: () => void) {
     return (
       <InputAdornment position="end">
@@ -192,7 +210,7 @@ class PinProperties extends React.Component<IProps, IState> {
         <Stack direction="row" alignItems="flex-end" spacing={0.5}>
           <Checkbox size="small" checked={this.state.isPort}
                     inputProps={{"aria-label": "Port"}}
-                    onChange={e => this.setState({isPort: e.target.checked})}/>
+                    onChange={e => this.togglePort(e.target.checked)}/>
           <TextField
             id="pin-port-name"
             label="Port Name"

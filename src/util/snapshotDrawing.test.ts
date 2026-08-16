@@ -4,6 +4,7 @@ import {LogicComponent} from '../logic/LogicComponent';
 import {makeComponent} from '../logic/componentFactory';
 import {GateType} from '../enums/GateType';
 import {PartType} from '../enums/PartType';
+import {setPort} from '../logic/nets';
 
 const {ResizeObserver} = window;
 
@@ -81,6 +82,16 @@ describe('drawing a board for export', () => {
     const svg = draw(board);
 
     expect(svg.querySelectorAll('.selected')).toHaveLength(0);
+  });
+
+  test('leaves out port names, which say how the board was being looked at', () => {
+    // The circuit is the same whether or not the toolbar was left highlighting ports, so a picture
+    // of it should be too — the same reason the selection does not appear.
+    const {board, source} = wired();
+    board.highlightPorts = true;
+    setPort(board, source.pins()[0], true, 'a');
+
+    expect(draw(board).querySelectorAll('.port-name')).toHaveLength(0);
   });
 
   test('leaves out the rulers, which are not part of the board', () => {
