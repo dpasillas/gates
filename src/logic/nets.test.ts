@@ -283,17 +283,49 @@ describe('exposing a pin as a port', () => {
     expect(pin.portName).toBe('A');
   });
 
-  test('refuses a name another port already has', () => {
+  test('lets inputs share a name, since one exposed pin drives them all', () => {
     const {logicBoard, gate} = board();
     const first = gate(GateType.AND).inputPins[0];
     const second = gate(GateType.OR).inputPins[0];
     setPort(logicBoard, first, true, 'A');
 
-    expect(checkPortName(logicBoard, second, 'A')).toContain('already the port');
+    expect(checkPortName(logicBoard, second, 'A')).toBeUndefined();
+
+    setPort(logicBoard, second, true, 'A');
+
+    expect(second.isPort).toBe(true);
+    expect(second.portName).toBe('A');
+  });
+
+  test('refuses a second output on one name, which has nothing to drive it', () => {
+    const {logicBoard, gate} = board();
+    const first = gate(GateType.AND).outputPins[0];
+    const second = gate(GateType.OR).outputPins[0];
+    setPort(logicBoard, first, true, 'A');
+
+    expect(checkPortName(logicBoard, second, 'A')).toContain('already an output port');
 
     setPort(logicBoard, second, true, 'A');
 
     expect(second.isPort).toBe(false);
+  });
+
+  test('refuses an input the name an output drives, which would make the pin both', () => {
+    const {logicBoard, gate} = board();
+    const driver = gate(GateType.AND).outputPins[0];
+    const listener = gate(GateType.OR).inputPins[0];
+    setPort(logicBoard, driver, true, 'A');
+
+    expect(checkPortName(logicBoard, listener, 'A')).toContain('already an output port');
+  });
+
+  test('refuses an output the name inputs are already listening on', () => {
+    const {logicBoard, gate} = board();
+    const listener = gate(GateType.AND).inputPins[0];
+    const driver = gate(GateType.OR).outputPins[0];
+    setPort(logicBoard, listener, true, 'A');
+
+    expect(checkPortName(logicBoard, driver, 'A')).toContain('already an input port');
   });
 
   test('frees the name once the pin stops being a port', () => {

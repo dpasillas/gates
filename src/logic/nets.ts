@@ -194,15 +194,29 @@ function setNetName(board: LogicBoard, pins: LogicPin[], name: string) {
   board.updateProperties();
 }
 
+/**
+ * One port name is one pin on the outside of the board, so the net rule applies across it: at most
+ * one output drives it. Inputs share a name freely, and the exposed pin then drives all of them.
+ *
+ * An output meeting an input under one name would need that pin to drive and be driven at once,
+ * which is the bidirectional case the simulation does not have.
+ */
 function checkPortName(board: LogicBoard, pin: LogicPin, name: string): string | undefined {
-  if (!name.trim()) {
+  const wanted = name.trim();
+  if (!wanted) {
     return "A port needs a name.";
   }
 
-  const taken = [...board.pins.values()]
-    .some(other => other !== pin && other.isPort && other.portName === name.trim());
+  const sharing = [...board.pins.values()]
+    .filter(other => other !== pin && other.isPort && other.portName === wanted);
 
-  return taken ? `Another pin is already the port "${name.trim()}".` : undefined;
+  if (sharing.some(other => other.pinType === PinType.OUTPUT)) {
+    return `"${wanted}" is already an output port.`;
+  }
+
+  return pin.pinType === PinType.OUTPUT && sharing.length > 0
+    ? `"${wanted}" is already an input port.`
+    : undefined;
 }
 
 function setPort(board: LogicBoard, pin: LogicPin, isPort: boolean, name: string) {
