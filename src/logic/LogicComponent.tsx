@@ -11,6 +11,7 @@ import {LogicBoard} from "./LogicBoard";
 import {ComponentProperty} from "./ComponentProperty";
 import {bitMask} from "../util/bits";
 import {normalizeAngle} from "../util/angle";
+import {shapeFor} from "../util/shapeCache";
 
 
 /**
@@ -79,6 +80,7 @@ abstract class LogicComponent {
   private __fieldWidth: number = -1;
   private __width: number = -1;
   private __d: string = "";
+  private __shapeKey: string = "";
   /** The unique id of this component, used for rendering, and serialization */
   readonly uuid: string;
   /** Human-readable name of this kind of component, e.g. "AND" or "Clock". */
@@ -162,6 +164,10 @@ abstract class LogicComponent {
   /** Handler for updating this component's body and pins in response to property updates */
   updateGeometry(params: Partial<UpdateGeometryParams>) {
     const fullParams = this.makeUpdateGeometryParams(params);
+    // Taken from the parameters, not the fields: the width setters assign their field only after
+    // this returns, so reading them here would key the new geometry under the old size.
+    this.__shapeKey =
+        `${this.type}/${this.subtype}/${fullParams.width}/${fullParams.fieldWidth}/${this.isMerged}`;
     const {Group} = this.scope;
     // Read against the old body, before the pivot moves under it.
     const placedAt = this.geometry?.position.clone();
@@ -217,7 +223,8 @@ abstract class LogicComponent {
         .flatMap(pin => [...pin.connections.values()])
         .forEach(connection => connection.update());
 
-    this.__d = (this.body.exportSVG() as SVGElement).getAttribute('d')!;
+    this.__d = shapeFor(`body:${this.__shapeKey}`,
+        () => (this.body.exportSVG() as SVGElement).getAttribute('d')!);
 
     this.body.data = {
       type: 'Component',
@@ -438,6 +445,11 @@ abstract class LogicComponent {
   /** Path description of the component's body */
   get d() {
     return this.__d;
+  }
+
+  /** Everything that decides the shape of this component's body and where its pins sit. */
+  get shapeKey(): string {
+    return this.__shapeKey;
   }
 
   get selected() {
