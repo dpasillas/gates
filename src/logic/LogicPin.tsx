@@ -8,6 +8,7 @@ import {LogicConnection} from "./LogicConnection";
 import * as paper from "paper";
 import {LogicBoard} from "./LogicBoard";
 import {bitMask} from "../util/bits";
+import {shapeFor} from "../util/shapeCache";
 
 export enum PinOrientation {
   UNKNOWN,
@@ -62,6 +63,8 @@ class LogicPin {
   board?: LogicBoard;
   width: number;
   geometry?: paper.PathItem;
+  /** Path data for the renderer, held so that drawing does not export it from paper every time. */
+  d: string = "";
   not: boolean;
   orientation: PinOrientation;
   pinType: PinType;
@@ -255,40 +258,61 @@ class LogicPin {
     if (this.geometry) {
       this.geometry.remove()
     }
-    const { CompoundPath, Path, Point } = this.parent.scope;
-    let pin;
-    if (this.not) {
-      pin = new CompoundPath(Constants.NOT_PIN_PATH)
-    } else {
-      pin = new Path(Constants.PIN_PATH);
-    }
-    pin.pivot = new Point(0, 0);
+    const { CompoundPath, Point } = this.parent.scope;
 
+    let rotation: number;
     switch (this.orientation) {
       case PinOrientation.UP:
-        pin.rotate(-90);
+        rotation = -90;
         this.connectionAnchor = new Point(0, -18);
         break;
       case PinOrientation.DOWN:
-        pin.rotate(90);
+        rotation = 90;
         this.connectionAnchor = new Point(0, 18);
         break;
       case PinOrientation.LEFT:
-        pin.rotate(180);
+        rotation = 180;
         this.connectionAnchor = new Point(-18, 0);
         break;
       case PinOrientation.RIGHT:
+        rotation = 0;
         this.connectionAnchor = new Point(18, 0);
         break;
       default:
         throw new Error("Unknown pin orientation")
     }
 
-    pin.translate(pos);
-    this.geometry = pin.subtract(this.parent.body as paper.PathItem);
-    pin.remove();
+    // Where the pin meets the body decides how much of it the body cuts away, so its placement is
+    // part of what identifies the shape.
+    this.d = shapeFor(`pin:${this.parent.shapeKey}|${this.not}|${rotation}|${pos.x},${pos.y}`,
+        () => this.clipToBody(pos, rotation));
+
+    this.geometry = new CompoundPath(this.d);
+    // The boolean result this path stands in for carried the pin's own pivot, which sits where the
+    // pin meets the body rather than in the middle of what survived the cut. `position` is read
+    // through the pivot, and anchor points — where wires attach — are measured from it.
+    this.geometry.pivot = pos;
     this.geometry.data.type = 'Pin'
     this.geometry.data.logical = this;
+  }
+
+  /** The pin with its component's body taken out of it, as path data. */
+  private clipToBody(pos: paper.Point, rotation: number): string {
+    const { CompoundPath, Path, Point } = this.parent.scope;
+    const pin = this.not
+        ? new CompoundPath(Constants.NOT_PIN_PATH)
+        : new Path(Constants.PIN_PATH);
+
+    pin.pivot = new Point(0, 0);
+    pin.rotate(rotation);
+    pin.translate(pos);
+
+    const clipped = pin.subtract(this.parent.body as paper.PathItem);
+    pin.remove();
+    const d = (clipped.exportSVG() as SVGElement).getAttribute('d') ?? "";
+    clipped.remove();
+
+    return d;
   }
 
   /** Triggers a re-render */

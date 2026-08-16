@@ -35,13 +35,8 @@ class Pin extends React.Component<PinProps, IState> {
         this.props.pin.updateSelf = () => this.setState({});
     }
     render() {
-        const data = this.props.pin.geometry!.data;
-        this.props.pin.geometry!.data = {}
-        //@ts-ignore
-        const d = this.props.pin.geometry!.exportSVG().getAttribute('d')
-        this.props.pin.geometry!.data = data;
         const pathAttributes = {
-            d: d
+            d: this.props.pin.d
         }
 
         const classNames = [
