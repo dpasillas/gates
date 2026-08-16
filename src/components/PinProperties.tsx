@@ -211,7 +211,7 @@ class PinProperties extends React.Component<IProps, IState> {
         </Stack>
         {this.state.isPort &&
           <Typography variant="caption" color={problem ? "error" : "text.secondary"}>
-            {problem ?? "Port names must be unique across the board."}
+            {problem ?? "Inputs may share a port name. An output port takes its name alone."}
           </Typography>}
       </>
     );

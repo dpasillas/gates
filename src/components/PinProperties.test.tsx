@@ -113,9 +113,9 @@ describe('pin properties', () => {
     expect(screen.queryByLabelText('Port')).toBeNull();
   });
 
-  test('will not take a port name another port already has', () => {
+  test('will not take a port name an output already drives', () => {
     const {logicBoard, gate} = board();
-    const taken = gate(GateType.AND).inputPins[0];
+    const taken = gate(GateType.AND).outputPins[0];
     taken.isPort = true;
     taken.portName = 'A';
     const pin = gate(GateType.OR).inputPins[0];
@@ -124,9 +124,25 @@ describe('pin properties', () => {
     fireEvent.click(screen.getByLabelText('Port'));
     fireEvent.change(field('Port Name'), {target: {value: 'A'}});
 
-    expect(screen.getByText(/already the port/)).toBeInTheDocument();
+    expect(screen.getByText(/already an output port/)).toBeInTheDocument();
     expect(field('Port Name')).toHaveAttribute('aria-invalid', 'true');
     expect(setPortName()).toBeDisabled();
+  });
+
+  test('takes a port name another input already has, since they share the exposed pin', () => {
+    const {logicBoard, gate} = board();
+    const other = gate(GateType.AND).inputPins[0];
+    other.isPort = true;
+    other.portName = 'A';
+    const pin = gate(GateType.OR).inputPins[0];
+    showing(logicBoard, pin);
+
+    fireEvent.click(screen.getByLabelText('Port'));
+    fireEvent.change(field('Port Name'), {target: {value: 'A'}});
+    fireEvent.click(setPortName());
+
+    expect(pin.isPort).toBe(true);
+    expect(pin.portName).toBe('A');
   });
 
   test('accepts a free port name', () => {
@@ -142,7 +158,7 @@ describe('pin properties', () => {
     expect(pin.portName).toBe('Reset');
   });
 
-  test('asks for a name before it asks for a unique one', () => {
+  test('asks for a name before it says how names may be shared', () => {
     const {logicBoard, gate} = board();
     showing(logicBoard, gate(GateType.AND).inputPins[0]);
 
@@ -152,7 +168,8 @@ describe('pin properties', () => {
     fireEvent.change(field('Port Name'), {target: {value: 'Reset'}});
 
     // Nothing wrong with it, so the rule it has to keep meeting is what is left to say.
-    expect(screen.getByText(/must be unique/)).toBeInTheDocument();
+    expect(screen.queryByText(/needs a name/)).toBeNull();
+    expect(screen.getByText(/share/i)).toBeInTheDocument();
   });
 });
 
