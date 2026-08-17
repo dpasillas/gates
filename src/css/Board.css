@@ -80,8 +80,13 @@ path.grid {
     opacity: .5;
 }
 
-.selected :not(.decoration) {
-    border-style: dotted;
+/* Selection dashes the component body and the pin outline, and nothing else. Anything else drawn
+   inside a component — port marks, switch controls, decorations — sets its own stroke and keeps it.
+   Listing what takes the dashes rather than what escapes them: the first set is closed, the second
+   grows with every decoration anyone adds. */
+.component.selected > g:not(.pin) > path:first-child,
+.component.selected .pin > path:not(.wide):not(.port-mark),
+.pin.selected > path:not(.wide):not(.port-mark) {
     stroke-dasharray: 2 2;
 }
 
@@ -103,6 +108,42 @@ path.grid {
 
 .component.selected .pin:hover .anchor {
     fill: #007ADD80;
+}
+
+/* Drawn for every port pin but shown only while ports are being highlighted, which is also what
+   keeps it out of an exported picture — the export carries this stylesheet but not that class.
+
+   Green because the blues and reds are spoken for by selection and by wire state, and a port is
+   neither of those. */
+.port-mark {
+    fill: none;
+    stroke: none;
+    pointer-events: none;
+}
+
+.highlight-ports .port-mark {
+    stroke: #2e7d32;
+    stroke-width: 1.5px;
+    stroke-linecap: round;
+}
+
+.highlight-ports .pin.driver .port-mark {
+    fill: #2e7d32;
+}
+
+.port-name text {
+    font-family: 'Roboto Mono', monospace;
+    fill: #1b4d1f;
+    stroke: none;
+    pointer-events: none;
+}
+
+/* Lifts the name off the grid and off any wire running under it, without hiding either. */
+.port-name rect {
+    fill: white;
+    opacity: 0.65;
+    stroke: none;
+    pointer-events: none;
 }
 
 /* Segments carry their own fill and stroke so the component's white body does not show through, and

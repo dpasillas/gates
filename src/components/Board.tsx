@@ -9,6 +9,7 @@ import { GateEventHandlers } from "./Component";
 import {LogicBoard} from "../logic/LogicBoard";
 import {MouseManager} from "../util/MouseManager";
 import {snapTo} from "../util/grid";
+import {normalizeAngleOffset} from "../util/angle";
 
 // import Properties from "./Properties";
 
@@ -42,6 +43,18 @@ const RULER_SIZE = 20;
 const TICK_TARGET_SPACING = 80;
 /** Number of unlabeled subdivisions drawn between each pair of labeled ticks */
 const MINOR_TICKS = 4;
+
+/** How far past the anchor a port's name starts, enough to clear the mark drawn around it. */
+const PORT_NAME_OFFSET = 10;
+
+/** Set here rather than in the stylesheet: the backdrop behind a name is measured from it. */
+const PORT_NAME_SIZE = 8;
+
+/** Width of one character of Roboto Mono as a fraction of its size. Exact, the font being fixed. */
+const PORT_NAME_ADVANCE = 0.6;
+
+/** Space between a name and the edge of its backdrop. */
+const PORT_NAME_PADDING = 1;
 
 interface IProps {
     board: LogicBoard;
@@ -340,6 +353,63 @@ class Board extends React.Component<IProps, IState> {
         );
     }
 
+    /**
+     * The names of the board's ports, drawn over everything.
+     *
+     * A layer of its own rather than a label inside each pin. Pins live in their component's frame,
+     * where a name would turn with the component and be drawn over by any component rendered after
+     * it — svg has painting order and no z-index. Here the names are already in board coordinates,
+     * which is where upright means upright, and nothing is painted after them.
+     */
+    renderPortNames() {
+        if (!this.props.board.highlightPorts) {
+            return null;
+        }
+
+        const names: JSX.Element[] = [];
+        for (const pin of this.props.board.pins.values()) {
+            if (!pin.isPort || !pin.portName || !pin.geometry) {
+                continue;
+            }
+
+            const [local, direction] = pin.anchor;
+            const at = pin.transform(local);
+            const x = at.x + direction.x * PORT_NAME_OFFSET,
+                y = at.y + direction.y * PORT_NAME_OFFSET;
+
+            // Taken from where the pin points on the board rather than on its component, so a pin
+            // built facing north and turned to face east is placed as an east-facing pin is.
+            //
+            // Rounded because turning a component leaves the direction a hair off true: a pin facing
+            // due north arrives just past -90, which reads as pointing backwards and flips the name.
+            const facing = Math.round(
+                Math.atan2(direction.y, direction.x) * 180 / Math.PI * 1000) / 1000;
+            // Turned to lie along the pin, then turned again wherever that would leave it running
+            // right to left. Anchoring at the far end keeps the name outside the pin either way.
+            const reversed = facing >= 90 || facing < -90;
+            const turn = normalizeAngleOffset(reversed ? facing + 180 : facing);
+
+            // The name runs outward from (x, y), so which side of it the backdrop covers depends on
+            // which end of the name is anchored there.
+            const width = pin.portName.length * PORT_NAME_SIZE * PORT_NAME_ADVANCE;
+            const left = (reversed ? x - width : x) - PORT_NAME_PADDING;
+
+            names.push(
+                <g key={pin.uuid} className="port-name" transform={`rotate(${turn} ${x} ${y})`}>
+                    <rect x={left} y={y - PORT_NAME_SIZE / 2 - PORT_NAME_PADDING}
+                          width={width + 2 * PORT_NAME_PADDING}
+                          height={PORT_NAME_SIZE + 2 * PORT_NAME_PADDING}/>
+                    <text x={x} y={y} fontSize={PORT_NAME_SIZE}
+                          textAnchor={reversed ? "end" : "start"} dominantBaseline="middle">
+                        {pin.portName}
+                    </text>
+                </g>
+            );
+        }
+
+        return <g key="port-names" className="port-names">{names}</g>;
+    }
+
     render() {
         const { left, top, width, height } = this.props.board.viewBox;
 
@@ -387,7 +457,7 @@ class Board extends React.Component<IProps, IState> {
                     onDragOver={(e) => this.handleDragOver(e)}
                     onDrop={(e) => this.handleDrop(e)}
                 >
-                    <svg className="board"
+                    <svg className={`board${this.props.board.highlightPorts ? ' highlight-ports' : ''}`}
                         preserveAspectRatio="xMinYMin slice"
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox={`${left} ${top} ${width} ${height}`}
@@ -431,6 +501,7 @@ class Board extends React.Component<IProps, IState> {
                             );
                         })()}
                         {renderedComponents}
+                        {this.renderPortNames()}
                         {selectionBox &&
                             <path className="select" d={selectionBox} vectorEffect="non-scaling-stroke" />
                         }

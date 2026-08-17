@@ -210,10 +210,22 @@ class Properties extends React.Component<IProps, IState> {
           </Typography>}
         <Divider/>
         {properties.map(property => (
-          <PropertyRow key={property.key} property={property} onApplied={() => this.setState({})}/>
+          <PropertyRow key={property.key} property={property} onApplied={this.onApplied.bind(this)}/>
         ))}
       </Box>
     );
+  }
+
+  /**
+   * Redraws the board as well as this panel.
+   *
+   * A property that moves or turns a component redraws that component, but anything the board draws
+   * from where its components ended up — the port names, which are a layer of their own — is left
+   * showing where they were until something else happens to redraw it.
+   */
+  onApplied() {
+    this.props.board.update();
+    this.setState({});
   }
 
   renderHeader() {

@@ -436,6 +436,15 @@ class App extends React.Component<IProps , IState>{
     this.setState({});
   }
 
+  private handleHighlightPorts() {
+    this.board.highlightPorts = !this.board.highlightPorts;
+    writeSettings({highlightPorts: this.board.highlightPorts});
+    // Every pin decides for itself whether to fade or name itself, so they all have to be asked
+    // again rather than only the board being redrawn around them.
+    this.board.updateApp();
+    this.setState({});
+  }
+
   /**
    * The keys the board answers to.
    *
@@ -542,6 +551,8 @@ class App extends React.Component<IProps , IState>{
       ...editing,
       wireStyle: this.board.wireStyle,
       setWireStyle: this.handleWireStyle.bind(this),
+      highlightPorts: this.board.highlightPorts,
+      toggleHighlightPorts: this.handleHighlightPorts.bind(this),
     });
 
     return (
@@ -555,7 +566,8 @@ class App extends React.Component<IProps , IState>{
                          onDelete={deleteSelection}
                          onCut={editing.cut}
                          onCopy={editing.copy}
-                         onPaste={editing.paste}/>
+                         onPaste={editing.paste}
+                         onToggleHighlightPorts={this.handleHighlightPorts.bind(this)}/>
                 <EditorTabs project={this.project}
                             onSelect={this.handleSelectBoard.bind(this)}
                             onClose={this.handleCloseBoard.bind(this)}

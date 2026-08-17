@@ -112,6 +112,14 @@ class LogicBoard {
    */
   connectOnClick: boolean = readSettings().connectOnClick;
 
+  /**
+   * Whether the board picks its ports out and fades everything else.
+   *
+   * A port is otherwise only visible in the properties panel, one selected pin at a time, which is
+   * no way to read the interface a board presents once it is used as a component.
+   */
+  highlightPorts: boolean = readSettings().highlightPorts;
+
   /** How far apart the positions a component may be placed on are, or zero while snapping is off. */
   get snapSize(): number {
     return snapSizeFor(this.snapMode);
