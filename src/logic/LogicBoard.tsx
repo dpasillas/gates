@@ -17,6 +17,7 @@ import { normalizeAngleOffset } from "../util/angle";
 import { WireStyle } from "../util/wireStyle";
 import { snapSizeFor, SnapMode } from "../util/grid";
 import { leaveNets } from "./nets";
+import { Net } from "./Net";
 import { readSettings } from "../storage/settings";
 import { mergeProperties, MergedProperty } from "../util/mergeProperties";
 
@@ -49,6 +50,8 @@ class LogicBoard {
   connections: Map<string, LogicConnection> = new Map();
   /** All pins which may be rendered */
   pins: Map<string, LogicPin> = new Map();
+  /** The named lines on this board. A name picks out at most one, and only on this board. */
+  readonly nets: Map<string, Net> = new Map();
 
   readonly selectedComponents: OperableSet<LogicComponent> = new OperableSet();
   readonly selectedPins: OperableSet<LogicPin> = new OperableSet();
@@ -284,11 +287,12 @@ class LogicBoard {
    * @param pin - The pin to be updated
    * @param delay - The amount of time from the current time before the pin's state should be updated.
    */
-  postEvent(state: LogicState, pin: LogicPin, delay: number) {
+  postEvent(state: LogicState, pin: LogicPin, delay: number, then?: () => void) {
     const event = new LogicEvent({
       pin: pin,
       time: this.simulationCurrentTime + delay,
-      state: state
+      state: state,
+      then,
     });
     // console.log(`Posting event at time (${this.simulationCurrentTime}) for target time (${event.time})`)
     this.simulation.insert(event);
@@ -316,15 +320,42 @@ class LogicBoard {
     }
   }
 
+  /** Lines whose drivers have moved and which have yet to be worked out. */
+  private readonly settling: Set<Net> = new Set();
+
+  markSettling(net: Net) {
+    this.settling.add(net);
+  }
+
+  /** Works out every line that moved, and hands the results on. May queue further events. */
+  settleNets() {
+    const moved = [...this.settling];
+    this.settling.clear();
+
+    for (const net of moved) {
+      net.settle();
+    }
+  }
+
+  /**
+   * Runs the simulation up to the next step, an instant at a time.
+   *
+   * Every event sharing an instant is applied before any line is worked out, so a line driven from
+   * more than one place settles once on the values it actually has, rather than once per event and
+   * through orderings that never physically occur.
+   */
   advanceSimulation() {
     const current = this.simulationCurrentTime;
     const target = current + this.simulationStepSize;
     // TODO(dpasillas): Modify Binary Tree to remove need to check first() on every loop.
     while (this.simulation.size() && this.simulation.first()!.time <= target) {
-      const event = this.simulation.popFirst()!;
-      // Update the time so that operations triggered by this event use the correct reference time.
-      this.simulationCurrentTime = event.time;
-      event.apply();
+      const at = this.simulation.first()!.time;
+      // Set first, so anything an event triggers measures its own delay from the right instant.
+      this.simulationCurrentTime = at;
+      while (this.simulation.size() && this.simulation.first()!.time === at) {
+        this.simulation.popFirst()!.apply();
+      }
+      this.settleNets();
     }
     this.simulationCurrentTime = target;
     // TODO(dpasillas): Remove this call once we've identified where the simulation state may be referenced, and

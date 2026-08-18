@@ -6,6 +6,7 @@ import {LogicState} from './LogicState';
 import {Switch} from './Switch';
 import {GateType} from '../enums/GateType';
 import {PartType} from '../enums/PartType';
+import {setNetName} from './nets';
 import {PARTS} from '../components/partsCatalogue';
 
 function place(board: LogicBoard, type: PartType, subtype: number, x = 0, y = 0): LogicComponent {
@@ -109,7 +110,7 @@ describe('a board written out and read back', () => {
   test('keeps the names given to pins', () => {
     const board = new LogicBoard();
     const gate = place(board, PartType.GATE, GateType.AND);
-    gate.outputPins[0].netName = 'clk';
+    setNetName(board, [gate.outputPins[0]], 'clk');
     gate.inputPins[0].portName = 'A';
     gate.inputPins[0].isPort = true;
 

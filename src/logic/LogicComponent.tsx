@@ -12,6 +12,7 @@ import {ComponentProperty} from "./ComponentProperty";
 import {bitMask} from "../util/bits";
 import {normalizeAngle} from "../util/angle";
 import {shapeFor} from "../util/shapeCache";
+import {leaveNet} from "./nets";
 
 
 /**
@@ -213,7 +214,7 @@ abstract class LogicComponent {
       const before = carried.get(pin.uuid);
       if (before !== undefined && before !== pin.width) {
         pin.disconnect();
-        pin.netName = "";
+        leaveNet(pin);
       }
     }
 
@@ -475,9 +476,9 @@ abstract class LogicComponent {
   }
 
   /** Sets the specified logical state on the specified pin after the propagation delay. */
-  postEvent(state: LogicState, pin?: LogicPin) {
+  postEvent(state: LogicState, pin?: LogicPin, then?: () => void) {
     pin = pin ?? this.outputPins[0];
-    this.board?.postEvent(state, pin, this.delay);
+    this.board?.postEvent(state, pin, this.delay, then);
   }
 
   /** Delete this component, and all associated pins/connections */

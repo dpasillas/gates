@@ -1,10 +1,8 @@
 import {LogicBoard} from "./LogicBoard";
 import {LogicPin, PinType} from "./LogicPin";
+import {Net} from "./Net";
 
-/**
- * Sharing a net name is the same thing as being connected. The simulation knows only about wires;
- * names are the bookkeeping that decides which wires to make and unmake.
- */
+/** Being on a net and sharing its name are the same statement. The net holds both. */
 
 interface NetNameCheck {
   readonly error?: string;
@@ -13,32 +11,59 @@ interface NetNameCheck {
   readonly displaced?: LogicPin;
 }
 
-function pinsOnNet(board: LogicBoard, name: string): LogicPin[] {
-  return name ? [...board.pins.values()].filter(pin => pin.netName === name) : [];
-}
-
-/** Naming an output has to name everything it drives, so the whole net ends up under one name. */
-function connectedGroup(pin: LogicPin): LogicPin[] {
-  const found = new Map<string, LogicPin>();
-  const pending = [pin];
-
-  while (pending.length > 0) {
-    const current = pending.pop()!;
-    if (found.has(current.uuid)) {
-      continue;
-    }
-    found.set(current.uuid, current);
-
-    for (const connection of current.connections.values()) {
-      for (const end of [connection.source, connection.sink]) {
-        if (!found.has(end.uuid)) {
-          pending.push(end);
-        }
-      }
-    }
+/** The net a board knows by this name, making one and registering it if it has none. */
+function netFor(board: LogicBoard, name: string): Net {
+  const existing = board.nets.get(name);
+  if (existing) {
+    return existing;
   }
 
-  return [...found.values()];
+  const made = new Net();
+  made.name = name;
+  board.nets.set(name, made);
+
+  return made;
+}
+
+function pinsOnNet(board: LogicBoard, name: string): LogicPin[] {
+  return name ? board.nets.get(name)?.members ?? [] : [];
+}
+
+/** Everything on the same line as this pin, which is the pin alone when it is on none. */
+function connectedGroup(pin: LogicPin): LogicPin[] {
+  return pin.net ? pin.net.members : [pin];
+}
+
+/** Takes a pin off its line. The net forgets itself once nobody is left on it. */
+function leaveNet(pin: LogicPin) {
+  pin.net?.remove(pin);
+}
+
+/** Calls a net by a different name, moving its members into any net already going by that one. */
+function renameNet(board: LogicBoard, net: Net, name: string) {
+  if (net.name === name) {
+    return;
+  }
+
+  if (net.name) {
+    board.nets.delete(net.name);
+  }
+
+  if (!name) {
+    net.name = "";
+
+    return;
+  }
+
+  const existing = board.nets.get(name);
+  if (existing && existing !== net) {
+    net.members.forEach(member => existing.add(member));
+
+    return;
+  }
+
+  net.name = name;
+  board.nets.set(name, net);
 }
 
 /**
@@ -103,7 +128,6 @@ function connectPins(board: LogicBoard, pins: LogicPin[]): number {
     const connection = pin.connectTo(driver);
     if (connection) {
       board.addConnection(connection);
-      adoptNet(driver, pin);
       made++;
     }
   }
@@ -115,17 +139,12 @@ function connectPins(board: LogicBoard, pins: LogicPin[]): number {
  * Takes pins off their nets, for wires cut on purpose. Pass only the pins the user chose.
  *
  * Not for every disconnection: connectTo disconnects an input before rewiring it, so doing this
- * there would wipe the name a pin was being given.
+ * there would take a pin off the line it was in the middle of joining.
  */
 function leaveNets(pins: Iterable<LogicPin>) {
   for (const pin of pins) {
-    pin.netName = "";
+    leaveNet(pin);
   }
-}
-
-/** Wired pins answer to one name, and the output owns it. */
-function adoptNet(source: LogicPin, sink: LogicPin) {
-  sink.netName = source.netName;
 }
 
 /**
@@ -169,20 +188,28 @@ function setNetName(board: LogicBoard, pins: LogicPin[], name: string) {
   }
 
   if (displaced) {
-    displaced.netName = "";
+    leaveNet(displaced);
     displaced.disconnect();
   }
 
   for (const pin of pins) {
     if (pin.pinType === PinType.OUTPUT) {
-      const group = connectedGroup(pin);
-      group.forEach(member => member.netName = name);
+      const net = pin.net;
       if (!name) {
+        const group = connectedGroup(pin);
         group.forEach(member => member.disconnect());
+        leaveNets(group);
+      } else if (net) {
+        renameNet(board, net, name);
+      } else {
+        netFor(board, name).add(pin);
       }
     } else {
       pin.disconnect();
-      pin.netName = name;
+      leaveNet(pin);
+      if (name) {
+        netFor(board, name).add(pin);
+      }
     }
   }
 
@@ -232,7 +259,7 @@ function setPort(board: LogicBoard, pin: LogicPin, isPort: boolean, name: string
 }
 
 export {
-  adoptNet, checkNetName, checkPortName, connectedGroup, connectPins, isConnectableGroup,
-  leaveNets, pinsOnNet, setNetName, setPort, wouldConnect,
+  checkNetName, checkPortName, connectedGroup, connectPins, isConnectableGroup, leaveNet,
+  leaveNets, netFor, pinsOnNet, setNetName, setPort, wouldConnect,
 };
 export type {NetNameCheck};
