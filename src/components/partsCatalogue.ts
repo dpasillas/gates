@@ -8,6 +8,9 @@ const PARTS: Map<string, Part[]> = new Map([
     new Part({type: PartType.INPUT, subtype: 0, label: "Clock"}),
     new Part({type: PartType.INPUT, subtype: 1, label: "Switch"}),
     new Part({type: PartType.INPUT, subtype: 2, label: "Ground"}),
+    // TODO(dpasillas): Put the pull resistors back once user-drawn nets exist. Both are built and
+    //   the net resolves them correctly, but the only way to share a line with the tri-state they
+    //   are for is to wire two outputs together, which is not an interaction we want.
   ]],
   ["Output", [
     new Part({type: PartType.OUTPUT, subtype: 0, label: "Bulb"}),

@@ -43,7 +43,12 @@ class LogicConnection {
     // Nothing drives the far end any more, so it falls back to high impedance and its component
     // works out what that means. Left alone it keeps the last value it was handed and goes on
     // behaving as though the wire were still there.
-    this.sink.reset();
+    //
+    // Only where that end was listening. Two drivers may share a wire, and which of them this call
+    // names the sink is arbitrary — a pull resistor goes on pulling once it is unwired.
+    if (!this.sink.drives) {
+      this.sink.reset();
+    }
   }
 
   render() {

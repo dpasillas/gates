@@ -62,21 +62,55 @@ class Net {
   }
 
   /**
-   * What the line settles to.
+   * What the line settles to, weighing every driver on it.
    *
-   * One driver today. Several will need weighing by drive strength, which is what a pull-up is:
-   * see the resistor task.
+   * Per channel: whatever is driven strongly decides, and only where nothing is does a weak driver
+   * get to. Drivers that disagree at the deciding strength give an unknown, and a channel nobody
+   * drives floats.
    */
   resolve(): LogicState {
-    const [driver] = this.drivers;
-    if (driver) {
-      return driver.driven;
+    const drivers = this.drivers;
+    const [any] = this.members;
+    const mask = any ? bitMask(any.width) : 0;
+
+    if (drivers.length === 0) {
+      return new LogicState({z: mask});
+    }
+    if (drivers.length === 1) {
+      return drivers[0].driven;
     }
 
-    // Nothing is driving, so the line floats at the width of whoever is on it.
-    const [any] = this.members;
+    let strongOne = 0, strongZero = 0, strongX = 0;
+    let weakOne = 0, weakZero = 0, weakX = 0;
 
-    return new LogicState({z: any ? bitMask(any.width) : 0});
+    for (const pin of drivers) {
+      const {v, x, z, w} = pin.driven;
+      const driving = ~z & mask;
+      const strongly = driving & ~w;
+      const weakly = driving & w;
+
+      strongOne |= v & ~x & strongly;
+      strongZero |= ~v & ~x & strongly;
+      strongX |= x & strongly;
+      weakOne |= v & ~x & weakly;
+      weakZero |= ~v & ~x & weakly;
+      weakX |= x & weakly;
+    }
+
+    const strongly = strongOne | strongZero | strongX;
+    const weakly = weakOne | weakZero | weakX;
+    const byWeak = weakly & ~strongly;
+    const strongClash = (strongOne & strongZero) | strongX;
+    const weakClash = (weakOne & weakZero) | weakX;
+
+    const x = ((strongly & strongClash) | (byWeak & weakClash)) & mask;
+
+    return new LogicState({
+      v: ((strongOne & ~strongClash) | (weakOne & byWeak & ~weakClash)) & mask & ~x,
+      x,
+      z: mask & ~strongly & ~weakly,
+      w: byWeak & ~x & mask,
+    });
   }
 
   /**

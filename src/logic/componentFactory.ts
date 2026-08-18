@@ -8,6 +8,7 @@ import {Joiner} from "./Joiner";
 import {LogicBoard} from "./LogicBoard";
 import {LogicComponent} from "./LogicComponent";
 import {LogicGate} from "./LogicGate";
+import {PullResistor} from "./PullResistor";
 import {SegmentDisplay} from "./SegmentDisplay";
 import {Splitter} from "./Splitter";
 import {Switch} from "./Switch";
@@ -45,6 +46,10 @@ function makeInput(subtype: number, scope: paper.PaperScope, board?: LogicBoard)
       return new Switch({subtype: 1, scope, board});
     case 2:
       return new Ground({subtype: 2, scope, board});
+    // Intentional fall through: the subtype selects which way the line is pulled.
+    case 3:
+    case 4:
+      return new PullResistor({subtype, scope, board});
     default:
       throw new Error(`Unsupported input subtype: ${subtype}`);
   }

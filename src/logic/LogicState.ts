@@ -4,6 +4,7 @@ interface IParams {
   v?: number; // non-error value
   x?: number; // unknown
   z?: number; // high-impedance
+  w?: number; // driven weakly, as by a pull-up
 }
 
 /**
@@ -22,18 +23,28 @@ class LogicState {
   x: number;
   /** Represents whether bits are disconnected from an input source */
   z: number;
+  /**
+   * Represents whether bits are driven weakly rather than strongly.
+   *
+   * Set means weak, so anything built without saying is strong — which is every component but the
+   * pull resistors. A weak bit loses to a strong one when a line is worked out; Z needs no strength,
+   * being the absence of drive at all.
+   */
+  w: number;
 
   constructor(params: IParams) {
     this.v = params.v ?? 0;
     this.x = params.x ?? 0;
     this.z = params.z ?? 0;
+    this.w = params.w ?? 0;
   }
 
   eq(other: LogicState) {
     return (
         this.v === other.v &&
         this.x === other.x &&
-        this.z === other.z
+        this.z === other.z &&
+        this.w === other.w
     );
   }
 
@@ -41,7 +52,8 @@ class LogicState {
     return (
         this.v !== other.v ||
         this.x !== other.x ||
-        this.z !== other.z
+        this.z !== other.z ||
+        this.w !== other.w
     );
   }
 
@@ -62,7 +74,8 @@ class LogicState {
     return new LogicState({
       v: v,
       x: this.x,
-      z: this.z
+      z: this.z,
+      w: this.w
     });
   }
 }

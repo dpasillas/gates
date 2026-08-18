@@ -160,7 +160,13 @@ class LogicPin {
     return this.pinType === PinType.INPUT;
   }
 
-  /** Indicates whether this pin may be connected to another */
+  /**
+   * Indicates whether this pin may be connected to another.
+   *
+   * TODO(dpasillas): Two outputs sharing a line is what a pull resistor against a tri-state needs,
+   *   and the net resolves one from any number of drivers already. Wiring them directly is not the
+   *   way in — see the user-drawn nets task.
+   */
   canConnect(other: LogicPin) {
     if (this.width !== other.width) {
       return false;
@@ -206,6 +212,9 @@ class LogicPin {
 
   remove() {
     this.disconnect()
+    // A pin that is gone cannot still be on a line. Membership is what the line resolves from, so
+    // leaving it would keep a deleted component driving.
+    this.net?.remove(this);
     this.geometry?.remove();
     delete this.geometry?.data.logic
     this.board?.removePin(this.uuid);

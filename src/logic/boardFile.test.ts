@@ -128,6 +128,19 @@ describe('a board written out and read back', () => {
     expect(roundTrip(board).name).toBe('adder4');
   });
 
+  // The pull resistors are built but not listed, so the sweep above no longer reaches them. A board
+  // holding one still has to reopen as one.
+  test.each([[3, 'Pull Up'], [4, 'Pull Down']] as const)(
+    'an unlisted %s survives the trip', (subtype, label) => {
+      const board = new LogicBoard();
+      const placed = place(board, PartType.INPUT, subtype);
+
+      const [reopened] = [...roundTrip(board).components.values()];
+
+      expect(reopened.subtype).toBe(placed.subtype);
+      expect(reopened.label).toBe(label);
+    });
+
   test.each([...PARTS].flatMap(([category, parts]) =>
       parts.map(part => [`${category}/${part.label}`, part] as const)))(
     '%s survives the trip', (_name, part) => {
