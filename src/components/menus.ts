@@ -27,6 +27,8 @@ interface MenuCommands {
   duplicate?: () => void;
   /** Absent while nothing has been copied. */
   paste?: () => void;
+  /** Absent while there are no components selected to make a board out of. */
+  createBoardFromSelection?: () => void;
   wireStyle: WireStyle;
   setWireStyle: (style: WireStyle) => void;
   highlightPorts: boolean;
@@ -82,7 +84,11 @@ function editMenu(commands: MenuCommands): MenuItemSpec[] {
         {label: "Rotate Counterclockwise"},
       ],
     },
-    {label: "Create Board from Selection...", separated: true},
+    {
+      label: "Create Board from Selection...",
+      separated: true,
+      run: commands.createBoardFromSelection,
+    },
     {label: "Package Board as Component..."},
   ];
 }

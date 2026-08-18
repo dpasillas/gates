@@ -124,5 +124,5 @@ function duplicateSelection(board: LogicBoard): LogicComponent[] {
   return pasteInto(board, copied, {...centreOf(copied), repeat: 1});
 }
 
-export {copySelection, duplicateSelection, pasteAnchor, pasteInto, CASCADE};
+export {centreOfView, copySelection, duplicateSelection, pasteAnchor, pasteInto, CASCADE};
 export type {PasteAnchor};

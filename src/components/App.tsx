@@ -17,6 +17,7 @@ import {LogicBoard} from "../logic/LogicBoard";
 import {Project} from "../logic/Project";
 import {ComponentSet} from "../logic/boardFile";
 import {copySelection, duplicateSelection, pasteAnchor, pasteInto} from "../logic/clipboard";
+import {createBoardFromSelection} from "../logic/boardFromSelection";
 import {Toolbar} from "./Toolbar";
 import {exportBoard, importBoard} from "../storage/boardStore";
 import {
@@ -255,6 +256,29 @@ class App extends React.Component<IProps , IState>{
       submit: name => {
         this.watch([this.project.addBoard(name)]);
         this.setState({});
+      },
+    });
+  }
+
+  /**
+   * Takes what is selected onto a board of its own.
+   *
+   * Named before it is made rather than after: the board it makes is opened straight away, and a
+   * tab that comes up already called what it holds is one less thing to go back and fix.
+   */
+  private handleCreateBoardFromSelection() {
+    this.askName({
+      title: "Create Board from Selection",
+      label: "Board name",
+      confirm: "Create",
+      initial: `board ${this.project.boards.length + 1}`,
+      submit: name => {
+        const board = createBoardFromSelection(this.project, this.board, name);
+        if (!board) {
+          return;
+        }
+        this.watch([board]);
+        this.setState({notice: `Created ${name}`});
       },
     });
   }
@@ -537,6 +561,8 @@ class App extends React.Component<IProps , IState>{
       copy: hasComponents ? this.handleCopy.bind(this) : undefined,
       paste: this.clipboard ? this.handlePaste.bind(this) : undefined,
       duplicate: hasComponents ? this.handleDuplicate.bind(this) : undefined,
+      createBoardFromSelection:
+          hasComponents ? this.handleCreateBoardFromSelection.bind(this) : undefined,
     };
     const menus = buildMenus({
       newProject: this.handleNewProject.bind(this),
