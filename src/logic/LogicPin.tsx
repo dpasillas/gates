@@ -9,6 +9,7 @@ import * as paper from "paper";
 import {LogicBoard} from "./LogicBoard";
 import {bitMask} from "../util/bits";
 import {shapeFor} from "../util/shapeCache";
+import {driveOnto, Net} from "./Net";
 
 export enum PinOrientation {
   UNKNOWN,
@@ -68,16 +69,18 @@ class LogicPin {
   not: boolean;
   orientation: PinOrientation;
   pinType: PinType;
+  /** The value on the line this pin is on, which is what its component reads. */
   state: LogicState;
+  /** What this pin puts on that line. Meaningless on a pin that only listens. */
+  driven: LogicState;
   label?: string;
-  /**
-   * The net this pin belongs to, if it has been named.
-   *
-   * A name is a way of describing connections, not a thing connections are made of: pins sharing a
-   * name are wired to each other, and the name is bookkeeping for working out which wires to make.
-   * Clearing it takes an input off the net, and takes down the net an output drives.
-   */
-  netName: string = "";
+  /** The line this pin is on. Absent until it is wired to something or named. */
+  net?: Net;
+
+  /** What this pin is called on the board, which is the name of the line it is on. */
+  get netName(): string {
+    return this.net?.name ?? "";
+  }
   /** The name this pin is exposed under when the board is used as a component. */
   portName: string = "";
   /** Whether this pin is exposed at all. A port must be named, and named uniquely. */
@@ -96,58 +99,65 @@ class LogicPin {
     this.pinType = params.pinType;
     this.not = params.not ?? false;
     this.state = new LogicState({});
+    this.driven = new LogicState({});
     this.board = params.board;
     this.label = params.label;
 
     this.board?.addPin(this);
   }
 
-  /** Helper function which causes logic states to propagate */
+  /** Puts a value on this pin and lets it take effect at once. */
   setLogicState(state: LogicState) {
-    this.state = state;
     switch (this.pinType) {
       case PinType.INPUT:
-        this.parent.operate();
+        this.receive(state);
         break;
       case PinType.OUTPUT:
-        this.updateNext();
+        this.drive(state);
+        this.net?.settle();
         break;
       default:
         throw new Error();
     }
   }
 
-  /** Updates all pins with connections leading from this pin */
-  updateNext(force: boolean = false) {
-    if (this.pinType !== PinType.OUTPUT) {
-      throw new Error();
-    }
+  /**
+   * Records what this pin is putting on its line, without working out what the line is at.
+   *
+   * The board settles the line once every event sharing that instant has landed, so a line with
+   * more than one driver changing at once resolves once rather than passing through orderings.
+   */
+  drive(state: LogicState) {
+    this.driven = state;
 
-    for (const connection of this.connections.values()) {
-      connection.update();
-      const inputPin = connection.sink;
-      // No need to simulate events which won't affect the output
-      if (force || this.state.ne(inputPin.state)) {
-        inputPin.setLogicState(this.state)
-      }
-      // This ensures that self referencing components (such as Clock) operates appropriately
-      inputPin.parent.operate();
+    if (this.net) {
+      this.board?.markSettling(this.net);
+    } else {
+      this.state = state;
     }
   }
 
-  /**
-   * Removes every wire attached to this pin.
-   *
-   * A pin joined to itself is left where it is. That is not a wire to anything the user drew, it is
-   * a component's own arrangement — a clock drives itself through one, and taking it away stops the
-   * clock for good.
-   */
+  /** Takes the value its line settled to. */
+  receive(state: LogicState) {
+    this.state = state;
+    this.parent.operate();
+  }
+
+  /** Removes every wire attached to this pin. */
   disconnect() {
     for (const connection of [...this.connections.values()]) {
-      if (connection.source !== connection.sink) {
-        connection.remove();
-      }
+      connection.remove();
     }
+  }
+
+  /** Whether this pin puts a value on its net. Bidirectional pins will answer yes to both. */
+  get drives(): boolean {
+    return this.pinType === PinType.OUTPUT;
+  }
+
+  /** Whether this pin reads the value on its net. */
+  get listens(): boolean {
+    return this.pinType === PinType.INPUT;
   }
 
   /** Indicates whether this pin may be connected to another */
@@ -181,6 +191,7 @@ class LogicPin {
       const connection = new LogicConnection({ source: other, sink: this, board: this.board })
       this.connections.set(other.uuid, connection);
       other.connections.set(this.uuid, connection);
+      driveOnto(other, this);
       this.setLogicState(other.state);
       return connection;
     } else {
@@ -415,8 +426,10 @@ class LogicPin {
       this.setLogicState(new LogicState({ z: this.bitMask() }))
       this.parent.operate();
     } else {
-      this.setLogicState(new LogicState({ x: this.bitMask() }))
-      this.updateNext(true);
+      this.driven = new LogicState({ x: this.bitMask() });
+      this.state = this.driven;
+      // Forced: listeners are still holding whatever they had before the reset.
+      this.net?.settle(true);
     }
   }
 }

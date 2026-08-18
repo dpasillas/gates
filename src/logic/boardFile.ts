@@ -2,6 +2,7 @@ import {LogicBoard} from "./LogicBoard";
 import {LogicComponent} from "./LogicComponent";
 import {LogicPin} from "./LogicPin";
 import {Switch} from "./Switch";
+import {netFor} from "./nets";
 import {makeComponent} from "./componentFactory";
 import {GateType} from "../enums/GateType";
 import {PartType} from "../enums/PartType";
@@ -190,7 +191,7 @@ function partTypeNamed(name: string): PartType | undefined {
   return typeof type === "number" ? type : undefined;
 }
 
-function applyPinData(component: LogicComponent, pins: PinData[]) {
+function applyPinData(board: LogicBoard, component: LogicComponent, pins: PinData[]) {
   const all = component.pins();
 
   for (const data of pins) {
@@ -198,13 +199,15 @@ function applyPinData(component: LogicComponent, pins: PinData[]) {
     if (!pin) {
       continue;
     }
-    pin.netName = data.netName ?? "";
+    if (data.netName) {
+      netFor(board, data.netName).add(pin);
+    }
     pin.portName = data.portName ?? "";
     pin.isPort = data.isPort ?? false;
   }
 }
 
-function applyComponentData(component: LogicComponent, data: ComponentData) {
+function applyComponentData(board: LogicBoard, component: LogicComponent, data: ComponentData) {
   // Merging is settled first because it decides how many pins there are and how wide each one is,
   // and the widths below are applied over the pins it leaves behind.
   component.isMerged = data.merged ?? false;
@@ -220,7 +223,7 @@ function applyComponentData(component: LogicComponent, data: ComponentData) {
     component.toggles = data.toggles ?? 0;
   }
 
-  applyPinData(component, data.pins ?? []);
+  applyPinData(board, component, data.pins ?? []);
 }
 
 /**
@@ -244,7 +247,7 @@ function addComponents(board: LogicBoard, data: ComponentSet): LogicComponent[] 
       scope: board.scope,
       board,
     });
-    applyComponentData(component, entry);
+    applyComponentData(board, component, entry);
     board.addComponent(component);
 
     return component;

@@ -5,6 +5,7 @@ import {copySelection, duplicateSelection, pasteAnchor, pasteInto, CASCADE} from
 import {makeComponent} from './componentFactory';
 import {GateType} from '../enums/GateType';
 import {PartType} from '../enums/PartType';
+import {setNetName} from './nets';
 
 function place(board: LogicBoard, x: number, y = 0,
                type = PartType.GATE, subtype: number = GateType.AND): LogicComponent {
@@ -104,7 +105,7 @@ describe('copying a selection', () => {
 describe('what a copy leaves behind', () => {
   test('the names that put pins on a net, which are connections to things outside it', () => {
     const {board: made, source} = board();
-    source.outputPins[0].netName = 'clk';
+    setNetName(made, [source.outputPins[0]], 'clk');
     select(made, source);
 
     const copied = copySelection(made)!;

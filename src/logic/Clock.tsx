@@ -3,7 +3,6 @@ import React from "react";
 import {LogicComponent, LogicComponentParams} from "./LogicComponent";
 import {LogicPin, PinOrientation, PinType} from "./LogicPin";
 import {PartType} from "../enums/PartType";
-import {LogicConnection} from "./LogicConnection";
 import {LogicState} from "./LogicState";
 import {ComponentProperty} from "./ComponentProperty";
 
@@ -19,15 +18,17 @@ class Clock extends LogicComponent {
       type: PartType.INPUT,
       delay: 10,
     });
-    const [output] = this.outputPins
-    // This hack ensures that the clock triggers itself to change.
-    const selfConnection = new LogicConnection({source: output, sink: output})
-    output.connections.set(output.uuid, selfConnection);
   }
 
+  /**
+   * Asks to be run again once the edge it just posted lands.
+   *
+   * Nothing else will: a clock has no inputs, so it is its own source of change. Read from what the
+   * pin drives rather than from its line, which is what the clock decides rather than what it sees.
+   */
   operate(): void {
-    const s = this.outputPins[0].state.negated(1);
-    this.postEvent(s);
+    const next = this.outputPins[0].driven.negated(1);
+    this.postEvent(next, undefined, () => this.operate());
   }
 
   /**
@@ -96,7 +97,6 @@ class Clock extends LogicComponent {
   reset() {
     const [output] = this.outputPins;
     output.setLogicState(new LogicState({v: 0}));
-    output.updateNext(true);
     this.operate();
   }
 }

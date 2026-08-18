@@ -6,6 +6,7 @@ import {LogicBoard} from '../logic/LogicBoard';
 import {LogicGate} from '../logic/LogicGate';
 import {LogicPin} from '../logic/LogicPin';
 import {GateType} from '../enums/GateType';
+import {setNetName} from '../logic/nets';
 
 function board() {
   const logicBoard = new LogicBoard();
@@ -71,7 +72,7 @@ describe('pin properties', () => {
     const {logicBoard, gate} = board();
     const resident = gate(GateType.AND).outputPins[0];
     const arriving = gate(GateType.OR).outputPins[0];
-    resident.netName = 'clk';
+    setNetName(logicBoard, [resident], 'clk');
     showing(logicBoard, arriving);
 
     fireEvent.change(field('Net Name'), {target: {value: 'clk'}});

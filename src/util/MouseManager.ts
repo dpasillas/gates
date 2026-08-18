@@ -8,7 +8,7 @@ import {MouseEventMapping} from "./MouseEventMapping";
 import { MouseEventHandler, MouseEventName } from "./Types";
 import { SelectionMode, selectionModeFor } from "./selectionMode";
 import { snapTo } from "./grid";
-import { adoptNet, connectPins, wouldConnect } from "../logic/nets";
+import { connectPins, wouldConnect } from "../logic/nets";
 
 
 enum MouseAction {
@@ -303,7 +303,6 @@ class MouseManager {
     const connection = a.connectTo(b);
     if (connection) {
       board.addConnection(connection);
-      adoptNet(connection.source, connection.sink);
       board.update();
     }
   }
