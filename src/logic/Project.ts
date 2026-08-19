@@ -1,6 +1,7 @@
 import {v4 as uuidv4} from "uuid";
 
 import {LogicBoard} from "./LogicBoard";
+import {PackageComponent} from "./PackageComponent";
 
 /** What a project is called before it has been given a name of its own. */
 const UNTITLED_PROJECT = "Untitled Project";
@@ -31,6 +32,14 @@ class Project {
 
   /** The boards in the project, in the order the panel lists them. */
   boards: LogicBoard[];
+
+  /**
+   * The packages in the project, in the order the panel lists them.
+   *
+   * A package belongs to the project rather than to a board: it names no board itself, and the same
+   * one can front several.
+   */
+  packages: PackageComponent[] = [];
 
   /**
    * The boards with an editor tab open, in tab order.
@@ -98,6 +107,18 @@ class Project {
     this.show(board);
 
     return board;
+  }
+
+  /** Adds a package to the project. */
+  addPackage(pkg: PackageComponent): PackageComponent {
+    this.packages.push(pkg);
+
+    return pkg;
+  }
+
+  /** Takes a package out of the project. */
+  removePackage(pkg: PackageComponent) {
+    this.packages = this.packages.filter(other => other.uuid !== pkg.uuid);
   }
 
   /**

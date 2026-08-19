@@ -1,0 +1,38 @@
+/*
+ * What a package draws beyond its outline and its pins.
+ *
+ * Each of these sets its own fill: a component fills its body white and strokes it black, and a
+ * mark drawn inside one otherwise takes both.
+ */
+
+.package-divider,
+.package-clock {
+    fill: none;
+    stroke: currentColor;
+}
+
+.package-clock {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.package-corner {
+    fill: currentColor;
+    stroke: none;
+}
+
+/*
+ * The pin being edited, which is not the same thing as a pin selected on a board.
+ *
+ * Amber rather than the board's red: a package is being authored, and nothing about picking a pin
+ * to edit is a fault, which is what red reads as.
+ */
+.package-symbol .pin.selected {
+    stroke: #f9a825;
+    fill: #f9a82533;
+}
+
+.package-symbol .pin.selected > path.pin-outline {
+    stroke-dasharray: none;
+    stroke-width: 1.6px;
+}

@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import {LogicComponent} from "./LogicComponent";
-import * as Constants from "../Constants";
 import {Pin, PinEventHandlers, PinProps} from "../components/Pin";
 import React from "react";
 import {LogicState} from "./LogicState";
@@ -9,6 +8,7 @@ import * as paper from "paper";
 import {LogicBoard} from "./LogicBoard";
 import {bitMask} from "../util/bits";
 import {shapeFor} from "../util/shapeCache";
+import * as Constants from "../Constants";
 import {driveOnto, Net} from "./Net";
 
 export enum PinOrientation {
@@ -58,14 +58,65 @@ class LogicPin {
    */
   static readonly ANCHOR_RADIUS = 5;
 
+  /** How far a pin reaches from the body it is on, which is what its path is drawn to. */
+  static readonly STUB = 20;
+
+  /** How far a pin is turned from pointing right, for the edge it sits on. */
+  static angleFor(orientation: PinOrientation): number {
+    switch (orientation) {
+      case PinOrientation.UP:
+        return -90;
+      case PinOrientation.DOWN:
+        return 90;
+      case PinOrientation.LEFT:
+        return 180;
+      default:
+        return 0;
+    }
+  }
+
+  /**
+   * The pin outline, turned, placed, and with the body it meets taken out of it.
+   *
+   * The cut is what stops a pin being drawn back inside the shape it is attached to, and what makes
+   * a pin on a slanted edge stop at the slant.
+   */
+  static outline(scope: paper.PaperScope, body: paper.PathItem, not: boolean, angle: number,
+                 at: paper.Point): string {
+    const {CompoundPath, Path, Point} = scope;
+    const drawn = not
+        ? new CompoundPath(Constants.NOT_PIN_PATH)
+        : new Path(Constants.PIN_PATH);
+
+    drawn.pivot = new Point(0, 0);
+    drawn.rotate(angle);
+    drawn.translate(at);
+
+    const clipped = drawn.subtract(body);
+    drawn.remove();
+    const d = (clipped.exportSVG() as SVGElement).getAttribute("d") ?? "";
+    clipped.remove();
+
+    return d;
+  }
+
   private parent: LogicComponent;
   private connectionAnchor?: paper.Point;
-  readonly uuid: string;
+  /**
+   * Identity.
+   *
+   * Assignable, but only while restoring one that was stored: a package and its pins are written to
+   * a file by identity, and bindings name pins by it. Never reassign something already registered
+   * on a board, which keys its collections by this.
+   */
+  uuid: string;
   board?: LogicBoard;
   width: number;
   geometry?: paper.PathItem;
   /** Path data for the renderer, held so that drawing does not export it from paper every time. */
   d: string = "";
+  /** The slash saying this pin carries a bus, or nothing where it carries one bit. */
+  bus: string = "";
   not: boolean;
   orientation: PinOrientation;
   pinType: PinType;
@@ -81,6 +132,19 @@ class LogicPin {
   get netName(): string {
     return this.net?.name ?? "";
   }
+  /**
+   * Whether a part built to this pin is clocked by it, and whether the pin's name is drawn beside
+   * it, and how heavily.
+   *
+   * Said by whoever declares the pin rather than worked out from anything, so they live here beside
+   * the label they are about.
+   */
+  clock: boolean = false;
+  showLabel: boolean = true;
+  labelBold: boolean = false;
+  /** Which run of its edge it sits in, where something has split that edge in two. */
+  group: number = 0;
+
   /** The name this pin is exposed under when the board is used as a component. */
   portName: string = "";
   /** Whether this pin is exposed at all. A port must be named, and named uniquely. */
@@ -221,7 +285,7 @@ class LogicPin {
   }
 
   renderLabel(i: number): React.ReactElement | undefined {
-    if (!this.label) {
+    if (!this.label || !this.showLabel) {
       return undefined;
     }
 
@@ -245,7 +309,8 @@ class LogicPin {
 
     const [text, subscript] = this.label.split("__");
     return (
-      <text key={i} className={textClass} x={this.pos.x} y={this.pos.y}>
+      <text key={i} className={`${textClass}${this.labelBold ? " bold" : ""}`}
+            x={this.pos.x} y={this.pos.y}>
         {text}
         {subscript && <tspan>{subscript}</tspan>}
       </text>
@@ -280,27 +345,24 @@ class LogicPin {
     }
     const { CompoundPath, Point } = this.parent.scope;
 
-    let rotation: number;
     switch (this.orientation) {
       case PinOrientation.UP:
-        rotation = -90;
         this.connectionAnchor = new Point(0, -18);
         break;
       case PinOrientation.DOWN:
-        rotation = 90;
         this.connectionAnchor = new Point(0, 18);
         break;
       case PinOrientation.LEFT:
-        rotation = 180;
         this.connectionAnchor = new Point(-18, 0);
         break;
       case PinOrientation.RIGHT:
-        rotation = 0;
         this.connectionAnchor = new Point(18, 0);
         break;
       default:
         throw new Error("Unknown pin orientation")
     }
+    const rotation = LogicPin.angleFor(this.orientation);
+    this.bus = this.busSlash(pos, rotation);
 
     // Where the pin meets the body decides how much of it the body cuts away, so its placement is
     // part of what identifies the shape.
@@ -318,21 +380,28 @@ class LogicPin {
 
   /** The pin with its component's body taken out of it, as path data. */
   private clipToBody(pos: paper.Point, rotation: number): string {
-    const { CompoundPath, Path, Point } = this.parent.scope;
-    const pin = this.not
-        ? new CompoundPath(Constants.NOT_PIN_PATH)
-        : new Path(Constants.PIN_PATH);
+    return LogicPin.outline(this.parent.scope, this.parent.body as paper.PathItem, this.not,
+                            rotation, pos);
+  }
 
-    pin.pivot = new Point(0, 0);
-    pin.rotate(rotation);
-    pin.translate(pos);
+  /**
+   * The slash saying this pin carries more than one bit, or nothing where it carries one.
+   *
+   * A stroke across the line is how a schematic marks a bus. Drawn across the middle of the pin, so
+   * it reads as being about the pin rather than about what it is wired to.
+   */
+  private busSlash(pos: paper.Point, rotation: number): string {
+    if (this.width <= 1) {
+      return "";
+    }
 
-    const clipped = pin.subtract(this.parent.body as paper.PathItem);
-    pin.remove();
-    const d = (clipped.exportSVG() as SVGElement).getAttribute('d') ?? "";
-    clipped.remove();
+    const radians = rotation * Math.PI / 180;
+    const reach = LogicPin.STUB / 2;
+    const round = (value: number) => Math.round(value * 1000) / 1000;
+    const midX = pos.x + Math.cos(radians) * reach;
+    const midY = pos.y + Math.sin(radians) * reach;
 
-    return d;
+    return `M${round(midX - 3)},${round(midY + 3)} L${round(midX + 3)},${round(midY - 3)}`;
   }
 
   /** Triggers a re-render */

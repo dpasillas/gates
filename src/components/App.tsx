@@ -12,8 +12,11 @@ import {EditorTabs} from "./EditorTabs";
 import {MenuBar} from "./MenuBar";
 import {ProjectPanel} from "./ProjectPanel";
 import {NameDialog, OpenProjectDialog} from "./ProjectDialogs";
+import {PackageDialog} from "./PackageDialog";
 import {buildMenus} from "./menus";
 import {LogicBoard} from "../logic/LogicBoard";
+import {GLOBAL_SCOPE} from "../Constants";
+import {PackageComponent} from "../logic/PackageComponent";
 import {Project} from "../logic/Project";
 import {ComponentSet} from "../logic/boardFile";
 import {copySelection, duplicateSelection, pasteAnchor, pasteInto} from "../logic/clipboard";
@@ -54,6 +57,8 @@ interface IState {
   naming?: NamePrompt,
   /** The projects to choose between, while the open dialog is up. */
   opening?: ProjectSummary[],
+  /** The package being authored, while the interface editor is up. */
+  authoring?: PackageComponent,
 }
 
 /** Whether the keyboard belongs to something being typed into rather than to the board. */
@@ -281,6 +286,46 @@ class App extends React.Component<IProps , IState>{
         this.setState({notice: `Created ${name}`});
       },
     });
+  }
+
+  /**
+   * Opens the interface editor on a new package.
+   *
+   * Nothing joins the project until it is saved, so a package that was started and thought better
+   * of leaves nothing behind to delete.
+   */
+  private handleAddPackage() {
+    this.setState({authoring: new PackageComponent(
+        {scope: GLOBAL_SCOPE, name: `package ${this.project.packages.length + 1}`})});
+  }
+
+  private handleEditPackage(pkg: PackageComponent) {
+    this.setState({authoring: pkg});
+  }
+
+  /**
+   * Takes what the editor was showing.
+   *
+   * A package keeps its identity while it is edited, so saving one that is already in the project
+   * puts it back where it was rather than beside itself.
+   */
+  private handleSavePackage(saved: PackageComponent) {
+    const at = this.project.packages.findIndex(pkg => pkg.uuid === saved.uuid);
+    if (at < 0) {
+      this.project.addPackage(saved);
+    } else {
+      this.project.packages[at] = saved;
+    }
+    this.setState({authoring: undefined, notice: `Saved ${saved.name}`});
+  }
+
+  private handleDeletePackage(pkg: PackageComponent) {
+    if (!window.confirm(`Delete ${pkg.name}?`)) {
+      return;
+    }
+
+    this.project.removePackage(pkg);
+    this.setState({notice: `Deleted ${pkg.name}`});
   }
 
   private handleSelectBoard(board: LogicBoard) {
@@ -547,7 +592,10 @@ class App extends React.Component<IProps , IState>{
                     onAddBoard={this.handleAddBoard.bind(this)}
                     onImportBoard={this.handleImportBoard.bind(this)}
                     onSelectBoard={this.handleSelectBoard.bind(this)}
-                    onDeleteBoard={this.handleDeleteBoard.bind(this)}/>
+                    onDeleteBoard={this.handleDeleteBoard.bind(this)}
+                    onAddPackage={this.handleAddPackage.bind(this)}
+                    onEditPackage={this.handleEditPackage.bind(this)}
+                    onDeletePackage={this.handleDeletePackage.bind(this)}/>
     );
   }
 
@@ -622,6 +670,10 @@ class App extends React.Component<IProps , IState>{
                               this.setState({naming: undefined});
                               prompt?.submit(name);
                             }}/>}
+              {this.state.authoring &&
+                <PackageDialog package={this.state.authoring}
+                               onCancel={() => this.setState({authoring: undefined})}
+                               onSave={this.handleSavePackage.bind(this)}/>}
               <OpenProjectDialog open={Boolean(this.state.opening)}
                                  projects={this.state.opening ?? []}
                                  onCancel={() => this.setState({opening: undefined})}

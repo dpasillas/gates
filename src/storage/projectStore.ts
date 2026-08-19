@@ -15,13 +15,17 @@ import {forgetProject, mostRecentProject, readSettings, rememberProject} from ".
 import {boardText, carriedText, IMPORT_ACCEPT} from "./boardStore";
 import {loadBoard, parseBoardFile} from "../logic/boardFile";
 import {LogicBoard} from "../logic/LogicBoard";
+import {PackageComponent} from "../logic/PackageComponent";
+import {packageFrom, parsePackageFile, serializePackage} from "../logic/packageFile";
 import {Project} from "../logic/Project";
 import {
-  BOARDS_DIRECTORY,
+  packagesFromBundle,
   parseProjectBundle,
   parseProjectFile,
   serializeProject,
   serializeProjectBundle,
+  BOARDS_DIRECTORY,
+  PACKAGES_DIRECTORY,
   ProjectBundle,
   ProjectData,
 } from "../logic/projectFile";
@@ -85,6 +89,15 @@ async function writeInto(project: Project, home: FileSystemDirectoryHandle) {
     await writeText(await fileIn(boards, `${board.id}.json`), boardText(board));
   }
 
+  if (project.packages.length > 0) {
+    const packages = await directoryIn(home, PACKAGES_DIRECTORY);
+    for (const pkg of project.packages) {
+      await writeText(await fileIn(packages, `${pkg.uuid}.json`),
+                      `${JSON.stringify(serializePackage(pkg), undefined, 2)}
+`);
+    }
+  }
+
   await writeText(await fileIn(home, MANIFEST),
                   `${JSON.stringify(serializeProject(project), undefined, 2)}\n`);
 
@@ -122,10 +135,12 @@ async function saveProjectAs(project: Project, name: string): Promise<void> {
 }
 
 /** A project holding these boards, showing them all, named and identified by its manifest. */
-function assemble(data: ProjectData, boards: LogicBoard[]): Project {
+function assemble(data: ProjectData, boards: LogicBoard[],
+                  packages: PackageComponent[] = []): Project {
   const project = new Project(boards[0]);
   project.id = data.id || project.id;
   project.name = data.name;
+  project.packages = packages;
 
   // A manifest can name no boards at all, and the editor has to be showing something.
   if (boards.length > 0) {
@@ -155,7 +170,14 @@ async function readProject(home: FileSystemDirectoryHandle): Promise<Project> {
     boards.push(board);
   }
 
-  const project = assemble(data, boards);
+  const packages: PackageComponent[] = [];
+  for (const entry of data.packages) {
+    const pkg = packageFrom(parsePackageFile(await readText(await fileAt(home, entry.file))));
+    pkg.uuid = entry.id || pkg.uuid;
+    packages.push(pkg);
+  }
+
+  const project = assemble(data, boards, packages);
   project.directory = home;
   rememberProject({id: project.id, name: project.name});
 
@@ -250,7 +272,7 @@ function projectFromBundle(bundle: ProjectBundle): Project {
     }
   });
 
-  return assemble(bundle.project, boards);
+  return assemble(bundle.project, boards, packagesFromBundle(bundle));
 }
 
 /** Reads a project out of a file the user chooses, or nothing if they change their mind. */

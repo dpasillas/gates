@@ -71,23 +71,27 @@ path.grid {
     fill: #FF000080;
 }
 
-.pin .wide {
-    stroke: none;
-    fill: url(#bus);
-}
-
-.selected .wide {
-    opacity: .5;
-}
 
 /* Selection dashes the component body and the pin outline, and nothing else. Anything else drawn
    inside a component — port marks, switch controls, decorations — sets its own stroke and keeps it.
    Listing what takes the dashes rather than what escapes them: the first set is closed, the second
    grows with every decoration anyone adds. */
 .component.selected > g:not(.pin) > path:first-child,
-.component.selected .pin > path:not(.wide):not(.port-mark),
-.pin.selected > path:not(.wide):not(.port-mark) {
+.component.selected .pin > path.pin-outline,
+.pin.selected > path.pin-outline {
     stroke-dasharray: 2 2;
+}
+
+/* A pin is an outline, and a bus is one stroke across it. Set here rather than beside each drawing
+   of a pin, so a symbol in a dialog and a pin on the board cannot disagree about either. */
+.pin-outline {
+    stroke-linejoin: round;
+}
+
+.pin-bus {
+    fill: none;
+    stroke: inherit;
+    stroke-width: 1;
 }
 
 .anchor {

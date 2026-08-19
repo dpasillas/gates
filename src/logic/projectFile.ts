@@ -1,5 +1,6 @@
 import {Project} from "./Project";
 import {parseBoardFile, serializeBoard, BoardData} from "./boardFile";
+import {packageFrom, parsePackageFile, serializePackage, PackageData} from "./packageFile";
 
 /** Tag every project manifest carries, so that a file of some other kind is rejected as one. */
 const PROJECT_FORMAT = "gates.project";
@@ -8,6 +9,9 @@ const PROJECT_FORMAT_VERSION = 1;
 
 /** The directory boards are kept in, relative to the project. */
 const BOARDS_DIRECTORY = "boards";
+
+/** The directory packages are kept in, relative to the project. */
+const PACKAGES_DIRECTORY = "packages";
 
 /** One file the project is made of. */
 interface ProjectEntry {
@@ -33,14 +37,17 @@ interface ProjectData {
   boards: ProjectEntry[];
   /** Empty until boards can be packaged as components. */
   components: ProjectEntry[];
-  /** Empty until interfaces exist. */
-  interfaces: ProjectEntry[];
+  packages: ProjectEntry[];
   /** Empty until the testbench exists. */
   tests: ProjectEntry[];
 }
 
 function boardEntry(id: string, name: string): ProjectEntry {
   return {id, name, file: `${BOARDS_DIRECTORY}/${id}.json`};
+}
+
+function packageEntry(id: string, name: string): ProjectEntry {
+  return {id, name, file: `${PACKAGES_DIRECTORY}/${id}.json`};
 }
 
 function serializeProject(project: Project): ProjectData {
@@ -51,7 +58,7 @@ function serializeProject(project: Project): ProjectData {
     name: project.name,
     boards: project.boards.map(board => boardEntry(board.id, board.name)),
     components: [],
-    interfaces: [],
+    packages: project.packages.map(pkg => packageEntry(pkg.uuid, pkg.name)),
     tests: [],
   };
 }
@@ -100,7 +107,7 @@ function parseProjectFile(text: string): ProjectData {
     name: typeof parsed.name === "string" ? parsed.name : "Untitled Project",
     boards: entries(parsed.boards),
     components: entries(parsed.components),
-    interfaces: entries(parsed.interfaces),
+    packages: entries(parsed.packages),
     tests: entries(parsed.tests),
   };
 }
@@ -121,6 +128,7 @@ interface ProjectBundle {
   version: number;
   project: ProjectData;
   boards: BoardData[];
+  packages: PackageData[];
 }
 
 function serializeProjectBundle(project: Project): ProjectBundle {
@@ -129,6 +137,7 @@ function serializeProjectBundle(project: Project): ProjectBundle {
     version: PROJECT_BUNDLE_VERSION,
     project: serializeProject(project),
     boards: project.boards.map(serializeBoard),
+    packages: project.packages.map(serializePackage),
   };
 }
 
@@ -152,19 +161,31 @@ function parseProjectBundle(text: string): ProjectBundle {
     throw new Error("This project is damaged: it is missing its boards.");
   }
 
+  // Packages are read leniently where boards are not: a bundle written before they existed has
+  // none, and a project with no packages is a project, where a project with no boards is damaged.
+  const packages = Array.isArray(parsed.packages) ? parsed.packages : [];
+
   return {
     format: PROJECT_BUNDLE_FORMAT,
     version: PROJECT_BUNDLE_VERSION,
     project: parseProjectFile(JSON.stringify(parsed.project)),
     boards: parsed.boards.map(board => parseBoardFile(JSON.stringify(board))),
+    packages: packages.map(pkg => parsePackageFile(JSON.stringify(pkg))),
   };
 }
 
+/** The packages a bundle carries, as objects rather than as data. */
+function packagesFromBundle(bundle: ProjectBundle) {
+  return bundle.packages.map(data => packageFrom(data));
+}
+
 export {
+  packagesFromBundle,
   parseProjectBundle,
   parseProjectFile,
   serializeProject,
   serializeProjectBundle,
   BOARDS_DIRECTORY,
+  PACKAGES_DIRECTORY,
 };
 export type {ProjectBundle, ProjectData, ProjectEntry};

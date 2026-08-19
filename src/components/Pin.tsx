@@ -98,9 +98,6 @@ class Pin extends React.Component<PinProps, IState> {
 
     render() {
         const pin = this.props.pin;
-        const pathAttributes = {
-            d: pin.d
-        }
 
         const classNames = [
             'pin'
@@ -133,8 +130,8 @@ class Pin extends React.Component<PinProps, IState> {
                     {pin.isPort && this.renderPortMark(anchor)}
                     {/* The drawn circle is the drop target: same radius the drop is tested against. */}
                     <circle className="anchor" cx={anchor.x} cy={anchor.y} r={LogicPin.ANCHOR_RADIUS} />
-                    <path {...pathAttributes} />
-                    {pin.width > 1 && <path className="wide" {...pathAttributes} />}
+                    <path className="pin-outline" d={pin.d} />
+                    {pin.bus && <path className="pin-bus" d={pin.bus} />}
                 </g>
             </Tooltip>
         );

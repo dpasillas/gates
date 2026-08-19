@@ -70,7 +70,7 @@ describe('writing a project to its directory', () => {
 
     const manifest = parseProjectFile(home.read(MANIFEST)!);
     expect(manifest.components).toEqual([]);
-    expect(manifest.interfaces).toEqual([]);
+    expect(manifest.packages).toEqual([]);
     expect(manifest.tests).toEqual([]);
   });
 

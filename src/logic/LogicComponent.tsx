@@ -83,7 +83,14 @@ abstract class LogicComponent {
   private __d: string = "";
   private __shapeKey: string = "";
   /** The unique id of this component, used for rendering, and serialization */
-  readonly uuid: string;
+  /**
+   * Identity.
+   *
+   * Assignable, but only while restoring one that was stored: a package and its pins are written to
+   * a file by identity, and bindings name pins by it. Never reassign something already registered
+   * on a board, which keys its collections by this.
+   */
+  uuid: string;
   /** Human-readable name of this kind of component, e.g. "AND" or "Clock". */
   readonly label: string;
   readonly type: PartType;
@@ -162,13 +169,22 @@ abstract class LogicComponent {
     }
   }
 
+  /**
+   * What decides this component's drawing, and so what its cached shape is filed under.
+   *
+   * Everything built from a type and a couple of widths is described by them. A component whose
+   * shape is authored rather than implied says so by overriding this.
+   */
+  protected shapeKeyFor(params: UpdateGeometryParams): string {
+    return `${this.type}/${this.subtype}/${params.width}/${params.fieldWidth}/${this.isMerged}`;
+  }
+
   /** Handler for updating this component's body and pins in response to property updates */
   updateGeometry(params: Partial<UpdateGeometryParams>) {
     const fullParams = this.makeUpdateGeometryParams(params);
     // Taken from the parameters, not the fields: the width setters assign their field only after
     // this returns, so reading them here would key the new geometry under the old size.
-    this.__shapeKey =
-        `${this.type}/${this.subtype}/${fullParams.width}/${fullParams.fieldWidth}/${this.isMerged}`;
+    this.__shapeKey = this.shapeKeyFor(fullParams);
     const {Group} = this.scope;
     // Read against the old body, before the pivot moves under it.
     const placedAt = this.geometry?.position.clone();
