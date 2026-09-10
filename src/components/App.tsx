@@ -36,7 +36,8 @@ import {
   saveProjectAs,
   ProjectSummary,
 } from "../storage/projectStore";
-import {writeSettings} from "../storage/settings";
+import {readSettings, writeSettings} from "../storage/settings";
+import {ExportKind} from "../util/exportKind";
 import {WireStyle} from "../util/wireStyle";
 import {LightTheme} from "../Themes";
 import {ThemeContext} from "../ThemeContext";
@@ -64,7 +65,12 @@ interface IState {
   authoring?: PackageComponent,
   /** The board being packaged, while the binding dialog is up. */
   binding?: {board: LogicBoard, existing?: ComponentDefinition},
+  /** What the toolbar's export button writes out. */
+  exportKind: ExportKind,
 }
+
+/** The kinds the export button can write out today. */
+const EXPORTABLE: ExportKind[] = ["board", "project"];
 
 /** Whether the keyboard belongs to something being typed into rather than to the board. */
 /**
@@ -105,6 +111,7 @@ class App extends React.Component<IProps , IState>{
     this.state = {
       theme: LightTheme,
       setTheme: this.setTheme.bind(this),
+      exportKind: readSettings().exportKind,
     }
   }
 
@@ -478,6 +485,22 @@ class App extends React.Component<IProps , IState>{
     this.attempt(async () => `Exported ${await exportProject(this.project)}`);
   }
 
+  private handleExport(kind: ExportKind) {
+    switch (kind) {
+      case "board":
+        return this.handleExportBoard();
+      case "project":
+        return this.handleExportProject();
+      default:
+        this.setState({notice: `Exporting a ${kind} is not there yet`});
+    }
+  }
+
+  private handleChooseExportKind(kind: ExportKind) {
+    writeSettings({exportKind: kind});
+    this.setState({exportKind: kind});
+  }
+
   private handleImportProject() {
     if (!this.mayDiscard()) {
       return;
@@ -755,6 +778,10 @@ class App extends React.Component<IProps , IState>{
                 <MenuBar menus={menus} title={`${this.project.name} — ${this.board.name}`}/>
                 <Toolbar board={this.board}
                          onSave={this.handleSave.bind(this)}
+                         exportKind={this.state.exportKind}
+                         exportable={EXPORTABLE}
+                         onExport={this.handleExport.bind(this)}
+                         onChooseExportKind={this.handleChooseExportKind.bind(this)}
                          onDelete={deleteSelection}
                          onCut={editing.cut}
                          onCopy={editing.copy}

@@ -1,5 +1,6 @@
 import {DEFAULT_WIRE_STYLE, WIRE_STYLES, WireStyle} from "../util/wireStyle";
 import {isSnapMode, SnapMode} from "../util/grid";
+import {DEFAULT_EXPORT_KIND, ExportKind, isExportKind} from "../util/exportKind";
 
 /**
  * Preferences that belong to this browser rather than to any board.
@@ -29,6 +30,8 @@ interface Settings {
   connectOnClick: boolean;
   /** Whether the board picks its ports out and fades everything else. */
   highlightPorts: boolean;
+  /** What the toolbar's export button writes out, as last chosen from its menu. */
+  exportKind: ExportKind;
   /** Most recently opened first. */
   recentProjects: RecentProject[];
 }
@@ -38,6 +41,7 @@ const DEFAULTS: Settings = {
   snapMode: "off",
   connectOnClick: true,
   highlightPorts: false,
+  exportKind: DEFAULT_EXPORT_KIND,
   recentProjects: [],
 };
 
@@ -84,6 +88,7 @@ function readSettings(): Settings {
     highlightPorts: typeof settings.highlightPorts === "boolean"
         ? settings.highlightPorts
         : DEFAULTS.highlightPorts,
+    exportKind: isExportKind(settings.exportKind) ? settings.exportKind : DEFAULTS.exportKind,
     recentProjects: Array.isArray(settings.recentProjects)
         ? settings.recentProjects.filter(isRecentProject).slice(0, RECENT_PROJECT_LIMIT)
         : [],

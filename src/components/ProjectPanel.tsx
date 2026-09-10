@@ -4,6 +4,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
+import {alpha} from "@mui/material/styles";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import Delete from "@mui/icons-material/Delete";
 import ExpandMore from "@mui/icons-material/ExpandMore";
@@ -90,7 +91,7 @@ class ProjectPanel extends React.Component<IProps, IState> {
     const shown = name || `untitled ${kind.toLowerCase()}`;
 
     return (
-      <div className="project-held-row">
+      <Box className="project-held-row" sx={{"&:hover": {bgcolor: "action.hover"}}}>
         <Icon className="project-row-icon" title={kind}/>
         <span className="project-row-name" title={shown}>{shown}</span>
         <IconButton className="project-held-extract" size="small"
@@ -99,7 +100,7 @@ class ProjectPanel extends React.Component<IProps, IState> {
                     onClick={() => extract(definition)}>
           <Unarchive fontSize="inherit"/>
         </IconButton>
-      </div>
+      </Box>
     );
   }
 
@@ -163,9 +164,14 @@ class ProjectPanel extends React.Component<IProps, IState> {
            tabIndex={0}
            aria-current={active}
            sx={{
-             bgcolor: active ? "action.selected" : "transparent",
-             borderLeftColor: active ? "primary.main" : "transparent",
              "&:hover": {bgcolor: "action.hover"},
+             // The current board is marked by a pill inset in its row rather than a bar at the
+             // edge, where it met the rail's own bar. Blue while the panel holds the keyboard;
+             // grey once the user has gone to work on the board.
+             "&.active::before": {bgcolor: "action.selected"},
+             ".project-panel:focus-within &.active::before": {
+               bgcolor: theme => alpha(theme.palette.primary.main, 0.14),
+             },
            }}
            onClick={() => this.props.onSelectBoard(board)}>
         <BoardIcon className="project-row-icon"/>

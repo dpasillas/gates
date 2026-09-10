@@ -37,6 +37,8 @@ interface IState {
   dropIndex?: number;
   /** How wide the gap held open for it should be. */
   gap?: number;
+  /** Where the active tab's mark sits along the row. */
+  indicator?: {left: number, width: number};
 }
 
 /**
@@ -178,7 +180,6 @@ class EditorTabs extends React.Component<IProps, IState> {
            aria-selected={active}
            sx={{
              bgcolor: active ? "action.selected" : "transparent",
-             borderColor: "divider",
              color: active ? "text.primary" : "text.secondary",
            }}
            onClick={() => this.props.onSelect(board)}
@@ -232,7 +233,37 @@ class EditorTabs extends React.Component<IProps, IState> {
     return row;
   }
 
+  componentDidMount() {
+    this.placeIndicator();
+  }
+
+  componentDidUpdate() {
+    this.placeIndicator();
+  }
+
+  /**
+   * Puts the indicator under the active tab.
+   *
+   * One element slid along the row, as the side rail's is, rather than a border on every tab: a
+   * border has to be drawn on the inactive tabs too to keep the row level, and then it shows.
+   * Measured after each render because the tabs are what decide where it goes.
+   */
+  private placeIndicator() {
+    const strip = this.strip.current;
+    const active = strip?.querySelector<HTMLElement>(".editor-tab.active");
+    if (!strip || !active || this.lifted) {
+      return;
+    }
+
+    const next = {left: active.offsetLeft, width: active.offsetWidth};
+    if (next.left !== this.state.indicator?.left || next.width !== this.state.indicator?.width) {
+      this.setState({indicator: next});
+    }
+  }
+
   render() {
+    const {indicator} = this.state;
+
     return (
       <Box className="editor-tabs" role="tablist" aria-label="Open boards"
            ref={this.strip}
@@ -241,6 +272,10 @@ class EditorTabs extends React.Component<IProps, IState> {
            onDragLeave={e => this.handleDragLeave(e)}
            onDrop={e => this.handleDrop(e)}>
         {this.renderRow()}
+        {indicator && !this.lifted &&
+          <Box className="editor-tab-indicator" aria-hidden="true"
+               style={{left: indicator.left, width: indicator.width}}
+               sx={{bgcolor: "primary.main"}}/>}
         <Tooltip title="New board">
           <IconButton className="editor-tab-add" size="small" aria-label="New board"
                       onClick={this.props.onAdd}>

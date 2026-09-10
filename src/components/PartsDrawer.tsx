@@ -65,7 +65,11 @@ function PartTile({part, onDragStart}: {part: Part, onDragStart?: (part: Part) =
   return (
     <Box className="part"
          draggable
-         sx={{bgcolor: "background.paper", border: 1, borderColor: "divider"}}
+         sx={{
+           bgcolor: "background.paper", border: 1, borderColor: "divider",
+           "&:hover": {bgcolor: "action.hover", borderColor: "text.secondary"},
+           "&:hover .part-label": {color: "text.primary"},
+         }}
          onDragStart={handleDragStart}
          onDragEnd={() => {Part.data = undefined}}>
       {/* Scaled to the tile rather than drawn at board size: the parts vary by several times in

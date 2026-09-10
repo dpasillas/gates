@@ -19,10 +19,12 @@ import ContentCopy from "@mui/icons-material/ContentCopy";
 import ContentPaste from "@mui/icons-material/ContentPaste";
 
 import {LogicBoard} from "../logic/LogicBoard";
+import {ExportButton} from "./ExportButton";
 import {ToggleThemeButton} from "./ToggleThemeButton";
 import {writeSettings} from "../storage/settings";
 import {nextWireStyle, wireStyleLabel, WireStyle} from "../util/wireStyle";
 import {nextSnapMode, snapModeLabel, SnapMode} from "../util/grid";
+import {ExportKind} from "../util/exportKind";
 import "../css/Toolbar.css";
 
 /** A miniature of each wire style, drawn the way the style draws a wire. */
@@ -53,6 +55,12 @@ function snapIcon(mode: SnapMode) {
 interface IProps {
   board: LogicBoard;
   onSave: () => void;
+  /** What the export button writes out when pressed. */
+  exportKind: ExportKind;
+  /** The kinds it can write out today. */
+  exportable: ExportKind[];
+  onExport: (kind: ExportKind) => void;
+  onChooseExportKind: (kind: ExportKind) => void;
   /** Absent while there is no selection to delete. */
   onDelete?: () => void;
   /** Absent while there are no components selected to take. */
@@ -146,6 +154,9 @@ class Toolbar extends React.Component<IProps, IState> {
                 <Save fontSize="small"/>
               </IconButton>
             </Tooltip>
+            <ExportButton kind={this.props.exportKind} available={this.props.exportable}
+                          onExport={this.props.onExport}
+                          onChooseKind={this.props.onChooseExportKind}/>
           </Box>
           <Box flexDirection="row">
             <IconButton className={running ? "pressed" : ""} onClick={this.onPlay.bind(this)}>

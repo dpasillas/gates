@@ -24,6 +24,22 @@ describe('settings kept in the browser', () => {
     expect(readSettings().connectOnClick).toBe(true);
   });
 
+  test('export a board until told otherwise', () => {
+    expect(readSettings().exportKind).toBe('board');
+  });
+
+  test('keep the kind of export last chosen', () => {
+    writeSettings({exportKind: 'project'});
+
+    expect(readSettings().exportKind).toBe('project');
+  });
+
+  test('fall back to exporting a board over a kind they do not know', () => {
+    window.localStorage.setItem('gates.settings', JSON.stringify({exportKind: 'wiring'}));
+
+    expect(readSettings().exportKind).toBe('board');
+  });
+
   test('keep connect-on-click off once it has been turned off', () => {
     writeSettings({connectOnClick: false});
 

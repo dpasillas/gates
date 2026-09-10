@@ -48,3 +48,22 @@
 .toolbar .group:not(:first-child) {
     margin-left: 1em;
 }
+/* The export button opens a menu on a long press, which the corner triangle is there to say. */
+.toolbar button.export-button {
+    position: relative;
+}
+
+/* The same 20px as the Material icons around it. */
+.toolbar .export-icon {
+    font-size: 1.25rem;
+}
+
+.toolbar button.export-button::after {
+    content: "";
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    border-left: 5px solid transparent;
+    border-bottom: 5px solid currentColor;
+    opacity: 0.55;
+}

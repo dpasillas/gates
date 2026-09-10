@@ -45,7 +45,9 @@ describe('the Highlight Ports menu item', () => {
 
 describe('the Highlight Ports toolbar button', () => {
   function renderToolbar(board: LogicBoard, onToggle = () => {}) {
-    render(<Toolbar board={board} onSave={() => {}} onToggleHighlightPorts={onToggle}/>);
+    render(<Toolbar board={board} onSave={() => {}} onToggleHighlightPorts={onToggle}
+                    exportKind="board" exportable={['board']} onExport={() => {}}
+                    onChooseExportKind={() => {}}/>);
 
     return screen.getByRole('button', {name: /Highlight ports/i});
   }
