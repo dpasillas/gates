@@ -1,6 +1,8 @@
 import {Project} from "./Project";
 import {parseBoardFile, serializeBoard, BoardData} from "./boardFile";
 import {packageFrom, parsePackageFile, serializePackage, PackageData} from "./packageFile";
+import {componentFrom, parseComponentFile, serializeComponentDefinition, ComponentFileData}
+    from "./componentFile";
 
 /** Tag every project manifest carries, so that a file of some other kind is rejected as one. */
 const PROJECT_FORMAT = "gates.project";
@@ -12,6 +14,9 @@ const BOARDS_DIRECTORY = "boards";
 
 /** The directory packages are kept in, relative to the project. */
 const PACKAGES_DIRECTORY = "packages";
+
+/** The directory components are kept in, relative to the project. */
+const COMPONENTS_DIRECTORY = "components";
 
 /** One file the project is made of. */
 interface ProjectEntry {
@@ -35,7 +40,6 @@ interface ProjectData {
   id: string;
   name: string;
   boards: ProjectEntry[];
-  /** Empty until boards can be packaged as components. */
   components: ProjectEntry[];
   packages: ProjectEntry[];
   /** Empty until the testbench exists. */
@@ -50,6 +54,10 @@ function packageEntry(id: string, name: string): ProjectEntry {
   return {id, name, file: `${PACKAGES_DIRECTORY}/${id}.json`};
 }
 
+function componentEntry(id: string, name: string): ProjectEntry {
+  return {id, name, file: `${COMPONENTS_DIRECTORY}/${id}.json`};
+}
+
 function serializeProject(project: Project): ProjectData {
   return {
     format: PROJECT_FORMAT,
@@ -57,7 +65,7 @@ function serializeProject(project: Project): ProjectData {
     id: project.id,
     name: project.name,
     boards: project.boards.map(board => boardEntry(board.id, board.name)),
-    components: [],
+    components: project.components.map(made => componentEntry(made.uuid, made.name)),
     packages: project.packages.map(pkg => packageEntry(pkg.uuid, pkg.name)),
     tests: [],
   };
@@ -129,6 +137,7 @@ interface ProjectBundle {
   project: ProjectData;
   boards: BoardData[];
   packages: PackageData[];
+  components: ComponentFileData[];
 }
 
 function serializeProjectBundle(project: Project): ProjectBundle {
@@ -138,6 +147,7 @@ function serializeProjectBundle(project: Project): ProjectBundle {
     project: serializeProject(project),
     boards: project.boards.map(serializeBoard),
     packages: project.packages.map(serializePackage),
+    components: project.components.map(serializeComponentDefinition),
   };
 }
 
@@ -161,9 +171,10 @@ function parseProjectBundle(text: string): ProjectBundle {
     throw new Error("This project is damaged: it is missing its boards.");
   }
 
-  // Packages are read leniently where boards are not: a bundle written before they existed has
-  // none, and a project with no packages is a project, where a project with no boards is damaged.
+  // Packages and components are read leniently where boards are not: a bundle written before they
+  // existed has none, and a project without them is a project, where one without boards is damaged.
   const packages = Array.isArray(parsed.packages) ? parsed.packages : [];
+  const components = Array.isArray(parsed.components) ? parsed.components : [];
 
   return {
     format: PROJECT_BUNDLE_FORMAT,
@@ -171,6 +182,7 @@ function parseProjectBundle(text: string): ProjectBundle {
     project: parseProjectFile(JSON.stringify(parsed.project)),
     boards: parsed.boards.map(board => parseBoardFile(JSON.stringify(board))),
     packages: packages.map(pkg => parsePackageFile(JSON.stringify(pkg))),
+    components: components.map(made => parseComponentFile(JSON.stringify(made))),
   };
 }
 
@@ -179,13 +191,20 @@ function packagesFromBundle(bundle: ProjectBundle) {
   return bundle.packages.map(data => packageFrom(data));
 }
 
+/** The components a bundle carries, as objects rather than as data. */
+function componentsFromBundle(bundle: ProjectBundle) {
+  return bundle.components.map(data => componentFrom(data));
+}
+
 export {
+  componentsFromBundle,
   packagesFromBundle,
   parseProjectBundle,
   parseProjectFile,
   serializeProject,
   serializeProjectBundle,
   BOARDS_DIRECTORY,
+  COMPONENTS_DIRECTORY,
   PACKAGES_DIRECTORY,
 };
 export type {ProjectBundle, ProjectData, ProjectEntry};

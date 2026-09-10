@@ -16,15 +16,20 @@ import {boardText, carriedText, IMPORT_ACCEPT} from "./boardStore";
 import {loadBoard, parseBoardFile} from "../logic/boardFile";
 import {LogicBoard} from "../logic/LogicBoard";
 import {PackageComponent} from "../logic/PackageComponent";
+import {ComponentDefinition} from "../logic/ComponentDefinition";
+import {componentFrom, parseComponentFile, serializeComponentDefinition}
+    from "../logic/componentFile";
 import {packageFrom, parsePackageFile, serializePackage} from "../logic/packageFile";
 import {Project} from "../logic/Project";
 import {
+  componentsFromBundle,
   packagesFromBundle,
   parseProjectBundle,
   parseProjectFile,
   serializeProject,
   serializeProjectBundle,
   BOARDS_DIRECTORY,
+  COMPONENTS_DIRECTORY,
   PACKAGES_DIRECTORY,
   ProjectBundle,
   ProjectData,
@@ -98,6 +103,15 @@ async function writeInto(project: Project, home: FileSystemDirectoryHandle) {
     }
   }
 
+  if (project.components.length > 0) {
+    const components = await directoryIn(home, COMPONENTS_DIRECTORY);
+    for (const made of project.components) {
+      await writeText(await fileIn(components, `${made.uuid}.json`),
+                      `${JSON.stringify(serializeComponentDefinition(made), undefined, 2)}
+`);
+    }
+  }
+
   await writeText(await fileIn(home, MANIFEST),
                   `${JSON.stringify(serializeProject(project), undefined, 2)}\n`);
 
@@ -136,11 +150,15 @@ async function saveProjectAs(project: Project, name: string): Promise<void> {
 
 /** A project holding these boards, showing them all, named and identified by its manifest. */
 function assemble(data: ProjectData, boards: LogicBoard[],
-                  packages: PackageComponent[] = []): Project {
+                  packages: PackageComponent[] = [],
+                  components: ComponentDefinition[] = []): Project {
   const project = new Project(boards[0]);
   project.id = data.id || project.id;
   project.name = data.name;
   project.packages = packages;
+  project.components = components;
+  // Pointed at the project rather than at the list read above, so a component made later is found.
+  boards.forEach(board => project.adopt(board));
 
   // A manifest can name no boards at all, and the editor has to be showing something.
   if (boards.length > 0) {
@@ -162,14 +180,6 @@ function assemble(data: ProjectData, boards: LogicBoard[],
 async function readProject(home: FileSystemDirectoryHandle): Promise<Project> {
   const data = parseProjectFile(await readText(await home.getFileHandle(MANIFEST)));
 
-  const boards: LogicBoard[] = [];
-  for (const entry of data.boards) {
-    const board = new LogicBoard();
-    loadBoard(board, parseBoardFile(await readText(await fileAt(home, entry.file))));
-    board.id = entry.id || board.id;
-    boards.push(board);
-  }
-
   const packages: PackageComponent[] = [];
   for (const entry of data.packages) {
     const pkg = packageFrom(parsePackageFile(await readText(await fileAt(home, entry.file))));
@@ -177,7 +187,25 @@ async function readProject(home: FileSystemDirectoryHandle): Promise<Project> {
     packages.push(pkg);
   }
 
-  const project = assemble(data, boards, packages);
+  // Read before the boards, which is the order the references run in: a board holding a placement
+  // of a component cannot be built until the component it names is there to build it from.
+  const components: ComponentDefinition[] = [];
+  for (const entry of data.components) {
+    const made = componentFrom(parseComponentFile(await readText(await fileAt(home, entry.file))));
+    made.uuid = entry.id || made.uuid;
+    components.push(made);
+  }
+
+  const boards: LogicBoard[] = [];
+  for (const entry of data.boards) {
+    const board = new LogicBoard();
+    board.library = id => components.find(made => made.uuid === id);
+    loadBoard(board, parseBoardFile(await readText(await fileAt(home, entry.file))));
+    board.id = entry.id || board.id;
+    boards.push(board);
+  }
+
+  const project = assemble(data, boards, packages, components);
   project.directory = home;
   rememberProject({id: project.id, name: project.name});
 
@@ -259,8 +287,12 @@ async function exportProject(project: Project): Promise<string> {
  * the user saves, so the choice is still theirs.
  */
 function projectFromBundle(bundle: ProjectBundle): Project {
+  // Built before the boards: a placement names its component, so the components have to exist
+  // before a board holding one can be read.
+  const components = componentsFromBundle(bundle);
   const boards = bundle.boards.map(data => {
     const board = new LogicBoard();
+    board.library = id => components.find(made => made.uuid === id);
     loadBoard(board, data);
 
     return board;
@@ -272,7 +304,7 @@ function projectFromBundle(bundle: ProjectBundle): Project {
     }
   });
 
-  return assemble(bundle.project, boards, packagesFromBundle(bundle));
+  return assemble(bundle.project, boards, packagesFromBundle(bundle), components);
 }
 
 /** Reads a project out of a file the user chooses, or nothing if they change their mind. */

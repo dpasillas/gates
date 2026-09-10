@@ -19,9 +19,9 @@ function place(board: LogicBoard, x = 0, subtype = GateType.AND): LogicComponent
 function board(): {board: LogicBoard, gate: LogicComponent} {
   const made = new LogicBoard();
   const gate = place(made);
-  setPort(made, gate.inputPins[0], true, 'a');
-  setPort(made, gate.inputPins[1], true, 'b');
-  setPort(made, gate.outputPins[0], true, 'y');
+  setPort(made, gate.inputPins[0], 'a');
+  setPort(made, gate.inputPins[1], 'b');
+  setPort(made, gate.outputPins[0], 'y');
 
   return {board: made, gate};
 }
@@ -55,7 +55,7 @@ describe('the ports a board exposes', () => {
   test('gather the pins sharing one name, which the port then drives together', () => {
     const {board: made, gate} = board();
     const second = place(made, 80);
-    setPort(made, second.inputPins[0], true, 'a');
+    setPort(made, second.inputPins[0], 'a');
 
     const shared = boardPorts(made).find(port => port.name === 'a')!;
 
@@ -68,7 +68,6 @@ describe('the ports a board exposes', () => {
     // by way of a file, which writes the flags straight onto the pins.
     const {board: made, gate} = board();
     const second = place(made, 80);
-    second.outputPins[0].isPort = true;
     second.outputPins[0].portName = 'a';
 
     const shared = boardPorts(made).find(port => port.name === 'a')!;
@@ -81,7 +80,7 @@ describe('the ports a board exposes', () => {
     const {board: made} = board();
     const wide = place(made, 80);
     wide.width = 8;
-    setPort(made, wide.inputPins[0], true, 'a');
+    setPort(made, wide.inputPins[0], 'a');
 
     expect(boardPorts(made).find(port => port.name === 'a')?.width).toBe(8);
   });

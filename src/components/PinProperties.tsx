@@ -1,7 +1,6 @@
 import React from "react";
 
 import Box from "@mui/material/Box";
-import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -45,7 +44,6 @@ interface IProps {
 interface IState {
   netName: string;
   portName: string;
-  isPort: boolean;
   /** What the pins said when the fields were last filled, telling a draft from an outside change. */
   taken: Values;
 }
@@ -53,7 +51,6 @@ interface IState {
 interface Values {
   netName: string;
   portName: string;
-  isPort: boolean;
 }
 
 function valuesOf(pins: LogicPin[]): Values {
@@ -62,7 +59,6 @@ function valuesOf(pins: LogicPin[]): Values {
   return {
     netName: shared(pins, p => p.netName) ?? "",
     portName: pin?.portName ?? "",
-    isPort: pin?.isPort ?? false,
   };
 }
 
@@ -101,8 +97,7 @@ class PinProperties extends React.Component<IProps, IState> {
     const now = valuesOf(props.pins);
     const {taken} = state;
 
-    if (now.netName === taken.netName && now.portName === taken.portName
-        && now.isPort === taken.isPort) {
+    if (now.netName === taken.netName && now.portName === taken.portName) {
       return null;
     }
 
@@ -119,26 +114,7 @@ class PinProperties extends React.Component<IProps, IState> {
   }
 
   applyPort() {
-    const [pin] = this.props.pins;
-    setPort(this.props.board, pin, this.state.isPort, this.state.portName);
-    this.props.onApplied();
-  }
-
-  /**
-   * Taking a pin off the boundary happens on the spot; putting it on waits to be set.
-   *
-   * A port needs a name, so making one is only complete once there is a name to check. Taking one
-   * away needs neither, and holding it behind the same commit would leave the box showing a state
-   * the board is not in — with nothing to type, there is nothing to change one's mind about.
-   */
-  togglePort(isPort: boolean) {
-    if (isPort) {
-      this.setState({isPort});
-
-      return;
-    }
-
-    setPort(this.props.board, this.props.pins[0], false, "");
+    setPort(this.props.board, this.props.pins[0], this.state.portName);
     this.props.onApplied();
   }
 
@@ -196,41 +172,38 @@ class PinProperties extends React.Component<IProps, IState> {
     );
   }
 
+  /**
+   * The port name, which is the whole of it.
+   *
+   * There is no separate switch for being a port: a port is a name, so typing one exposes the pin
+   * and clearing it takes it off the boundary. Judged on the trimmed name, since spaces around one
+   * are not part of it.
+   */
   renderPort() {
     const [pin] = this.props.pins;
-    const problem = this.state.isPort
-      ? checkPortName(this.props.board, pin, this.state.portName)
-      : undefined;
-    const unchanged = this.state.isPort === pin.isPort
-      && this.state.portName.trim() === pin.portName;
-    const cannotApply = Boolean(problem) || unchanged;
+    const wanted = this.state.portName.trim();
+    const problem = wanted ? checkPortName(this.props.board, pin, wanted) : undefined;
+    const cannotApply = Boolean(problem) || wanted === pin.portName;
 
     return (
       <>
-        <Stack direction="row" alignItems="flex-end" spacing={0.5}>
-          <Checkbox size="small" checked={this.state.isPort}
-                    inputProps={{"aria-label": "Port"}}
-                    onChange={e => this.togglePort(e.target.checked)}/>
-          <TextField
-            id="pin-port-name"
-            label="Port Name"
-            size="small"
-            variant="standard"
-            fullWidth
-            disabled={!this.state.isPort}
-            error={Boolean(problem)}
-            value={this.state.portName}
-            onChange={e => this.setState({portName: e.target.value})}
-            onKeyDown={applyOnEnter(cannotApply, () => this.applyPort())}
-            InputProps={{
-              endAdornment: this.renderApply(
-                "Set port name", cannotApply, () => this.applyPort()),
-            }}/>
-        </Stack>
-        {this.state.isPort &&
-          <Typography variant="caption" color={problem ? "error" : "text.secondary"}>
-            {problem ?? "Inputs may share a port name. An output port takes its name alone."}
-          </Typography>}
+        <TextField
+          id="pin-port-name"
+          label="Port Name"
+          size="small"
+          variant="standard"
+          fullWidth
+          error={Boolean(problem)}
+          value={this.state.portName}
+          onChange={e => this.setState({portName: e.target.value})}
+          onKeyDown={applyOnEnter(cannotApply, () => this.applyPort())}
+          InputProps={{
+            endAdornment: this.renderApply(
+              "Set port name", cannotApply, () => this.applyPort()),
+          }}/>
+        <Typography variant="caption" color={problem ? "error" : "text.secondary"}>
+          {problem ?? "A named pin is a port. Inputs may share a name; an output takes its alone."}
+        </Typography>
       </>
     );
   }

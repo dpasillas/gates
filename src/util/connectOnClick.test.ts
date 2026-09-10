@@ -117,7 +117,20 @@ describe('clicking a pin with connect-on-click on', () => {
     expect(board.connections.size).toBe(1);
   });
 
-  test('keeps the selection, so an output can be clicked out to input after input', () => {
+  test('drops the selection once the wire is made', () => {
+    // What was selected was the start of a wire, and it is finished. Leaving it selected makes the
+    // next click somewhere else quietly wire that too.
+    const {board, manager} = setup(true);
+    const [source, a] = [gate(board), gate(board)];
+    board.setSelectedPins([source.outputPins[0]]);
+
+    click(manager, board, a.inputPins[0]);
+
+    expect(board.connections.size).toBe(1);
+    expect([...board.selectedPins]).toEqual([]);
+  });
+
+  test('so a second click selects rather than wiring again', () => {
     const {board, manager} = setup(true);
     const [source, a, b] = [gate(board), gate(board), gate(board)];
     board.setSelectedPins([source.outputPins[0]]);
@@ -125,8 +138,8 @@ describe('clicking a pin with connect-on-click on', () => {
     click(manager, board, a.inputPins[0]);
     click(manager, board, b.inputPins[0]);
 
-    expect(board.connections.size).toBe(2);
-    expect([...board.selectedPins]).toEqual([source.outputPins[0]]);
+    expect(board.connections.size).toBe(1);
+    expect([...board.selectedPins]).toEqual([b.inputPins[0]]);
   });
 
   test('gathers several selected inputs onto one clicked output', () => {

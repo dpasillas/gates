@@ -33,7 +33,7 @@ function boardPorts(board: LogicBoard): BoardPort[] {
   const ports = new Map<string, BoardPort>();
 
   for (const pin of board.pins.values()) {
-    if (!pin.isPort || !pin.portName) {
+    if (!pin.isPort) {
       continue;
     }
 

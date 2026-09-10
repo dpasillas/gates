@@ -277,7 +277,7 @@ describe('exposing a pin as a port', () => {
 
     expect(checkPortName(logicBoard, pin, 'A')).toBeUndefined();
 
-    setPort(logicBoard, pin, true, 'A');
+    setPort(logicBoard, pin, 'A');
 
     expect(pin.isPort).toBe(true);
     expect(pin.portName).toBe('A');
@@ -287,11 +287,11 @@ describe('exposing a pin as a port', () => {
     const {logicBoard, gate} = board();
     const first = gate(GateType.AND).inputPins[0];
     const second = gate(GateType.OR).inputPins[0];
-    setPort(logicBoard, first, true, 'A');
+    setPort(logicBoard, first, 'A');
 
     expect(checkPortName(logicBoard, second, 'A')).toBeUndefined();
 
-    setPort(logicBoard, second, true, 'A');
+    setPort(logicBoard, second, 'A');
 
     expect(second.isPort).toBe(true);
     expect(second.portName).toBe('A');
@@ -301,11 +301,11 @@ describe('exposing a pin as a port', () => {
     const {logicBoard, gate} = board();
     const first = gate(GateType.AND).outputPins[0];
     const second = gate(GateType.OR).outputPins[0];
-    setPort(logicBoard, first, true, 'A');
+    setPort(logicBoard, first, 'A');
 
     expect(checkPortName(logicBoard, second, 'A')).toContain('already an output port');
 
-    setPort(logicBoard, second, true, 'A');
+    setPort(logicBoard, second, 'A');
 
     expect(second.isPort).toBe(false);
   });
@@ -314,7 +314,7 @@ describe('exposing a pin as a port', () => {
     const {logicBoard, gate} = board();
     const driver = gate(GateType.AND).outputPins[0];
     const listener = gate(GateType.OR).inputPins[0];
-    setPort(logicBoard, driver, true, 'A');
+    setPort(logicBoard, driver, 'A');
 
     expect(checkPortName(logicBoard, listener, 'A')).toContain('already an output port');
   });
@@ -323,7 +323,7 @@ describe('exposing a pin as a port', () => {
     const {logicBoard, gate} = board();
     const listener = gate(GateType.AND).inputPins[0];
     const driver = gate(GateType.OR).outputPins[0];
-    setPort(logicBoard, listener, true, 'A');
+    setPort(logicBoard, listener, 'A');
 
     expect(checkPortName(logicBoard, driver, 'A')).toContain('already an input port');
   });
@@ -332,9 +332,9 @@ describe('exposing a pin as a port', () => {
     const {logicBoard, gate} = board();
     const first = gate(GateType.AND).inputPins[0];
     const second = gate(GateType.OR).inputPins[0];
-    setPort(logicBoard, first, true, 'A');
+    setPort(logicBoard, first, 'A');
 
-    setPort(logicBoard, first, false, 'A');
+    setPort(logicBoard, first, '');
 
     expect(first.portName).toBe('');
     expect(checkPortName(logicBoard, second, 'A')).toBeUndefined();
@@ -343,7 +343,7 @@ describe('exposing a pin as a port', () => {
   test('does not mind a pin keeping its own name', () => {
     const {logicBoard, gate} = board();
     const pin = gate(GateType.AND).inputPins[0];
-    setPort(logicBoard, pin, true, 'A');
+    setPort(logicBoard, pin, 'A');
 
     expect(checkPortName(logicBoard, pin, 'A')).toBeUndefined();
   });

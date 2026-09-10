@@ -1,6 +1,7 @@
 import React from "react";
 
 import {Board} from "../components/Board";
+import type {ComponentLibrary} from "./ComponentDefinition";
 import {LogicComponent} from "./LogicComponent";
 import {LogicConnection} from "./LogicConnection";
 import paper from "paper";
@@ -46,6 +47,23 @@ class LogicBoard {
 
   /** All components which should be rendered on screen */
   components: Map<string, LogicComponent> = new Map();
+  /**
+   * Where a placement of a custom component finds what it was built from.
+   *
+   * Set by the project the board belongs to. A placement names its component rather than carrying
+   * it, so reading a board — from a file, from the clipboard — needs somewhere to look the name up,
+   * and the board being filled is the one thing every such reader already has.
+   */
+  library?: ComponentLibrary;
+  /**
+   * Components that run on this board without being on it.
+   *
+   * What a subcomponent is made of. They post events into the one queue and are reset with
+   * everything else, and they are in none of the collections that mean "on the board" — nothing
+   * draws them, hit-tests them, photographs them or writes them to a file, because from outside a
+   * subcomponent is one part.
+   */
+  hosted: Map<string, LogicComponent> = new Map();
   /** All connections which may be rendered */
   connections: Map<string, LogicConnection> = new Map();
   /** All pins which may be rendered */
@@ -310,6 +328,7 @@ class LogicBoard {
     // Important that the simulation time is set to 0 before components are reset
     this.simulationCurrentTime = 0;
     this.components.forEach(c => c.reset());
+    this.hosted.forEach(c => c.reset());
     // console.log(this.simulation)
   }
 
@@ -382,6 +401,18 @@ class LogicBoard {
     this.components.set(component.uuid, component)
   }
 
+  /**
+   * Takes on a component for the simulation without putting it on the board.
+   *
+   * Its pins are deliberately left out of {@link pins}: everything that reads that map is asking
+   * what the user can see or reach, and the insides of a subcomponent are neither.
+   */
+  host(component: LogicComponent) {
+    component.board = this;
+    component.pins().forEach(pin => {pin.board = this});
+    this.hosted.set(component.uuid, component);
+  }
+
   /** Tracks a connection to be rendered */
   addConnection(connection: LogicConnection) {
     this.connections.set(connection.uuid, connection)
@@ -443,7 +474,11 @@ class LogicBoard {
     for (const component of [...this.components.values()]) {
       component.remove();
     }
+    for (const component of [...this.hosted.values()]) {
+      component.remove();
+    }
     this.components.clear();
+    this.hosted.clear();
     this.connections.clear();
     this.pins.clear();
 

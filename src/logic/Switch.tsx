@@ -99,13 +99,17 @@ class Switch extends LogicComponent {
      *
      * This is the bank's own setting rather than a logic state: it is where the user left the
      * switches, so it is saved with the board where the values on the pins are not.
+     *
+     * Read from what the pins are *driving*, never from what their line settled to. A switch is a
+     * pure driver: a second driver on the same line makes that line unknown, and a switch that read
+     * the line back would flip itself to match and stop being toggleable at all.
      */
     get toggles(): number {
         if (this.isMerged) {
-            return this.outputPins[0]?.state.v ?? 0;
+            return this.outputPins[0]?.driven.v ?? 0;
         }
 
-        return this.outputPins.reduce((bits, pin, bit) => bits | ((pin.state.v & 1) << bit), 0);
+        return this.outputPins.reduce((bits, pin, bit) => bits | ((pin.driven.v & 1) << bit), 0);
     }
 
     set toggles(bits: number) {
@@ -126,7 +130,7 @@ class Switch extends LogicComponent {
             return false;
         }
 
-        return (this.isMerged ? (pin.state.v >> bit) : pin.state.v) % 2 === 1;
+        return (this.isMerged ? (pin.driven.v >> bit) : pin.driven.v) % 2 === 1;
     }
 
     extraRender(): React.ReactElement {
@@ -164,18 +168,18 @@ class Switch extends LogicComponent {
     handleClick(bit: number) {
         if (this.isMerged) {
             const [pin] = this.outputPins;
-            pin.setLogicState(new LogicState({v: pin.state.v ^ (1 << bit)}));
+            pin.setLogicState(new LogicState({v: pin.driven.v ^ (1 << bit)}));
         } else {
             const pin = this.outputPins[bit];
-            pin.setLogicState(new LogicState({v: pin.state.v ^ 1}));
+            pin.setLogicState(new LogicState({v: pin.driven.v ^ 1}));
         }
 
         this.update();
     }
 
-    /** Reset but keep prior state */
+    /** Reset but keep where the user left the switches, which is not a value the reset clears. */
     reset(): void {
-        const states = this.outputPins.map(pin => pin.state);
+        const states = this.outputPins.map(pin => pin.driven);
         super.reset();
         this.outputPins.forEach((pin, i) => {
             if (states[i]) {

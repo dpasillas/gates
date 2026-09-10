@@ -7,20 +7,23 @@ import {Sidebar} from "./Sidebar";
 import {Properties} from "./Properties";
 import {NET_NAME_FIELD} from "./PinProperties";
 import {connectPins} from "../logic/nets";
-import {PARTS} from "./partsCatalogue";
+import {partsFor} from "./partsCatalogue";
 import {EditorTabs} from "./EditorTabs";
 import {MenuBar} from "./MenuBar";
 import {ProjectPanel} from "./ProjectPanel";
 import {NameDialog, OpenProjectDialog} from "./ProjectDialogs";
+import {ComponentDialog} from "./ComponentDialog";
 import {PackageDialog} from "./PackageDialog";
 import {buildMenus} from "./menus";
 import {LogicBoard} from "../logic/LogicBoard";
 import {GLOBAL_SCOPE} from "../Constants";
+import {ComponentDefinition} from "../logic/ComponentDefinition";
 import {PackageComponent} from "../logic/PackageComponent";
 import {Project} from "../logic/Project";
 import {ComponentSet} from "../logic/boardFile";
 import {copySelection, duplicateSelection, pasteAnchor, pasteInto} from "../logic/clipboard";
 import {createBoardFromSelection} from "../logic/boardFromSelection";
+import {extractBoard, extractPackage} from "../logic/componentExtract";
 import {Toolbar} from "./Toolbar";
 import {exportBoard, importBoard} from "../storage/boardStore";
 import {
@@ -59,9 +62,18 @@ interface IState {
   opening?: ProjectSummary[],
   /** The package being authored, while the interface editor is up. */
   authoring?: PackageComponent,
+  /** The board being packaged, while the binding dialog is up. */
+  binding?: {board: LogicBoard, existing?: ComponentDefinition},
 }
 
 /** Whether the keyboard belongs to something being typed into rather than to the board. */
+/**
+ * The panels that can be left holding focus.
+ *
+ * A press outside the one holding it is the user going to work elsewhere, and it lets go.
+ */
+const PANELS = ".properties-content, .project-panel, .parts-panel";
+
 function isTyping(target: EventTarget | null): boolean {
   const element = target as HTMLElement | null;
 
@@ -252,6 +264,25 @@ class App extends React.Component<IProps , IState>{
     });
   }
 
+  /**
+   * Renames a board.
+   *
+   * A board's name is what the tab and the component dialog call it and nothing else; components
+   * built from it are unaffected, since what they hold is what the board is made of.
+   */
+  private handleRenameBoard(board: LogicBoard) {
+    this.askName({
+      title: "Rename Board",
+      label: "Board name",
+      confirm: "Rename",
+      initial: board.name,
+      submit: name => {
+        board.name = name;
+        this.setState({});
+      },
+    });
+  }
+
   private handleAddBoard() {
     this.askName({
       title: "New Board",
@@ -319,6 +350,70 @@ class App extends React.Component<IProps , IState>{
     this.setState({authoring: undefined, notice: `Saved ${saved.name}`});
   }
 
+  /** Opens the binding dialog on the board in front. */
+  private handlePackageBoard() {
+    this.setState({binding: {board: this.board}});
+  }
+
+  private handleEditComponent(definition: ComponentDefinition) {
+    const board = this.project.boards.find(other => other.id === definition.source.boardId);
+    if (!board) {
+      this.setState({notice: `${definition.name} was built from a board this project no longer has`});
+
+      return;
+    }
+
+    this.setState({binding: {board, existing: definition}});
+  }
+
+  /**
+   * Takes what the binding dialog was showing.
+   *
+   * The component is a copy of the board and the package it names, so the project gains something
+   * whole rather than a set of references that could come apart later.
+   */
+  private handleSaveComponent(definition: ComponentDefinition) {
+    this.project.addComponent(definition);
+    this.setState({binding: undefined, notice: `Saved ${definition.name}`});
+  }
+
+  /**
+   * Takes the board a component holds and puts it in the project, under a name the user gives.
+   *
+   * Named on the way out because the project may already have a board called this, and which one is
+   * which is exactly what the user is about to need to know. The identity is not theirs to choose:
+   * where the project has lost the board it comes back as itself and the component is bound to it
+   * again, and where the project still has it this is a fork, since wanting a look at a working
+   * component is not a reason to repoint it.
+   */
+  private handleExtractBoard(definition: ComponentDefinition) {
+    this.askName({
+      title: "Extract Board",
+      label: "Board name",
+      confirm: "Extract",
+      initial: definition.source.boardName,
+      submit: name => {
+        const board = extractBoard(definition, this.project, name);
+        this.watch([board]);
+        this.setState({notice: `Extracted ${board.name}`});
+      },
+    });
+  }
+
+  private handleExtractPackage(definition: ComponentDefinition) {
+    const pkg = extractPackage(definition, this.project);
+    this.setState({notice: `Extracted ${pkg.name}`});
+  }
+
+  private handleDeleteComponent(definition: ComponentDefinition) {
+    if (!window.confirm(`Delete ${definition.name}? Boards using it will not open until it is back.`)) {
+      return;
+    }
+
+    this.project.removeComponent(definition);
+    this.setState({});
+  }
+
   private handleDeletePackage(pkg: PackageComponent) {
     if (!window.confirm(`Delete ${pkg.name}?`)) {
       return;
@@ -360,13 +455,22 @@ class App extends React.Component<IProps , IState>{
 
   private handleImportBoard() {
     this.attempt(async () => {
-      const board = await importBoard();
-      if (!board) {
+      const imported = await importBoard();
+      if (!imported) {
         return undefined;
       }
+
+      // An exported board carries the components it uses, since it left the project that had them.
+      // Ones this project already holds under the same identity are the same component, and are
+      // left alone rather than replaced by the copy that travelled.
+      const {board, components} = imported;
+      const gained = components.filter(made => !this.project.componentFor(made.uuid));
+      gained.forEach(made => this.project.addComponent(made));
       this.watch([this.project.addBoard(board.name, board)]);
 
-      return `Added ${board.name}`;
+      return gained.length > 0
+          ? `Added ${board.name} and ${gained.length} component${gained.length > 1 ? "s" : ""}`
+          : `Added ${board.name}`;
     });
   }
 
@@ -459,24 +563,29 @@ class App extends React.Component<IProps , IState>{
    * selection is not what is being escaped from.
    */
   /**
-   * Lets go of a panel field when the user goes to work somewhere else.
+   * Lets go of whatever a panel was holding when the user goes to work somewhere else.
    *
    * The board suppresses the browser's own handling of a press, so that a drag cannot move focus
-   * part-way through the gesture. That also means nothing takes focus off a field left behind, and
-   * a field that still has the caret goes on swallowing the keys the board answers to.
+   * part-way through the gesture. That also means nothing takes focus off what a panel was left
+   * holding: a field with the caret goes on swallowing the keys the board answers to, and a button
+   * keeps its focus ring long after whatever it opened has been dealt with.
    *
    * Taken on the way down rather than on the way back up: the board stops a press from travelling
    * any further once it has one, so waiting for it to bubble here would be waiting for good.
    */
   private handleMouseDown(e: MouseEvent) {
-    if (e.target instanceof Element && e.target.closest(".properties-content")) {
+    const focused = document.activeElement;
+    if (!(focused instanceof HTMLElement)) {
       return;
     }
 
-    const focused = document.activeElement;
-    if (focused instanceof HTMLElement && focused.closest(".properties-content")) {
-      focused.blur();
+    const holding = focused.closest(PANELS);
+    // A press inside the same panel is the user still working there, so it keeps what it has.
+    if (!holding || (e.target instanceof Element && e.target.closest(PANELS) === holding)) {
+      return;
     }
+
+    focused.blur();
   }
 
   private handleEscape() {
@@ -485,7 +594,7 @@ class App extends React.Component<IProps , IState>{
     }
 
     const focused = document.activeElement;
-    if (focused instanceof HTMLElement && focused.closest(".properties-content")) {
+    if (focused instanceof HTMLElement && focused.closest(PANELS)) {
       focused.blur();
     }
 
@@ -592,10 +701,16 @@ class App extends React.Component<IProps , IState>{
                     onAddBoard={this.handleAddBoard.bind(this)}
                     onImportBoard={this.handleImportBoard.bind(this)}
                     onSelectBoard={this.handleSelectBoard.bind(this)}
+                    onRenameBoard={this.handleRenameBoard.bind(this)}
                     onDeleteBoard={this.handleDeleteBoard.bind(this)}
                     onAddPackage={this.handleAddPackage.bind(this)}
                     onEditPackage={this.handleEditPackage.bind(this)}
-                    onDeletePackage={this.handleDeletePackage.bind(this)}/>
+                    onDeletePackage={this.handleDeletePackage.bind(this)}
+                    onAddComponent={this.handlePackageBoard.bind(this)}
+                    onEditComponent={this.handleEditComponent.bind(this)}
+                    onDeleteComponent={this.handleDeleteComponent.bind(this)}
+                    onExtractBoard={this.handleExtractBoard.bind(this)}
+                    onExtractPackage={this.handleExtractPackage.bind(this)}/>
     );
   }
 
@@ -621,6 +736,7 @@ class App extends React.Component<IProps , IState>{
       exportProject: this.handleExportProject.bind(this),
       importBoard: this.handleImportBoard.bind(this),
       importProject: this.handleImportProject.bind(this),
+      packageBoard: this.handlePackageBoard.bind(this),
       deleteSelection,
       ...editing,
       wireStyle: this.board.wireStyle,
@@ -632,8 +748,10 @@ class App extends React.Component<IProps , IState>{
     return (
         <ThemeContext.Provider value={this.state}>
           <ThemeProvider theme={this.state.theme}>
-            <div style={{width: "100%", height: "100%"}}>
-              <div>
+            {/* A column, so that the row below the header gets the height the header leaves rather
+                than the whole page's — which put the side panels' last 100 pixels off-screen. */}
+            <div style={{width: "100%", height: "100%", display: "flex", flexDirection: "column"}}>
+              <div style={{flexShrink: 0}}>
                 <MenuBar menus={menus} title={`${this.project.name} — ${this.board.name}`}/>
                 <Toolbar board={this.board}
                          onSave={this.handleSave.bind(this)}
@@ -649,9 +767,9 @@ class App extends React.Component<IProps , IState>{
                             onReorder={this.handleReorderTabs.bind(this)}/>
               </div>
               {/* Relative so that the side panels, which overlay the board, anchor to this row. */}
-              <Box sx={{bgcolor: 'background.default', width: "100%", height: "100%", display: "flex",
-                        position: "relative"}}>
-                <Sidebar parts={PARTS} projectView={this.renderProjectView()}>
+              <Box sx={{bgcolor: 'background.default', width: "100%", flex: 1, minHeight: 0,
+                        display: "flex", position: "relative"}}>
+                <Sidebar parts={partsFor(this.project)} projectView={this.renderProjectView()}>
                 </Sidebar>
                 {this.board.render()}
                 {/* Keyed with the board so that switching tabs gives the panel the new board to
@@ -672,8 +790,22 @@ class App extends React.Component<IProps , IState>{
                             }}/>}
               {this.state.authoring &&
                 <PackageDialog package={this.state.authoring}
+                               title={this.project.packages.some(
+                                   pkg => pkg.uuid === this.state.authoring?.uuid)
+                                   ? "Edit Package" : "Create Package"}
                                onCancel={() => this.setState({authoring: undefined})}
                                onSave={this.handleSavePackage.bind(this)}/>}
+              {this.state.binding &&
+                <ComponentDialog board={this.state.binding.board}
+                                 boards={this.project.boards}
+                                 packages={this.project.packages}
+                                 existing={this.state.binding.existing}
+                                 onCancel={() => this.setState({binding: undefined})}
+                                 onSave={this.handleSaveComponent.bind(this)}
+                                 onCreatePackage={pkg => {
+                                   this.project.addPackage(pkg);
+                                   this.setState({});
+                                 }}/>}
               <OpenProjectDialog open={Boolean(this.state.opening)}
                                  projects={this.state.opening ?? []}
                                  onCancel={() => this.setState({opening: undefined})}

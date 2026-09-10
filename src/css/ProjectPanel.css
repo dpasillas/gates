@@ -57,6 +57,9 @@
 }
 
 .project-rows {
+    flex-grow: 1;
+    /* As in the parts panel: without this the list grows past the panel rather than scrolling. */
+    min-height: 0;
     overflow-y: auto;
 }
 
@@ -117,21 +120,6 @@
     opacity: 0.6;
 }
 
-.project-row-twisty {
-    flex-shrink: 0;
-    margin-left: -4px;
-    font-size: 16px;
-    opacity: 0.6;
-}
-
-/* How many pins the package declares, which is what a board has to match. */
-.project-row-count {
-    flex-shrink: 0;
-    font-size: 11px;
-    opacity: 0.55;
-    font-variant-numeric: tabular-nums;
-}
-
 /* Reached for rather than offered, like the delete beside it. */
 .project-row-action {
     flex-shrink: 0;
@@ -147,66 +135,28 @@
     opacity: 1;
 }
 
-/* The contract, opened out under the package it belongs to. */
-.project-pins {
-    padding: 0 16px 6px 34px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.project-pins.empty {
-    font-size: 12px;
-    font-style: italic;
+.project-row-twisty {
+    flex-shrink: 0;
+    font-size: 16px;
     opacity: 0.6;
 }
 
-.project-pin-row {
+.project-held-row {
     display: flex;
-    align-items: baseline;
-    gap: 6px;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 16px 5px 40px;
     font-size: 12px;
-    min-width: 0;
 }
 
-.project-pin-kind {
+.project-held-extract {
     flex-shrink: 0;
-    width: 22px;
-    font-size: 9px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    opacity: 0;
+    padding: 2px;
+    font-size: 15px;
 }
 
-.project-pin-kind.in {
-    color: #3d7de0;
-}
-
-.project-pin-kind.out {
-    color: #c77800;
-}
-
-.project-pin-name {
-    flex-grow: 1;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    font-family: 'Roboto Mono', monospace;
-}
-
-.project-pin-unnamed {
-    color: #c62828;
-}
-
-.project-pin-width,
-.project-pin-mark {
-    flex-shrink: 0;
-    font-size: 10px;
-    opacity: 0.6;
-}
-
-.project-pin-mark {
-    border: 1px solid;
-    border-radius: 3px;
-    padding: 0 3px;
+.project-held-row:hover .project-held-extract,
+.project-held-extract:focus-visible {
+    opacity: 1;
 }

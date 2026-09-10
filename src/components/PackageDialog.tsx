@@ -103,7 +103,7 @@ function OutlineIcon({shape, orientation}: {shape: PackageShape, orientation?: P
  * Rendered through the component's own renderer rather than a second one written for the dialog,
  * so what is being authored is what will be placed.
  */
-function Symbol({pkg, onPick}: {pkg: PackageComponent, onPick: (pin: LogicPin) => void}) {
+function Symbol({pkg, onPick}: {pkg: PackageComponent, onPick?: (pin: LogicPin) => void}) {
   // Framed on the middle of the body rather than on everything drawn, so that adding a pin to one
   // side grows the frame on both and the body stays where the eye left it.
   const body = pkg.body.bounds;
@@ -117,7 +117,7 @@ function Symbol({pkg, onPick}: {pkg: PackageComponent, onPick: (pin: LogicPin) =
          viewBox={`${body.center.x - across} ${body.center.y - down} `
                 + `${2 * across} ${2 * down}`}
          preserveAspectRatio="xMidYMid meet">
-      {pkg.render({onPinMouseDown: pin => onPick(pin)})}
+      {pkg.render({onPinMouseDown: pin => onPick?.(pin)})}
     </svg>
   );
 }
@@ -214,6 +214,7 @@ function Picker<T>({value, options, onChange, label}: {
 interface IProps {
   /** The package to author. Left alone: what is edited is a copy of it. */
   package: PackageComponent;
+  /** Defaults to the wording for a package being made rather than one being changed. */
   title?: string;
   confirm?: string;
   onCancel: () => void;
@@ -513,17 +514,17 @@ class PackageDialog extends React.Component<IProps, IState> {
     const pkg = this.state.package;
     const problems = pkg.problems;
     this.markSelection();
-    const {title = "Author interface", confirm = "Save interface"} = this.props;
+    const {title = "Create Package", confirm = "Save Package"} = this.props;
 
     return (
-      <Dialog open onClose={this.props.onCancel} maxWidth="md" fullWidth
+      <Dialog open onClose={this.props.onCancel} maxWidth={false}
               className="package-dialog"
               PaperProps={{className: "package-dialog-paper"}}>
         <DialogTitle>
           {title}
           <Typography variant="body2" color="text.secondary">
-            Declare each pin, its width, and where it sits. Saving adds this as a reusable package
-            you then bind a board's ports to.
+            Declare each pin, its width, and where it sits. A package is the symbol and the
+            contract a board's ports are bound to.
           </Typography>
         </DialogTitle>
         <DialogContent dividers className="package-dialog-body">
@@ -559,4 +560,4 @@ class PackageDialog extends React.Component<IProps, IState> {
   }
 }
 
-export {PackageDialog};
+export {PackageDialog, Symbol};

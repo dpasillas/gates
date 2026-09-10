@@ -1,11 +1,16 @@
 import {LogicBoard} from "./LogicBoard";
 import {LogicComponent} from "./LogicComponent";
 import {LogicPin} from "./LogicPin";
+import {SubComponent} from "./SubComponent";
 import {Switch} from "./Switch";
+import {applySettings} from "./componentData";
 import {netFor} from "./nets";
 import {makeComponent} from "./componentFactory";
 import {GateType} from "../enums/GateType";
 import {PartType} from "../enums/PartType";
+import type {ComponentFileData} from "./componentFile";
+import type {ComponentData, ComponentSet, ConnectionData, PinData, PinRef}
+    from "./componentData";
 
 /** Tag every board file carries, so that a file of some other kind is rejected as one. */
 const BOARD_FORMAT = "gates.board";
@@ -15,73 +20,18 @@ const BOARD_FORMAT_VERSION = 1;
 /** Decimal places kept for positions and angles. */
 const PRECISION = 3;
 
-/** Anything a pin carries that the component it belongs to does not already determine. */
-interface PinData {
-  /** Where the pin sits in its component's pin list, which the component's type and widths fix. */
-  index: number;
-  netName?: string;
-  portName?: string;
-  isPort?: boolean;
-}
-
-interface ComponentData {
-  /**
-   * The name of the PartType, not its number.
-   *
-   * Written by name so that inserting a part type into the enum cannot silently change what every
-   * file already on disk means. The subtype below is a number because for most types it is a bare
-   * index into that type's parts rather than a member of any enum.
-   */
-  type: string;
-  subtype: number;
-  x: number;
-  y: number;
-  angle: number;
-  width: number;
-  fieldWidth: number;
-  merged?: boolean;
-  delay: number;
-  /**
-   * Which of a switch's toggles are left on, a bit each.
-   *
-   * Kept here beside the other settings rather than behind a per-component hook: it is the one
-   * piece of state any component has that its type and widths do not already give, and one number
-   * does not pay for the machinery.
-   */
-  toggles?: number;
-  pins?: PinData[];
-}
-
-/** One end of a connection, as a position in the file rather than an identity. */
-interface PinRef {
-  /** Index into the file's component list. */
-  component: number;
-  /** Index into that component's pin list. */
-  pin: number;
-}
-
-interface ConnectionData {
-  /** The driving pin. */
-  source: PinRef;
-  /** The pin being driven. */
-  sink: PinRef;
-}
-
-/**
- * Some components and the wiring among them, without saying where they came from.
- *
- * A whole board is one of these; so is a selection lifted off one. Both are put back the same way,
- * which is what keeps a pasted component and a component read out of a file the same thing.
- */
-interface ComponentSet {
-  components: ComponentData[];
-  connections: ConnectionData[];
-}
-
 interface BoardData extends ComponentSet {
   format: typeof BOARD_FORMAT;
   version: number;
   name: string;
+  /**
+   * The custom components this board uses, in full.
+   *
+   * Written when a board leaves its project, and absent inside one. A placement names its component
+   * rather than carrying it, which is right while the two are filed together — but an exported
+   * board has to open somewhere that has never heard of them, so the export takes them along.
+   */
+  library?: ComponentFileData[];
 }
 
 function round(value: number): number {
@@ -92,7 +42,7 @@ function round(value: number): number {
 
 /** The pin's own settings, or nothing when it is carrying none of them. */
 function serializePin(pin: LogicPin, index: number): PinData | undefined {
-  if (!pin.netName && !pin.portName && !pin.isPort) {
+  if (!pin.netName && !pin.portName) {
     return undefined;
   }
 
@@ -102,9 +52,6 @@ function serializePin(pin: LogicPin, index: number): PinData | undefined {
   }
   if (pin.portName) {
     data.portName = pin.portName;
-  }
-  if (pin.isPort) {
-    data.isPort = true;
   }
 
   return data;
@@ -127,6 +74,9 @@ function serializeComponent(component: LogicComponent): ComponentData {
     delay: component.delay,
   };
 
+  if (component instanceof SubComponent && component.definitionId) {
+    data.component = component.definitionId;
+  }
   if (component.isMerged) {
     data.merged = true;
   }
@@ -202,28 +152,28 @@ function applyPinData(board: LogicBoard, component: LogicComponent, pins: PinDat
     if (data.netName) {
       netFor(board, data.netName).add(pin);
     }
-    pin.portName = data.portName ?? "";
-    pin.isPort = data.isPort ?? false;
+    pin.portName = (data.portName ?? "").trim();
   }
 }
 
 function applyComponentData(board: LogicBoard, component: LogicComponent, data: ComponentData) {
-  // Merging is settled first because it decides how many pins there are and how wide each one is,
-  // and the widths below are applied over the pins it leaves behind.
-  component.isMerged = data.merged ?? false;
-  component.width = data.width;
-  component.fieldWidth = data.fieldWidth;
-  component.delay = data.delay;
+  applySettings(component, data);
+  applyPinData(board, component, data.pins ?? []);
+}
 
-  component.geometry.position = new component.scope.Point(data.x, data.y);
-  component.angle = data.angle;
-
-  // Set after the widths, which decide how many toggles there are to set.
-  if (component instanceof Switch) {
-    component.toggles = data.toggles ?? 0;
+/**
+ * Places a custom component, refusing rather than quietly dropping it.
+ *
+ * A missing component takes a whole subcircuit out of the board with it, which read as a working
+ * board with parts silently gone would be worse than not opening at all.
+ */
+function placementOf(board: LogicBoard, id: string): LogicComponent {
+  const definition = board.library?.(id);
+  if (!definition) {
+    throw new Error(`This board uses a component the project does not have: ${id}`);
   }
 
-  applyPinData(board, component, data.pins ?? []);
+  return new SubComponent({scope: board.scope, board, definition});
 }
 
 /**
@@ -241,12 +191,14 @@ function addComponents(board: LogicBoard, data: ComponentSet): LogicComponent[] 
       throw new Error(`Unknown part type: ${entry.type}`);
     }
 
-    const component = makeComponent({
-      type,
-      subtype: entry.subtype as GateType,
-      scope: board.scope,
-      board,
-    });
+    const component = entry.component
+        ? placementOf(board, entry.component)
+        : makeComponent({
+          type,
+          subtype: entry.subtype as GateType,
+          scope: board.scope,
+          board,
+        });
     applyComponentData(board, component, entry);
     board.addComponent(component);
 
@@ -322,6 +274,8 @@ function parseBoardFile(text: string): BoardData {
     name: typeof parsed.name === "string" ? parsed.name : "untitled",
     components: parsed.components as ComponentData[],
     connections: parsed.connections as ConnectionData[],
+    // Absent in a board filed inside a project, which finds its components there instead.
+    library: Array.isArray(parsed.library) ? parsed.library as ComponentFileData[] : undefined,
   };
 }
 

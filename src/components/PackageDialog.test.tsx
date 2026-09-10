@@ -27,7 +27,7 @@ function open(pkg: PackageComponent) {
   return {saved, wasCancelled: () => cancelled};
 }
 
-const save = () => screen.getByRole('button', {name: 'Save interface'});
+const save = () => screen.getByRole('button', {name: 'Save Package'});
 const labelField = () => screen.getByLabelText('Pin label');
 
 /** The pin rows, by the text they show. */

@@ -192,7 +192,7 @@ describe('what the copy arrives holding', () => {
 
   test('leaves port names behind for the same reason', () => {
     const {project: made, source, driver, sink} = project();
-    setPort(source, driver.outputPins[0], true, 'q');
+    setPort(source, driver.outputPins[0], 'q');
     expect(driver.outputPins[0].isPort).toBe(true);
     select(source, driver, sink);
 

@@ -116,7 +116,6 @@ describe('what a copy leaves behind', () => {
 
   test('the flag marking a pin as a port, which no two pins may share', () => {
     const {board: made, source} = board();
-    source.inputPins[0].isPort = true;
     source.inputPins[0].portName = 'A';
     select(made, source);
 

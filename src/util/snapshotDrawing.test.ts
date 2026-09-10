@@ -89,7 +89,7 @@ describe('drawing a board for export', () => {
     // of it should be too — the same reason the selection does not appear.
     const {board, source} = wired();
     board.highlightPorts = true;
-    setPort(board, source.pins()[0], true, 'a');
+    setPort(board, source.pins()[0], 'a');
 
     expect(draw(board).querySelectorAll('.port-name')).toHaveLength(0);
   });

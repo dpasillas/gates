@@ -368,7 +368,7 @@ class Board extends React.Component<IProps, IState> {
 
         const names: JSX.Element[] = [];
         for (const pin of this.props.board.pins.values()) {
-            if (!pin.isPort || !pin.portName || !pin.geometry) {
+            if (!pin.isPort || !pin.geometry) {
                 continue;
             }
 

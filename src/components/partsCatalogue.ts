@@ -1,4 +1,5 @@
 import {Part} from "./Part";
+import {Project} from "../logic/Project";
 import {GateType} from "../enums/GateType";
 import {PartType} from "../enums/PartType";
 
@@ -39,4 +40,30 @@ const PARTS: Map<string, Part[]> = new Map([
   ]],
 ]);
 
-export {PARTS};
+/**
+ * The built-in parts, plus a category holding the project's own components.
+ *
+ * Built fresh whenever the project's components change: a `Part` builds and holds a drawing of what
+ * it places, so one made from an older copy of a component would show the older symbol.
+ */
+function partsFor(project: Project): Map<string, Part[]> {
+  if (project.components.length === 0) {
+    return PARTS;
+  }
+
+  const library = (id: string) => project.componentFor(id);
+
+  return new Map([
+    ...PARTS,
+    ["Components", project.components.map(definition => new Part({
+      type: PartType.COMPOSITE_CUSTOM,
+      subtype: 0 as GateType,
+      label: definition.name || "untitled",
+      userDefined: true,
+      definition,
+      library,
+    }))],
+  ]);
+}
+
+export {PARTS, partsFor};

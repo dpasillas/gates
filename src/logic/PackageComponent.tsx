@@ -3,6 +3,7 @@ import * as paper from "paper";
 
 import {LogicComponent, LogicComponentParams, UpdateGeometryParams} from "./LogicComponent";
 import {LogicPin, PinOrientation, PinType} from "./LogicPin";
+import {digest} from "./hash";
 import {CornerMark, PackageDivider, PackageGroup, PackageShape} from "../enums/Packaging";
 import {PartType} from "../enums/PartType";
 import "../css/Package.css";
@@ -563,14 +564,7 @@ class PackageComponent extends LogicComponent {
    * package it is carrying is not the one already here under that name.
    */
   get interfaceHash(): string {
-    let value = 0x811c9dc5;
-    const text = this.canonical;
-    for (let i = 0; i < text.length; i++) {
-      value ^= text.charCodeAt(i);
-      value = Math.imul(value, 0x01000193);
-    }
-
-    return (value >>> 0).toString(16).padStart(8, "0");
+    return digest(this.canonical);
   }
 }
 

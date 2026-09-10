@@ -29,6 +29,7 @@ interface MenuCommands {
   paste?: () => void;
   /** Absent while there are no components selected to make a board out of. */
   createBoardFromSelection?: () => void;
+  packageBoard: () => void;
   wireStyle: WireStyle;
   setWireStyle: (style: WireStyle) => void;
   highlightPorts: boolean;
@@ -89,7 +90,7 @@ function editMenu(commands: MenuCommands): MenuItemSpec[] {
       separated: true,
       run: commands.createBoardFromSelection,
     },
-    {label: "Package Board as Component..."},
+    {label: "Package Board as Component...", run: commands.packageBoard},
   ];
 }
 

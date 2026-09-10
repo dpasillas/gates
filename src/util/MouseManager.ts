@@ -264,11 +264,14 @@ class MouseManager {
     const mode = selectionModeFor(e);
 
     // With connect-on-click on, a plain click on a pin the selection can reach joins them instead
-    // of selecting it. The selection stays, so an output can be clicked out to one input after
-    // another without being picked up again each time.
+    // of selecting it. The selection is dropped once the wire is made. Keeping it lets an output be
+    // clicked out to input after input, but the same gesture the other way round is destructive: a
+    // selected *input* clicked onto a second output is rewired to it, silently undoing the wire the
+    // click before made.
     if (board.connectOnClick && mode === SelectionMode.REPLACE
         && wouldConnect([...board.selectedPins], target)) {
       if (connectPins(board, [...board.selectedPins, target]) > 0) {
+        board.clearSelection();
         board.update();
       }
       board.updateProperties();
@@ -303,6 +306,9 @@ class MouseManager {
     const connection = a.connectTo(b);
     if (connection) {
       board.addConnection(connection);
+      // Dropped for the same reason a click-to-connect drops it: a selected input left over from
+      // the last wire is rewired by the next one, silently undoing what was just drawn.
+      board.clearSelection();
       board.update();
     }
   }

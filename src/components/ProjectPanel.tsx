@@ -4,16 +4,18 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import Delete from "@mui/icons-material/Delete";
-import DeveloperBoard from "@mui/icons-material/DeveloperBoard";
-import ExpandMore from "@mui/icons-material/ExpandMore";
 import ChevronRight from "@mui/icons-material/ChevronRight";
-import Memory from "@mui/icons-material/Memory";
+import Delete from "@mui/icons-material/Delete";
+import ExpandMore from "@mui/icons-material/ExpandMore";
+import Unarchive from "@mui/icons-material/Unarchive";
+
+import {BoardIcon, ComponentIcon, PackageIcon} from "./PanelIcons";
 
 import {LogicBoard} from "../logic/LogicBoard";
-import {PinType} from "../logic/LogicPin";
 import {PackageComponent} from "../logic/PackageComponent";
 import {Project} from "../logic/Project";
+import {linkage} from "../logic/ComponentDefinition";
+import type {ComponentDefinition} from "../logic/ComponentDefinition";
 import "../css/ProjectPanel.css";
 
 interface IProps {
@@ -22,90 +24,130 @@ interface IProps {
   onAddBoard: () => void;
   onImportBoard: () => void;
   onSelectBoard: (board: LogicBoard) => void;
+  onRenameBoard: (board: LogicBoard) => void;
   onDeleteBoard: (board: LogicBoard) => void;
   onAddPackage: () => void;
   onEditPackage: (pkg: PackageComponent) => void;
   onDeletePackage: (pkg: PackageComponent) => void;
+  onAddComponent: () => void;
+  onEditComponent: (definition: ComponentDefinition) => void;
+  onDeleteComponent: (definition: ComponentDefinition) => void;
+  onExtractBoard: (definition: ComponentDefinition) => void;
+  onExtractPackage: (definition: ComponentDefinition) => void;
 }
 
 interface IState {
-  /** The packages showing their pins, by id. */
+  /** The components showing what they hold, by id. */
   expanded: ReadonlySet<string>;
 }
 
 /**
  * What the project holds.
  *
- * Boards for now. Components and interfaces get their own sections here once a board can be
- * packaged as one, which is why this is a list of sections rather than a single list.
+ * Boards, packages and components, each their own section: a package with no board bound to it is
+ * a whole thing, and so is a board with no package in front of it.
  */
 class ProjectPanel extends React.Component<IProps, IState> {
   state: IState = {expanded: new Set()};
 
-  private toggle(pkg: PackageComponent) {
+  private toggle(id: string) {
     const expanded = new Set(this.state.expanded);
-    if (!expanded.delete(pkg.uuid)) {
-      expanded.add(pkg.uuid);
+    if (!expanded.delete(id)) {
+      expanded.add(id);
     }
     this.setState({expanded});
   }
 
+  renderPackage(pkg: PackageComponent) {
+    return (
+      <Box key={pkg.uuid} className="project-row"
+           sx={{"&:hover": {bgcolor: "action.hover"}}}>
+        <PackageIcon className="project-row-icon"/>
+        <span className="project-row-name">{pkg.name || "untitled package"}</span>
+        <Button className="project-row-action" size="small"
+                aria-label={`Edit ${pkg.name}`}
+                onClick={() => this.props.onEditPackage(pkg)}>
+          Edit
+        </Button>
+        <IconButton className="project-row-delete" size="small"
+                    aria-label={`Delete ${pkg.name}`}
+                    onClick={() => this.props.onDeletePackage(pkg)}>
+          <Delete fontSize="inherit"/>
+        </IconButton>
+      </Box>
+    );
+  }
+
   /**
-   * One pin of a package, as the contract a board would be built to.
+   * One of the two things a component holds, and the way to take it back out.
    *
-   * Named, said to be driven or read, and given its width, which is everything a board has to match
-   * for the package to be put in front of it.
+   * Named rather than shown: a package could be drawn here, but a board could not without an editor
+   * that refuses to edit, and a row that showed one and named the other would read as an oversight.
    */
-  private renderPackagePin(pkg: PackageComponent, index: number) {
-    const pin = pkg.declared[index];
-    const kind = pin.pinType === PinType.OUTPUT ? "out" : "in";
+  private renderHeld(
+      definition: ComponentDefinition, kind: "Board" | "Package", name: string,
+      Icon: typeof BoardIcon, extract: (definition: ComponentDefinition) => void) {
+    const shown = name || `untitled ${kind.toLowerCase()}`;
 
     return (
-      <div key={pin.uuid} className="project-pin-row">
-        <span className={`project-pin-kind ${kind}`}>{kind}</span>
-        <span className="project-pin-name">
-          {pin.label?.trim() || <em className="project-pin-unnamed">unnamed</em>}
-        </span>
-        {pin.width > 1 && <span className="project-pin-width">{pin.width}-bit</span>}
-        {pin.clock && <span className="project-pin-mark" title="Clock edge">clk</span>}
-        {pin.not && <span className="project-pin-mark" title="Active low">low</span>}
+      <div className="project-held-row">
+        <Icon className="project-row-icon" title={kind}/>
+        <span className="project-row-name" title={shown}>{shown}</span>
+        <IconButton className="project-held-extract" size="small"
+                    aria-label={`Extract ${kind.toLowerCase()} from ${definition.name}`}
+                    title={`Extract ${kind.toLowerCase()}`}
+                    onClick={() => extract(definition)}>
+          <Unarchive fontSize="inherit"/>
+        </IconButton>
       </div>
     );
   }
 
-  renderPackage(pkg: PackageComponent) {
-    const open = this.state.expanded.has(pkg.uuid);
+  /**
+   * One component, what it holds, and whether what it was built from has moved on since.
+   *
+   * A component holds copies of its board and its package, so BEHIND is never a broken state — only
+   * a note that the board it was built from has changed since that copy was taken. Opening the row
+   * shows those copies, which are otherwise the one thing in the project nothing can reach.
+   */
+  renderComponent(definition: ComponentDefinition) {
+    const open = this.state.expanded.has(definition.uuid);
 
     return (
-      <div key={pkg.uuid}>
+      <div key={definition.uuid}>
         <Box className="project-row"
              role="button"
              tabIndex={0}
              aria-expanded={open}
              sx={{"&:hover": {bgcolor: "action.hover"}}}
-             onClick={() => this.toggle(pkg)}>
+             onClick={() => this.toggle(definition.uuid)}>
           {open
             ? <ExpandMore className="project-row-twisty" fontSize="inherit"/>
             : <ChevronRight className="project-row-twisty" fontSize="inherit"/>}
-          <Memory className="project-row-icon" fontSize="inherit"/>
-          <span className="project-row-name">{pkg.name || "untitled package"}</span>
-          <span className="project-row-count">{pkg.declared.length}</span>
+          <ComponentIcon className="project-row-icon"/>
+          <span className="project-row-name">{definition.name || "untitled component"}</span>
+          {linkage(definition, this.props.project) === "stale" &&
+            <Box component="span" className="project-badge"
+                 sx={{color: "warning.main", borderColor: "warning.main"}}
+                 title="The board or package this was built from has changed since">BEHIND</Box>}
           <Button className="project-row-action" size="small"
-                  aria-label={`Edit ${pkg.name}`}
-                  onClick={e => {e.stopPropagation(); this.props.onEditPackage(pkg)}}>
+                  aria-label={`Edit ${definition.name}`}
+                  onClick={e => {e.stopPropagation(); this.props.onEditComponent(definition)}}>
             Edit
           </Button>
           <IconButton className="project-row-delete" size="small"
-                      aria-label={`Delete ${pkg.name}`}
-                      onClick={e => {e.stopPropagation(); this.props.onDeletePackage(pkg)}}>
+                      aria-label={`Delete ${definition.name}`}
+                      onClick={e => {e.stopPropagation(); this.props.onDeleteComponent(definition)}}>
             <Delete fontSize="inherit"/>
           </IconButton>
         </Box>
-        {open && (pkg.declared.length > 0
-          ? <div className="project-pins">
-              {pkg.declared.map((_, index) => this.renderPackagePin(pkg, index))}
-            </div>
-          : <div className="project-pins empty">No pins on it yet</div>)}
+        {open &&
+          <div className="project-held">
+            {this.renderHeld(definition, "Board", definition.source.boardName, BoardIcon,
+                             this.props.onExtractBoard)}
+            {this.renderHeld(definition, "Package", definition.packaging.name, PackageIcon,
+                             this.props.onExtractPackage)}
+          </div>}
       </div>
     );
   }
@@ -126,11 +168,16 @@ class ProjectPanel extends React.Component<IProps, IState> {
              "&:hover": {bgcolor: "action.hover"},
            }}
            onClick={() => this.props.onSelectBoard(board)}>
-        <DeveloperBoard className="project-row-icon" fontSize="inherit"/>
+        <BoardIcon className="project-row-icon"/>
         <span className="project-row-name">{board.name}</span>
         {board.id === project.mainBoard.id &&
           <Box component="span" className="project-badge"
                sx={{color: "primary.main", borderColor: "primary.main"}}>MAIN</Box>}
+        <Button className="project-row-action" size="small"
+                aria-label={`Rename ${board.name}`}
+                onClick={e => {e.stopPropagation(); this.props.onRenameBoard(board)}}>
+          Rename
+        </Button>
         {project.canRemove(board) &&
           <IconButton className="project-row-delete" size="small"
                       aria-label={`Delete ${board.name}`}
@@ -163,6 +210,8 @@ class ProjectPanel extends React.Component<IProps, IState> {
           <Button size="small" variant="outlined" onClick={this.props.onAddBoard}>+ Board</Button>
           <Button size="small" variant="outlined"
                   onClick={this.props.onAddPackage}>+ Package</Button>
+          <Button size="small" variant="outlined"
+                  onClick={this.props.onAddComponent}>+ Component</Button>
           <Button size="small" variant="outlined" onClick={this.props.onImportBoard}>Import...</Button>
         </div>
 
@@ -176,6 +225,13 @@ class ProjectPanel extends React.Component<IProps, IState> {
                 Nothing packaged yet. A package is the symbol and the pins a board is put behind.
               </div>
             : project.packages.map(pkg => this.renderPackage(pkg))}
+
+          <Box className="project-section-label" sx={{color: "text.secondary"}}>Components</Box>
+          {project.components.length === 0
+            ? <div className="project-empty">
+                Nothing built yet. A component is a package bound to a board, and is what you place.
+              </div>
+            : project.components.map(made => this.renderComponent(made))}
         </div>
       </div>
     );

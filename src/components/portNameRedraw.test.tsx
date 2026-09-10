@@ -27,7 +27,7 @@ function editor() {
     type: PartType.GATE, subtype: GateType.AND, scope: board.scope, board,
   });
   board.addComponent(gate);
-  setPort(board, gate.pins().find(pin => pin.pinType === PinType.INPUT)!, true, 'a');
+  setPort(board, gate.pins().find(pin => pin.pinType === PinType.INPUT)!, 'a');
   board.setSelectedComponents([gate]);
 
   const {container} = render(

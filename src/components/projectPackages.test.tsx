@@ -46,19 +46,17 @@ function panel(pkg = reg8()) {
                        onRename={() => {}}
                        onAddBoard={() => {}}
                        onImportBoard={() => {}}
-                       onSelectBoard={() => {}}
+                       onSelectBoard={() => {}} onRenameBoard={() => {}}
                        onDeleteBoard={() => {}}
                        onAddPackage={() => {added++}}
                        onEditPackage={made => edited.push(made)}
-                       onDeletePackage={made => deleted.push(made)}/>);
+                       onDeletePackage={made => deleted.push(made)}
+                       onAddComponent={() => {}}
+                       onEditComponent={() => {}}
+                       onDeleteComponent={() => {}}
+                         onExtractBoard={() => {}} onExtractPackage={() => {}}/>);
 
   return {project, pkg, edited, deleted, addedCount: () => added};
-}
-
-/** The pins shown under the package, as the panel reads them out. */
-function pinRows(): string[] {
-  return [...document.querySelectorAll('.project-pin-row')]
-      .map(row => (row.textContent ?? '').trim());
 }
 
 describe('the packages a project holds', () => {
@@ -69,18 +67,15 @@ describe('the packages a project holds', () => {
     expect(screen.getByText('reg8_std')).toBeInTheDocument();
   });
 
-  test('say how many pins are on them without being opened', () => {
-    panel();
-
-    expect(screen.getByText('4')).toBeInTheDocument();
-  });
-
   test('say so when there are none, rather than showing an empty heading', () => {
     render(<ProjectPanel project={new Project()}
                          onRename={() => {}} onAddBoard={() => {}} onImportBoard={() => {}}
-                         onSelectBoard={() => {}} onDeleteBoard={() => {}}
+                         onSelectBoard={() => {}} onRenameBoard={() => {}} onDeleteBoard={() => {}}
                          onAddPackage={() => {}} onEditPackage={() => {}}
-                         onDeletePackage={() => {}}/>);
+                         onDeletePackage={() => {}}
+                         onAddComponent={() => {}} onEditComponent={() => {}}
+                         onDeleteComponent={() => {}}
+                         onExtractBoard={() => {}} onExtractPackage={() => {}}/>);
 
     expect(screen.getByText(/Nothing packaged yet/)).toBeInTheDocument();
   });
@@ -91,49 +86,6 @@ describe('the packages a project holds', () => {
     fireEvent.click(screen.getByRole('button', {name: '+ Package'}));
 
     expect(addedCount()).toBe(1);
-  });
-});
-
-describe('opening a package out', () => {
-  test('shows nothing until it is asked for', () => {
-    panel();
-
-    expect(pinRows()).toEqual([]);
-  });
-
-  test('reads out the contract a board would be built to', () => {
-    panel();
-
-    fireEvent.click(screen.getByText('reg8_std'));
-
-    expect(pinRows()).toEqual(['inD8-bit', 'inCLKclk', 'inCLRlow', 'outQ8-bit']);
-  });
-
-  test('closes again', () => {
-    panel();
-
-    fireEvent.click(screen.getByText('reg8_std'));
-    fireEvent.click(screen.getByText('reg8_std'));
-
-    expect(pinRows()).toEqual([]);
-  });
-
-  test('says so when a package has no pins yet', () => {
-    panel(new PackageComponent({scope: GLOBAL_SCOPE, name: 'empty'}));
-
-    fireEvent.click(screen.getByText('empty'));
-
-    expect(screen.getByText('No pins on it yet')).toBeInTheDocument();
-  });
-
-  test('marks a pin nobody has named, which is what stops the package', () => {
-    const pkg = reg8();
-    pkg.declared[0].label = '';
-    panel(pkg);
-
-    fireEvent.click(screen.getByText('reg8_std'));
-
-    expect(screen.getByText('unnamed')).toBeInTheDocument();
   });
 });
 
@@ -153,14 +105,6 @@ describe('what a package row offers', () => {
 
     expect(deleted).toEqual([pkg]);
   });
-
-  test('neither of which opens it out, the row being for the package rather than its pins', () => {
-    panel();
-
-    fireEvent.click(screen.getByRole('button', {name: 'Edit reg8_std'}));
-
-    expect(pinRows()).toEqual([]);
-  });
 });
 
 describe('making a package from the panel', () => {
@@ -170,12 +114,26 @@ describe('making a package from the panel', () => {
     fireEvent.click(screen.getByRole('tab', {name: 'Project'}));
   }
 
-  test('brings up the interface editor', () => {
+  test('brings up the package editor', () => {
     openPanel();
 
     fireEvent.click(screen.getByRole('button', {name: '+ Package'}));
 
-    expect(screen.getByText('Author interface')).toBeInTheDocument();
+    expect(screen.getByText('Create Package')).toBeInTheDocument();
+  });
+
+  test('says it is editing when the package is already in the project', () => {
+    openPanel();
+    fireEvent.click(screen.getByRole('button', {name: '+ Package'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Add input'}));
+    fireEvent.change(screen.getByLabelText('Pin label'), {target: {value: 'a'}});
+    fireEvent.change(screen.getByLabelText('Package name'), {target: {value: 'mux2'}});
+    fireEvent.click(screen.getByRole('button', {name: 'Save Package'}));
+
+    fireEvent.click(screen.getByRole('button', {name: 'Edit mux2'}));
+
+    expect(screen.getByText('Edit Package')).toBeInTheDocument();
+    expect(screen.queryByText('Create Package')).toBeNull();
   });
 
   test('adds nothing to the project until it is saved', () => {
@@ -194,7 +152,7 @@ describe('making a package from the panel', () => {
     fireEvent.change(screen.getByLabelText('Package name'), {target: {value: 'mux2'}});
     fireEvent.click(screen.getByRole('button', {name: 'Add input'}));
     fireEvent.change(screen.getByLabelText('Pin label'), {target: {value: 'a'}});
-    fireEvent.click(screen.getByRole('button', {name: 'Save interface'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Save Package'}));
 
     expect(screen.getByText('mux2')).toBeInTheDocument();
   });
@@ -205,11 +163,11 @@ describe('making a package from the panel', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Add input'}));
     fireEvent.change(screen.getByLabelText('Pin label'), {target: {value: 'a'}});
     fireEvent.change(screen.getByLabelText('Package name'), {target: {value: 'mux2'}});
-    fireEvent.click(screen.getByRole('button', {name: 'Save interface'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Save Package'}));
 
     fireEvent.click(screen.getByRole('button', {name: 'Edit mux2'}));
     fireEvent.change(screen.getByLabelText('Package name'), {target: {value: 'mux4'}});
-    fireEvent.click(screen.getByRole('button', {name: 'Save interface'}));
+    fireEvent.click(screen.getByRole('button', {name: 'Save Package'}));
 
     expect(screen.getByText('mux4')).toBeInTheDocument();
     expect(screen.queryByText('mux2')).toBeNull();

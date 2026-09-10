@@ -103,7 +103,10 @@ describe('wiring pins', () => {
 
     connectPins(board, [outputOf(source), inputOf(sink)]);
 
-    expect(inputOf(sink).net).toBe(outputOf(source).net);
+    // One line, not one net: an unnamed line is what its wires make, so the two keep their own
+    // nets and the wire joins them. Folding them together is what leaves a rewired pin behind.
+    expect(outputOf(source).net!.line).toContain(inputOf(sink));
+    expect(outputOf(source).net!.listeners).toContain(inputOf(sink));
   });
 
   test('carries the name the driver was holding to what it drives', () => {
@@ -116,7 +119,7 @@ describe('wiring pins', () => {
     expect(inputOf(sink).netName).toBe('clk');
   });
 
-  test('takes away a name an input was holding while it waited for a driver', () => {
+  test('stops answering to a name an input was holding while it waited for a driver', () => {
     // Connected pins answer to one name and the driver owns it, so an unnamed driver leaves the
     // line unnamed rather than adopting what the input was called.
     const board = new LogicBoard();
@@ -126,6 +129,19 @@ describe('wiring pins', () => {
     connectPins(board, [outputOf(source), inputOf(sink)]);
 
     expect(inputOf(sink).netName).toBe('');
-    expect(board.nets.has('reset')).toBe(false);
+  });
+
+  test('gives that name back when the wire that quieted it is deleted', () => {
+    // The wire joins the two lines rather than folding one into the other, so the name is not
+    // destroyed on the way — which is what lets a subcomponent survive being unwired.
+    const board = new LogicBoard();
+    const source = gate(board), sink = gate(board);
+    setNetName(board, [inputOf(sink)], 'reset');
+    connectPins(board, [outputOf(source), inputOf(sink)]);
+
+    inputOf(sink).disconnect();
+
+    expect(inputOf(sink).netName).toBe('reset');
+    expect(board.nets.has('reset')).toBe(true);
   });
 });

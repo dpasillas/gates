@@ -112,8 +112,6 @@ describe('a board written out and read back', () => {
     const gate = place(board, PartType.GATE, GateType.AND);
     setNetName(board, [gate.outputPins[0]], 'clk');
     gate.inputPins[0].portName = 'A';
-    gate.inputPins[0].isPort = true;
-
     const [reopened] = [...roundTrip(board).components.values()];
 
     expect(reopened.outputPins[0].netName).toBe('clk');

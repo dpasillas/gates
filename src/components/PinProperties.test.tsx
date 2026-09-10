@@ -98,31 +98,29 @@ describe('pin properties', () => {
     expect(screen.getByText('2 pins selected')).toBeInTheDocument();
   });
 
-  test('offers the port option for one pin only', () => {
+  test('offers the port name for one pin only', () => {
     const {logicBoard, gate} = board();
     const single = gate(GateType.AND);
     showing(logicBoard, single.inputPins[0]);
 
-    expect(screen.getByLabelText('Port')).toBeInTheDocument();
+    expect(field('Port Name')).toBeInTheDocument();
   });
 
-  test('hides the port option when several pins are selected', () => {
+  test('hides it when several pins are selected', () => {
     const {logicBoard, gate} = board();
     const pair = gate(GateType.AND);
     showing(logicBoard, pair.inputPins[0], pair.inputPins[1]);
 
-    expect(screen.queryByLabelText('Port')).toBeNull();
+    expect(screen.queryByLabelText('Port Name')).toBeNull();
   });
 
-  test('makes a pin a port only once the name is set', () => {
+  test('makes a pin a port by naming it', () => {
+    // There is no separate switch: a port is a name, so having one is what makes a pin a port.
     const {logicBoard, gate} = board();
     const pin = gate(GateType.AND).inputPins[0];
     showing(logicBoard, pin);
 
-    fireEvent.click(screen.getByLabelText('Port'));
     fireEvent.change(field('Port Name'), {target: {value: 'clk'}});
-
-    // Ticking the box is a statement of intent; the port is not one until it has a name to check.
     expect(pin.isPort).toBe(false);
 
     fireEvent.click(setPortName());
@@ -131,41 +129,48 @@ describe('pin properties', () => {
     expect(pin.portName).toBe('clk');
   });
 
-  test('stops a pin being a port as soon as the box is cleared', () => {
+  test('takes the name it was given without the spaces around it', () => {
     const {logicBoard, gate} = board();
     const pin = gate(GateType.AND).inputPins[0];
-    pin.isPort = true;
+    showing(logicBoard, pin);
+
+    fireEvent.change(field('Port Name'), {target: {value: '  clk  '}});
+    fireEvent.click(setPortName());
+
+    expect(pin.portName).toBe('clk');
+  });
+
+  test('is not a port when the name is nothing but spaces', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).inputPins[0];
+    showing(logicBoard, pin);
+
+    fireEvent.change(field('Port Name'), {target: {value: '   '}});
+
+    expect(setPortName()).toBeDisabled();
+    expect(pin.isPort).toBe(false);
+  });
+
+  test('stops a pin being a port when the name is cleared', () => {
+    const {logicBoard, gate} = board();
+    const pin = gate(GateType.AND).inputPins[0];
     pin.portName = 'clk';
     showing(logicBoard, pin);
 
-    // No name to give and nothing to check, so there is nothing for a set action to wait for.
-    fireEvent.click(screen.getByLabelText('Port'));
+    fireEvent.change(field('Port Name'), {target: {value: ''}});
+    fireEvent.click(setPortName());
 
     expect(pin.isPort).toBe(false);
     expect(pin.portName).toBe('');
   });
 
-  test('clears the name field along with the port it belonged to', () => {
-    const {logicBoard, gate} = board();
-    const pin = gate(GateType.AND).inputPins[0];
-    pin.isPort = true;
-    pin.portName = 'clk';
-    showing(logicBoard, pin);
-
-    fireEvent.click(screen.getByLabelText('Port'));
-
-    expect(field('Port Name').value).toBe('');
-  });
-
   test('will not take a port name an output already drives', () => {
     const {logicBoard, gate} = board();
     const taken = gate(GateType.AND).outputPins[0];
-    taken.isPort = true;
     taken.portName = 'A';
     const pin = gate(GateType.OR).inputPins[0];
     showing(logicBoard, pin);
 
-    fireEvent.click(screen.getByLabelText('Port'));
     fireEvent.change(field('Port Name'), {target: {value: 'A'}});
 
     expect(screen.getByText(/already an output port/)).toBeInTheDocument();
@@ -176,12 +181,10 @@ describe('pin properties', () => {
   test('takes a port name another input already has, since they share the exposed pin', () => {
     const {logicBoard, gate} = board();
     const other = gate(GateType.AND).inputPins[0];
-    other.isPort = true;
     other.portName = 'A';
     const pin = gate(GateType.OR).inputPins[0];
     showing(logicBoard, pin);
 
-    fireEvent.click(screen.getByLabelText('Port'));
     fireEvent.change(field('Port Name'), {target: {value: 'A'}});
     fireEvent.click(setPortName());
 
@@ -194,7 +197,6 @@ describe('pin properties', () => {
     const pin = gate(GateType.AND).inputPins[0];
     showing(logicBoard, pin);
 
-    fireEvent.click(screen.getByLabelText('Port'));
     fireEvent.change(field('Port Name'), {target: {value: 'Reset'}});
     fireEvent.click(setPortName());
 
@@ -202,17 +204,12 @@ describe('pin properties', () => {
     expect(pin.portName).toBe('Reset');
   });
 
-  test('asks for a name before it says how names may be shared', () => {
+  test('says how names may be shared while there is nothing wrong with one', () => {
     const {logicBoard, gate} = board();
     showing(logicBoard, gate(GateType.AND).inputPins[0]);
 
-    fireEvent.click(screen.getByLabelText('Port'));
-    expect(screen.getByText(/needs a name/)).toBeInTheDocument();
-
     fireEvent.change(field('Port Name'), {target: {value: 'Reset'}});
 
-    // Nothing wrong with it, so the rule it has to keep meeting is what is left to say.
-    expect(screen.queryByText(/needs a name/)).toBeNull();
     expect(screen.getByText(/share/i)).toBeInTheDocument();
   });
 });
@@ -234,7 +231,6 @@ describe('committing a field with Enter', () => {
     const pin = gate(GateType.AND).inputPins[0];
     showing(logicBoard, pin);
 
-    fireEvent.click(screen.getByLabelText('Port'));
     fireEvent.change(field('Port Name'), {target: {value: 'Reset'}});
     fireEvent.keyDown(field('Port Name'), {key: 'Enter'});
 

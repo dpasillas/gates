@@ -65,6 +65,9 @@
 
 .parts-sections {
     flex-grow: 1;
+    /* A flex item will not shrink below its content without this, so the list grew past the panel
+       and took its own scrollbar out of reach instead of scrolling inside it. */
+    min-height: 0;
     overflow-y: auto;
 }
 

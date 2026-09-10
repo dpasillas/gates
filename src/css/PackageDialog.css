@@ -10,6 +10,9 @@
 .package-dialog .package-dialog-paper {
     resize: both;
     overflow: hidden;
+    /* A size to open at, rather than as much of the page as the window allows. Wide enough for the
+       symbol beside two columns of pins, and dragged bigger from the corner when that is not. */
+    width: 800px;
     min-width: 700px;
     min-height: 440px;
     max-width: calc(100vw - 64px);

@@ -25,13 +25,24 @@ function netFor(board: LogicBoard, name: string): Net {
   return made;
 }
 
+/**
+ * Every pin that answers to a name.
+ *
+ * The whole line rather than the named net's own members: a wire joins two lines without merging
+ * them, so a pin wired to a named line is on that line and goes by its name.
+ */
 function pinsOnNet(board: LogicBoard, name: string): LogicPin[] {
-  return name ? board.nets.get(name)?.members ?? [] : [];
+  return name ? board.nets.get(name)?.line ?? [] : [];
 }
 
-/** Everything on the same line as this pin, which is the pin alone when it is on none. */
+/**
+ * Everything on the same line as this pin, which is the pin alone when it is on none.
+ *
+ * The whole line rather than one net of it: a wire joins two lines without merging them, so the
+ * pins reachable across those wires are as much on this line as the ones beside it.
+ */
 function connectedGroup(pin: LogicPin): LogicPin[] {
-  return pin.net ? pin.net.members : [pin];
+  return pin.net ? pin.net.line : [pin];
 }
 
 /** Takes a pin off its line. The net forgets itself once nobody is left on it. */
@@ -235,7 +246,7 @@ function checkPortName(board: LogicBoard, pin: LogicPin, name: string): string |
   }
 
   const sharing = [...board.pins.values()]
-    .filter(other => other !== pin && other.isPort && other.portName === wanted);
+    .filter(other => other !== pin && other.portName === wanted);
 
   if (sharing.some(other => other.pinType === PinType.OUTPUT)) {
     return `"${wanted}" is already an output port.`;
@@ -246,13 +257,13 @@ function checkPortName(board: LogicBoard, pin: LogicPin, name: string): string |
     : undefined;
 }
 
-function setPort(board: LogicBoard, pin: LogicPin, isPort: boolean, name: string) {
-  if (isPort && checkPortName(board, pin, name)) {
+function setPort(board: LogicBoard, pin: LogicPin, name: string) {
+  const wanted = name.trim();
+  if (wanted && checkPortName(board, pin, wanted)) {
     return;
   }
 
-  pin.isPort = isPort;
-  pin.portName = isPort ? name.trim() : "";
+  pin.portName = wanted;
 
   board.update();
   board.updateProperties();

@@ -130,7 +130,7 @@ class LogicPin {
 
   /** What this pin is called on the board, which is the name of the line it is on. */
   get netName(): string {
-    return this.net?.name ?? "";
+    return this.net?.lineName ?? "";
   }
   /**
    * Whether a part built to this pin is clocked by it, and whether the pin's name is drawn beside
@@ -145,10 +145,32 @@ class LogicPin {
   /** Which run of its edge it sits in, where something has split that edge in two. */
   group: number = 0;
 
-  /** The name this pin is exposed under when the board is used as a component. */
+  /**
+   * Whether this pin is on its line to carry it rather than to drive it.
+   *
+   * The outside of a subcomponent: it is an output as far as wiring is concerned, so the board can
+   * be wired to read from it, but what the line is at is decided inside. Left out of resolution, it
+   * would otherwise argue with the driver it is meant to be presenting.
+   */
+  passive: boolean = false;
+
+  /**
+   * The name this pin is exposed under when the board is used as a component.
+   *
+   * Empty means it is not exposed. Kept trimmed, since a name that differs from another only by
+   * spaces is the same name to anyone reading it.
+   */
   portName: string = "";
-  /** Whether this pin is exposed at all. A port must be named, and named uniquely. */
-  isPort: boolean = false;
+
+  /**
+   * Whether this pin is exposed at all.
+   *
+   * Derived rather than stored: a port is a name, so having one *is* being a port. Held separately
+   * it could disagree with the name, and every reader had to check both.
+   */
+  get isPort(): boolean {
+    return this.portName !== "";
+  }
   connections: Map<string /* UUID of connected pin */, LogicConnection> = new Map<string, LogicConnection>();
   /**
    * Callback which triggers a re-render on the rendered object
@@ -261,8 +283,12 @@ class LogicPin {
       const connection = new LogicConnection({ source: other, sink: this, board: this.board })
       this.connections.set(other.uuid, connection);
       other.connections.set(this.uuid, connection);
-      driveOnto(other, this);
-      this.setLogicState(other.state);
+      // Settled rather than handed the source's own value. The wire joins two lines, so what this
+      // pin is now at is what the whole line resolves to, and everything else newly on that line
+      // has to hear it too — a subcomponent's pin does nothing with a value poked into it, since
+      // what it is wired to inside is reached along the line rather than through the component.
+      driveOnto(other, this).settle();
+
       return connection;
     } else {
       return other.connectTo(this);

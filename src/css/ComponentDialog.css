@@ -1,0 +1,98 @@
+.component-dialog-paper {
+    resize: both;
+    overflow: auto;
+    min-width: 520px;
+    min-height: 360px;
+}
+
+.component-dialog-body {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.component-symbol-pane {
+    width: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.component-form-pane {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.component-board-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.component-board-row .MuiButton-root {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+.component-section {
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.component-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.component-row-pin {
+    width: 140px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.component-row-name {
+    font-size: 0.85rem;
+}
+
+.component-row-kind {
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+.component-row-port {
+    width: 180px;
+    flex-shrink: 0;
+}
+
+.component-row-port .MuiSelect-select {
+    font-size: 0.85rem;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+
+.component-row-problem {
+    font-size: 0.75rem;
+    color: var(--mui-palette-error-main, #d32f2f);
+    flex: 1;
+    min-width: 0;
+}
+
+.component-warning {
+    font-size: 0.8rem;
+    opacity: 0.75;
+}
+
+.component-problem {
+    flex: 1;
+    padding-left: 8px;
+    font-size: 0.8rem;
+}

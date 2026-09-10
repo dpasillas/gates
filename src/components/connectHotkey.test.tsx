@@ -337,6 +337,52 @@ describe('the panel keeping up with the board', () => {
   });
 });
 
+describe('what a panel is left holding', () => {
+  /** The project panel open in the running app, with the board row hovered so its actions show. */
+  function openPanel() {
+    render(<App/>);
+    fireEvent.click(screen.getByRole('tab', {name: 'Project'}));
+  }
+
+  const renameButton = () =>
+      [...document.querySelectorAll('.project-panel button')]
+          .find(button => (button.getAttribute('aria-label') ?? '').startsWith('Rename'))!;
+
+  test('is let go of when the board is pressed', () => {
+    // The board suppresses the browser's own handling of a press, so nothing else takes focus off:
+    // a button that opened a dialog keeps its focus ring for the rest of the session otherwise.
+    openPanel();
+    const button = renameButton() as HTMLElement;
+    button.focus();
+    expect(button).toHaveFocus();
+
+    fireEvent.mouseDown(document.querySelector('.board-wrapper')!, {shiftKey: true});
+
+    expect(button).not.toHaveFocus();
+  });
+
+  test('is kept while the press is inside the same panel', () => {
+    openPanel();
+    const button = renameButton() as HTMLElement;
+    button.focus();
+
+    fireEvent.mouseDown(document.querySelector('.project-panel')!);
+
+    expect(button).toHaveFocus();
+  });
+
+  test('is let go of when the press is in a different panel', () => {
+    openPanel();
+    const button = renameButton() as HTMLElement;
+    button.focus();
+
+    fireEvent.mouseDown(document.querySelector('.properties-content')!);
+
+    expect(button).not.toHaveFocus();
+  });
+
+});
+
 describe('pressing outside the properties panel', () => {
   test('lets go of a field the caret was left in', () => {
     // The board suppresses the browser's own handling of a press, so nothing else takes focus off.

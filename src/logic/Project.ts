@@ -1,6 +1,7 @@
 import {v4 as uuidv4} from "uuid";
 
 import {LogicBoard} from "./LogicBoard";
+import {ComponentDefinition} from "./ComponentDefinition";
 import {PackageComponent} from "./PackageComponent";
 
 /** What a project is called before it has been given a name of its own. */
@@ -42,6 +43,14 @@ class Project {
   packages: PackageComponent[] = [];
 
   /**
+   * The components in the project, in the order the panel lists them.
+   *
+   * A component holds copies of the board and package it was built from, so one stays whole even
+   * after either of those is edited or removed.
+   */
+  components: ComponentDefinition[] = [];
+
+  /**
    * The boards with an editor tab open, in tab order.
    *
    * Which boards are open is about what the user is doing rather than what the project holds, so it
@@ -56,6 +65,7 @@ class Project {
   directory?: FileSystemDirectoryHandle;
 
   constructor(board: LogicBoard = new LogicBoard()) {
+    this.adopt(board);
     this.boards = [board];
     this.openBoardIds = [board.id];
     this.activeBoardId = board.id;
@@ -100,8 +110,20 @@ class Project {
     this.activeBoardId = board.id;
   }
 
+  /**
+   * Points a board at this project's components, so that a placement on it can be read back.
+   *
+   * Live rather than a copy: a component made after the board was loaded is still found.
+   */
+  adopt(board: LogicBoard): LogicBoard {
+    board.library = id => this.componentFor(id);
+
+    return board;
+  }
+
   /** Adds a board to the project and shows it. */
   addBoard(name: string, board: LogicBoard = new LogicBoard()): LogicBoard {
+    this.adopt(board);
     board.name = name;
     this.boards.push(board);
     this.show(board);
@@ -119,6 +141,28 @@ class Project {
   /** Takes a package out of the project. */
   removePackage(pkg: PackageComponent) {
     this.packages = this.packages.filter(other => other.uuid !== pkg.uuid);
+  }
+
+  /** Adds a component to the project, putting an edit back over the one it replaces. */
+  addComponent(definition: ComponentDefinition): ComponentDefinition {
+    const at = this.components.findIndex(other => other.uuid === definition.uuid);
+    if (at < 0) {
+      this.components.push(definition);
+    } else {
+      this.components[at] = definition;
+    }
+
+    return definition;
+  }
+
+  /** Takes a component out of the project. Placements of it are not sought out. */
+  removeComponent(definition: ComponentDefinition) {
+    this.components = this.components.filter(other => other.uuid !== definition.uuid);
+  }
+
+  /** The component a placement refers to, or nothing if the project no longer holds it. */
+  componentFor(id: string): ComponentDefinition | undefined {
+    return this.components.find(other => other.uuid === id);
   }
 
   /**

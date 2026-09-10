@@ -31,8 +31,8 @@ function boardWithPorts(highlight: boolean, angle: number = 0) {
 
   const input = gate.pins().find(pin => pin.pinType === PinType.INPUT)!;
   const output = gate.pins().find(pin => pin.pinType === PinType.OUTPUT)!;
-  setPort(board, input, true, 'a');
-  setPort(board, output, true, 'q');
+  setPort(board, input, 'a');
+  setPort(board, output, 'q');
 
   const {container} = render(<Board board={board}/>);
 
@@ -227,20 +227,19 @@ describe('port names on the board', () => {
   });
 });
 
-describe('a port pin that has lost its name', () => {
-  test('is not written out blank', () => {
+describe('a pin with no port name', () => {
+  test('is not a port at all, so nothing is written beside it', () => {
     const board = new LogicBoard();
     board.highlightPorts = true;
     const gate: LogicComponent = makeComponent({
       type: PartType.GATE, subtype: GateType.AND, scope: board.scope, board,
     });
     board.addComponent(gate);
-    // Reaching past setPort, which will not take an empty name, to the state a damaged file could
-    // still hold.
-    gate.pins()[0].isPort = true;
-
+    // The state this used to guard against — exposed but nameless — cannot be represented now that
+    // being a port *is* having a name.
     const {container} = render(<Board board={board}/>);
 
+    expect(gate.pins()[0].isPort).toBe(false);
     expect(pinCount(container, '.port-name')).toBe(0);
   });
 });
