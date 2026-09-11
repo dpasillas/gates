@@ -64,7 +64,6 @@
 }
 
 .project-row {
-    position: relative;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -73,8 +72,29 @@
     cursor: pointer;
 }
 
-/* The current board's mark: a pill just inside the row, under its contents. */
-.project-row.active::before {
+/* Tighter than a top-level row, so the two read as belonging to the component above them. */
+.project-held-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 24px;
+    padding: 0 16px 0 40px;
+    font-size: 12px;
+}
+
+/*
+ * Everything a row has to say about itself — hovered, current, focused — it says on a pill just
+ * inside its edges, under its contents, never across the whole row. The focus ring the browser
+ * would draw is replaced by the pill's own tint, so it goes too.
+ */
+.project-row,
+.project-held-row {
+    position: relative;
+    isolation: isolate;
+}
+
+.project-row::before,
+.project-held-row::before {
     content: "";
     position: absolute;
     inset: 3px 8px;
@@ -82,8 +102,13 @@
     z-index: -1;
 }
 
-.project-row.active {
-    isolation: isolate;
+.project-held-row::before {
+    inset: 1px 8px;
+}
+
+.project-row:focus-visible,
+.project-held-row:focus-visible {
+    outline: none;
 }
 
 .project-row-icon {
@@ -153,15 +178,6 @@
     opacity: 0.6;
 }
 
-/* Tighter than a top-level row, so the two read as belonging to the component above them. */
-.project-held-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 24px;
-    padding: 0 16px 0 40px;
-    font-size: 12px;
-}
 
 .project-held-extract {
     flex-shrink: 0;

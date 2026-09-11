@@ -4,7 +4,8 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
-import {alpha} from "@mui/material/styles";
+import {alpha, Theme} from "@mui/material/styles";
+import {SxProps} from "@mui/system";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import Delete from "@mui/icons-material/Delete";
 import ExpandMore from "@mui/icons-material/ExpandMore";
@@ -18,6 +19,22 @@ import {Project} from "../logic/Project";
 import {linkage} from "../logic/ComponentDefinition";
 import type {ComponentDefinition} from "../logic/ComponentDefinition";
 import "../css/ProjectPanel.css";
+
+/** Blue enough to be seen as the keyboard's, pale enough to leave the text alone. */
+const FOCUS_TINT = (theme: Theme) => alpha(theme.palette.primary.main, 0.14);
+
+/**
+ * How a row's pill is tinted.
+ *
+ * The current board is marked grey, and blue while the panel holds the keyboard — where the pill
+ * is also how a row reached by Tab shows it, since the browser's own ring is turned off in the
+ * stylesheet. Hover is the lightest tint of all, and gives way to the others.
+ */
+const ROW_SX: SxProps<Theme> = {
+  "&:hover::before": {bgcolor: "action.hover"},
+  "&.active::before": {bgcolor: "action.selected"},
+  "&:focus-visible::before, .project-panel:focus-within &.active::before": {bgcolor: FOCUS_TINT},
+};
 
 interface IProps {
   project: Project;
@@ -61,8 +78,7 @@ class ProjectPanel extends React.Component<IProps, IState> {
 
   renderPackage(pkg: PackageComponent) {
     return (
-      <Box key={pkg.uuid} className="project-row"
-           sx={{"&:hover": {bgcolor: "action.hover"}}}>
+      <Box key={pkg.uuid} className="project-row" sx={ROW_SX}>
         <PackageIcon className="project-row-icon"/>
         <span className="project-row-name">{pkg.name || "untitled package"}</span>
         <Button className="project-row-action" size="small"
@@ -91,7 +107,7 @@ class ProjectPanel extends React.Component<IProps, IState> {
     const shown = name || `untitled ${kind.toLowerCase()}`;
 
     return (
-      <Box className="project-held-row" sx={{"&:hover": {bgcolor: "action.hover"}}}>
+      <Box className="project-held-row" sx={ROW_SX}>
         <Icon className="project-row-icon" title={kind}/>
         <span className="project-row-name" title={shown}>{shown}</span>
         <IconButton className="project-held-extract" size="small"
@@ -120,7 +136,7 @@ class ProjectPanel extends React.Component<IProps, IState> {
              role="button"
              tabIndex={0}
              aria-expanded={open}
-             sx={{"&:hover": {bgcolor: "action.hover"}}}
+             sx={ROW_SX}
              onClick={() => this.toggle(definition.uuid)}>
           {open
             ? <ExpandMore className="project-row-twisty" fontSize="inherit"/>
@@ -163,16 +179,7 @@ class ProjectPanel extends React.Component<IProps, IState> {
            role="button"
            tabIndex={0}
            aria-current={active}
-           sx={{
-             "&:hover": {bgcolor: "action.hover"},
-             // The current board is marked by a pill inset in its row rather than a bar at the
-             // edge, where it met the rail's own bar. Blue while the panel holds the keyboard;
-             // grey once the user has gone to work on the board.
-             "&.active::before": {bgcolor: "action.selected"},
-             ".project-panel:focus-within &.active::before": {
-               bgcolor: theme => alpha(theme.palette.primary.main, 0.14),
-             },
-           }}
+           sx={ROW_SX}
            onClick={() => this.props.onSelectBoard(board)}>
         <BoardIcon className="project-row-icon"/>
         <span className="project-row-name">{board.name}</span>

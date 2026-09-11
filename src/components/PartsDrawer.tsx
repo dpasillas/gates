@@ -1,5 +1,6 @@
 import React from "react";
 import Box from "@mui/material/Box"
+import {alpha} from "@mui/material/styles";
 import Collapse from "@mui/material/Collapse"
 import {faChevronRight} from "@fortawesome/free-solid-svg-icons/faChevronRight";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -67,7 +68,10 @@ function PartTile({part, onDragStart}: {part: Part, onDragStart?: (part: Part) =
          draggable
          sx={{
            bgcolor: "background.paper", border: 1, borderColor: "divider",
-           "&:hover": {bgcolor: "action.hover", borderColor: "text.secondary"},
+           "&:hover": {
+             bgcolor: theme => alpha(theme.palette.primary.main, 0.08),
+             borderColor: "primary.main",
+           },
            "&:hover .part-label": {color: "text.primary"},
          }}
          onDragStart={handleDragStart}
