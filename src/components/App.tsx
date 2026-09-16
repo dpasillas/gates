@@ -11,7 +11,7 @@ import {partsFor} from "./partsCatalogue";
 import {EditorTabs} from "./EditorTabs";
 import {MenuBar} from "./MenuBar";
 import {ProjectPanel} from "./ProjectPanel";
-import {NameDialog, OpenProjectDialog} from "./ProjectDialogs";
+import {NameDialog, OpenProjectDialog, PickDialog} from "./ProjectDialogs";
 import {ComponentDialog} from "./ComponentDialog";
 import {PackageDialog} from "./PackageDialog";
 import {buildMenus} from "./menus";
@@ -26,6 +26,8 @@ import {createBoardFromSelection} from "../logic/boardFromSelection";
 import {extractBoard, extractPackage} from "../logic/componentExtract";
 import {Toolbar} from "./Toolbar";
 import {exportBoard, importBoard} from "../storage/boardStore";
+import {exportComponent, importComponent} from "../storage/componentStore";
+import {exportPackage, importPackage} from "../storage/packageStore";
 import {
   exportProject,
   importProject,
@@ -67,10 +69,11 @@ interface IState {
   binding?: {board: LogicBoard, existing?: ComponentDefinition},
   /** What the toolbar's export button writes out. */
   exportKind: ExportKind,
+  /** The kind being picked one of to export, while the chooser is up. */
+  choosing?: "component" | "package",
 }
 
-/** The kinds the export button can write out today. */
-const EXPORTABLE: ExportKind[] = ["board", "project"];
+const EXPORTABLE: ExportKind[] = ["board", "component", "package", "project"];
 
 /** Whether the keyboard belongs to something being typed into rather than to the board. */
 /**
@@ -485,6 +488,77 @@ class App extends React.Component<IProps , IState>{
     this.attempt(async () => `Exported ${await exportProject(this.project)}`);
   }
 
+  private handleExportComponent(definition: ComponentDefinition) {
+    this.attempt(async () => `Exported ${await exportComponent(definition, this.project)}`);
+  }
+
+  private handleExportPackage(pkg: PackageComponent) {
+    this.attempt(async () => `Exported ${await exportPackage(pkg)}`);
+  }
+
+  /**
+   * Asks which component or package to export, since unlike a board none is in front.
+   *
+   * With none to choose from there is nothing to ask, and the answer is the notice.
+   */
+  private handleChooseExport(kind: "component" | "package") {
+    const held = kind === "component" ? this.project.components : this.project.packages;
+    if (held.length === 0) {
+      this.setState({notice: `There are no ${kind}s to export`});
+      return;
+    }
+    this.setState({choosing: kind});
+  }
+
+  private handlePickedExport(id: string) {
+    const kind = this.state.choosing;
+    this.setState({choosing: undefined});
+    if (kind === "component") {
+      const definition = this.project.componentFor(id);
+      if (definition) {
+        this.handleExportComponent(definition);
+      }
+    } else if (kind === "package") {
+      const pkg = this.project.packages.find(other => other.uuid === id);
+      if (pkg) {
+        this.handleExportPackage(pkg);
+      }
+    }
+  }
+
+  private handleImportComponent() {
+    this.attempt(async () => {
+      const imported = await importComponent(this.project);
+      if (!imported) {
+        return undefined;
+      }
+
+      // As with a board: what it carried is only added where the project has nothing by that
+      // identity, while the component itself was asked for and always arrives.
+      const {definition, components} = imported;
+      components.filter(made => !this.project.componentFor(made.uuid))
+          .forEach(made => this.project.addComponent(made));
+      this.project.addComponent(definition);
+      this.setState({});
+
+      return `Added ${definition.name}`;
+    });
+  }
+
+  private handleImportPackage() {
+    this.attempt(async () => {
+      const pkg = await importPackage(this.project);
+      if (!pkg) {
+        return undefined;
+      }
+
+      this.project.addPackage(pkg);
+      this.setState({});
+
+      return `Added ${pkg.name}`;
+    });
+  }
+
   private handleExport(kind: ExportKind) {
     switch (kind) {
       case "board":
@@ -492,7 +566,7 @@ class App extends React.Component<IProps , IState>{
       case "project":
         return this.handleExportProject();
       default:
-        this.setState({notice: `Exporting a ${kind} is not there yet`});
+        return this.handleChooseExport(kind);
     }
   }
 
@@ -726,12 +800,16 @@ class App extends React.Component<IProps , IState>{
                     onSelectBoard={this.handleSelectBoard.bind(this)}
                     onRenameBoard={this.handleRenameBoard.bind(this)}
                     onDeleteBoard={this.handleDeleteBoard.bind(this)}
+                    onExportBoard={board => this.attempt(
+                        async () => `Exported ${await exportBoard(board)}`)}
                     onAddPackage={this.handleAddPackage.bind(this)}
                     onEditPackage={this.handleEditPackage.bind(this)}
                     onDeletePackage={this.handleDeletePackage.bind(this)}
+                    onExportPackage={this.handleExportPackage.bind(this)}
                     onAddComponent={this.handlePackageBoard.bind(this)}
                     onEditComponent={this.handleEditComponent.bind(this)}
                     onDeleteComponent={this.handleDeleteComponent.bind(this)}
+                    onExportComponent={this.handleExportComponent.bind(this)}
                     onExtractBoard={this.handleExtractBoard.bind(this)}
                     onExtractPackage={this.handleExtractPackage.bind(this)}/>
     );
@@ -756,8 +834,12 @@ class App extends React.Component<IProps , IState>{
       save: this.handleSave.bind(this),
       saveAs: this.handleSaveAs.bind(this),
       exportBoard: this.handleExportBoard.bind(this),
+      exportComponent: () => this.handleChooseExport("component"),
+      exportPackage: () => this.handleChooseExport("package"),
       exportProject: this.handleExportProject.bind(this),
       importBoard: this.handleImportBoard.bind(this),
+      importComponent: this.handleImportComponent.bind(this),
+      importPackage: this.handleImportPackage.bind(this),
       importProject: this.handleImportProject.bind(this),
       packageBoard: this.handlePackageBoard.bind(this),
       deleteSelection,
@@ -833,6 +915,17 @@ class App extends React.Component<IProps , IState>{
                                    this.project.addPackage(pkg);
                                    this.setState({});
                                  }}/>}
+              {this.state.choosing &&
+                <PickDialog title={`Export ${this.state.choosing === "component"
+                                ? "Component" : "Package"}`}
+                            confirm="Export"
+                            items={this.state.choosing === "component"
+                                ? this.project.components.map(made =>
+                                    ({id: made.uuid, name: made.name || "untitled component"}))
+                                : this.project.packages.map(pkg =>
+                                    ({id: pkg.uuid, name: pkg.name || "untitled package"}))}
+                            onCancel={() => this.setState({choosing: undefined})}
+                            onPick={this.handlePickedExport.bind(this)}/>}
               <OpenProjectDialog open={Boolean(this.state.opening)}
                                  projects={this.state.opening ?? []}
                                  onCancel={() => this.setState({opening: undefined})}

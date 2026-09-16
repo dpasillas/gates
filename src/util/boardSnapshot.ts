@@ -264,4 +264,5 @@ async function snapshotPng(board: LogicBoard, label?: string): Promise<Uint8Arra
   return rasterize(snapshotSvg(board, bounds, size, label), size);
 }
 
-export {snapshotBounds, snapshotPng, snapshotSize, snapshotSvg, EMPTY_BOX, PADDING};
+export {badge, element, rasterize, snapshotBounds, snapshotPng, snapshotSize, snapshotSvg,
+        EMPTY_BOX, PADDING};

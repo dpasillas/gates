@@ -124,19 +124,41 @@
     text-overflow: ellipsis;
 }
 
-/* Out of the way until the row is reached for, so that a list of boards does not read as a row of
-   buttons. Faded rather than hidden: a hidden control leaves the keyboard's reach and the
-   accessibility tree, and this is the only way to delete a board. */
-.project-row-delete {
-    flex-shrink: 0;
+/*
+ * A row's actions sit over the end of its name rather than beside it, and only while the row is
+ * reached for: the panel is narrow, and a name that has to share its line with three buttons is
+ * mostly ellipsis. Faded rather than hidden, so the buttons stay in the keyboard's reach and in the
+ * accessibility tree — this is the only way to delete a board.
+ */
+.project-row-actions {
+    position: absolute;
+    /* Inset as the pill is, so that what the actions paint is exactly the pill under them. */
+    top: 3px;
+    right: 12px;
+    bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding-left: 6px;
     opacity: 0;
-    padding: 2px;
-    font-size: 15px;
 }
 
-.project-row:hover .project-row-delete,
-.project-row-delete:focus-visible {
+.project-row:hover .project-row-actions,
+.project-held-row:hover .project-row-actions,
+.project-row-actions:focus-within {
     opacity: 1;
+}
+
+.project-held-row .project-row-actions {
+    top: 1px;
+    bottom: 1px;
+}
+
+.project-row-edit,
+.project-row-delete,
+.project-row-export {
+    padding: 2px;
+    font-size: 15px;
 }
 
 .project-badge {
@@ -157,19 +179,11 @@
     opacity: 0.6;
 }
 
-/* Reached for rather than offered, like the delete beside it. */
 .project-row-action {
-    flex-shrink: 0;
     min-width: 0;
-    opacity: 0;
     padding: 0 6px;
     font-size: 11px;
     text-transform: none;
-}
-
-.project-row:hover .project-row-action,
-.project-row-action:focus-visible {
-    opacity: 1;
 }
 
 .project-row-twisty {
@@ -178,15 +192,7 @@
     opacity: 0.6;
 }
 
-
 .project-held-extract {
-    flex-shrink: 0;
-    opacity: 0;
     padding: 1px;
     font-size: 15px;
-}
-
-.project-held-row:hover .project-held-extract,
-.project-held-extract:focus-visible {
-    opacity: 1;
 }

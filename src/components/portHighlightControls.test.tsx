@@ -10,7 +10,9 @@ import {WireStyle} from '../util/wireStyle';
 function commands(overrides: Partial<MenuCommands> = {}): MenuCommands {
   return {
     newProject: () => {}, openProject: () => {}, save: () => {}, saveAs: () => {},
-    exportBoard: () => {}, exportProject: () => {}, importBoard: () => {}, importProject: () => {},
+    exportBoard: () => {}, exportComponent: () => {}, exportPackage: () => {},
+    exportProject: () => {}, importBoard: () => {}, importComponent: () => {},
+    importPackage: () => {}, importProject: () => {},
     packageBoard: () => {},
     wireStyle: 'bezier' as WireStyle, setWireStyle: () => {},
     highlightPorts: false, toggleHighlightPorts: () => {},

@@ -45,7 +45,7 @@ describe('the export button', () => {
     fireEvent.contextMenu(button);
 
     const items = screen.getAllByRole('menuitem').map(item => item.textContent);
-    expect(items).toEqual(['Export board', 'Export component', 'Export package', 'Export project']);
+    expect(items).toEqual(['Export project', 'Export board', 'Export component', 'Export package']);
     expect(screen.getByRole('menuitem', {name: 'Export project'}))
         .toHaveClass('Mui-selected');
   });

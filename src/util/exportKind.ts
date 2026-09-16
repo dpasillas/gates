@@ -2,7 +2,7 @@
 type ExportKind = "board" | "component" | "package" | "project";
 
 /** The order the menu lists them in. */
-const EXPORT_KINDS: ExportKind[] = ["board", "component", "package", "project"];
+const EXPORT_KINDS: ExportKind[] = ["project", "board", "component", "package"];
 
 const DEFAULT_EXPORT_KIND: ExportKind = "board";
 

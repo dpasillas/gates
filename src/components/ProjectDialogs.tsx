@@ -92,4 +92,52 @@ function OpenProjectDialog(
   );
 }
 
-export {NameDialog, OpenProjectDialog};
+/** Something that can be picked out of a list by name. */
+interface Pickable {
+  id: string;
+  name: string;
+}
+
+/**
+ * Picks one thing out of the project's things of a kind.
+ *
+ * A board is exported from the editor, where one is always in front; a component or a package has
+ * no such place, so the one to write out has to be asked for.
+ */
+function PickDialog(
+    {title, items, confirm, onCancel, onPick}: {
+      title: string,
+      items: Pickable[],
+      confirm: string,
+      onCancel: () => void,
+      onPick: (id: string) => void,
+    }) {
+  const [chosen, setChosen] = React.useState<string | undefined>(
+      items.length === 1 ? items[0].id : undefined);
+
+  return (
+    <Dialog open onClose={onCancel} maxWidth="xs" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent dividers>
+        <List disablePadding>
+          {items.map(item => (
+            <ListItemButton key={item.id} selected={item.id === chosen}
+                            onClick={() => setChosen(item.id)}
+                            onDoubleClick={() => onPick(item.id)}>
+              <ListItemText primary={item.name}/>
+            </ListItemButton>
+          ))}
+        </List>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button disabled={chosen === undefined} onClick={() => chosen && onPick(chosen)}>
+          {confirm}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+export {NameDialog, OpenProjectDialog, PickDialog};
+export type {Pickable};

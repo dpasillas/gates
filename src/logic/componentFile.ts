@@ -39,6 +39,13 @@ interface ComponentFileData {
   contents: ComponentSet;
   binding: BindingData[];
   source: DefinitionSource;
+  /**
+   * The components placed on this one's board, in full.
+   *
+   * Written when a component leaves its project on its own, and absent inside one — or inside a
+   * board's export, which carries every component the board reaches in one flat list.
+   */
+  library?: ComponentFileData[];
 }
 
 function serializeComponentDefinition(definition: ComponentDefinition): ComponentFileData {
@@ -143,7 +150,7 @@ function parseComponentFile(input: string): ComponentFileData {
     throw new Error("This component is damaged: it is missing its packaging.");
   }
 
-  return {
+  const data: ComponentFileData = {
     format: COMPONENT_FORMAT,
     version: COMPONENT_FORMAT_VERSION,
     id: text(parsed.id),
@@ -153,6 +160,13 @@ function parseComponentFile(input: string): ComponentFileData {
     binding: Array.isArray(parsed.binding) ? parsed.binding as BindingData[] : [],
     source: sourceFrom(parsed.source),
   };
+  if (Array.isArray(parsed.library)) {
+    // Each checked as a file of its own, so a damaged passenger is refused in the same words as
+    // one arriving alone.
+    data.library = parsed.library.map(entry => parseComponentFile(JSON.stringify(entry)));
+  }
+
+  return data;
 }
 
 export {

@@ -54,7 +54,9 @@ function panel(pkg = reg8()) {
                        onAddComponent={() => {}}
                        onEditComponent={() => {}}
                        onDeleteComponent={() => {}}
-                         onExtractBoard={() => {}} onExtractPackage={() => {}}/>);
+                         onExtractBoard={() => {}} onExtractPackage={() => {}}
+                         onExportBoard={() => {}} onExportPackage={() => {}}
+                         onExportComponent={() => {}}/>);
 
   return {project, pkg, edited, deleted, addedCount: () => added};
 }
@@ -75,7 +77,9 @@ describe('the packages a project holds', () => {
                          onDeletePackage={() => {}}
                          onAddComponent={() => {}} onEditComponent={() => {}}
                          onDeleteComponent={() => {}}
-                         onExtractBoard={() => {}} onExtractPackage={() => {}}/>);
+                         onExtractBoard={() => {}} onExtractPackage={() => {}}
+                         onExportBoard={() => {}} onExportPackage={() => {}}
+                         onExportComponent={() => {}}/>);
 
     expect(screen.getByText(/Nothing packaged yet/)).toBeInTheDocument();
   });

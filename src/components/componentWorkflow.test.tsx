@@ -438,7 +438,9 @@ describe('renaming a board', () => {
                          onDeletePackage={() => {}}
                          onAddComponent={() => {}} onEditComponent={() => {}}
                          onDeleteComponent={() => {}}
-                         onExtractBoard={() => {}} onExtractPackage={() => {}}/>);
+                         onExtractBoard={() => {}} onExtractPackage={() => {}}
+                         onExportBoard={() => {}} onExportPackage={() => {}}
+                         onExportComponent={() => {}}/>);
 
     return {renamed};
   }
@@ -498,7 +500,9 @@ describe('what a component row opens to show', () => {
                          onAddComponent={() => {}} onEditComponent={() => {}}
                          onDeleteComponent={() => {}}
                          onExtractBoard={made => boards.push(made)}
-                         onExtractPackage={made => packages.push(made)}/>);
+                         onExtractPackage={made => packages.push(made)}
+                         onExportBoard={() => {}} onExportPackage={() => {}}
+                         onExportComponent={() => {}}/>);
 
     return {boards, packages};
   }
@@ -593,7 +597,9 @@ describe('the components a project holds', () => {
                          onAddComponent={() => {}}
                          onEditComponent={made => edited.push(made)}
                          onDeleteComponent={() => {}}
-                         onExtractBoard={() => {}} onExtractPackage={() => {}}/>);
+                         onExtractBoard={() => {}} onExtractPackage={() => {}}
+                         onExportBoard={() => {}} onExportPackage={() => {}}
+                         onExportComponent={() => {}}/>);
 
     return {edited};
   }

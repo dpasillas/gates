@@ -8,7 +8,9 @@ import {alpha, Theme} from "@mui/material/styles";
 import {SxProps} from "@mui/system";
 import ChevronRight from "@mui/icons-material/ChevronRight";
 import Delete from "@mui/icons-material/Delete";
+import Edit from "@mui/icons-material/Edit";
 import ExpandMore from "@mui/icons-material/ExpandMore";
+import FileDownload from "@mui/icons-material/FileDownload";
 import Unarchive from "@mui/icons-material/Unarchive";
 
 import {BoardIcon, ComponentIcon, PackageIcon} from "./PanelIcons";
@@ -29,12 +31,23 @@ const FOCUS_TINT = (theme: Theme) => alpha(theme.palette.primary.main, 0.14);
  * The current board is marked grey, and blue while the panel holds the keyboard — where the pill
  * is also how a row reached by Tab shows it, since the browser's own ring is turned off in the
  * stylesheet. Hover is the lightest tint of all, and gives way to the others.
+ *
+ * The tint is kept in a variable because two things wear it: the pill, and the actions that sit
+ * over the end of the name, which paint the same tint over the panel's own colour so that what
+ * they cover is covered rather than showing through.
  */
-const ROW_SX: SxProps<Theme> = {
-  "&:hover::before": {bgcolor: "action.hover"},
-  "&.active::before": {bgcolor: "action.selected"},
-  "&:focus-visible::before, .project-panel:focus-within &.active::before": {bgcolor: FOCUS_TINT},
-};
+const ROW_SX = {
+  "--row-tint": "transparent",
+  "&:hover": {"--row-tint": (theme: Theme) => theme.palette.action.hover},
+  "&.active": {"--row-tint": (theme: Theme) => theme.palette.action.selected},
+  "&:focus-visible, .project-panel:focus-within &.active": {"--row-tint": FOCUS_TINT},
+  "&::before": {bgcolor: "var(--row-tint)"},
+  "& .project-row-actions": {
+    bgcolor: "background.paper",
+    backgroundImage: "linear-gradient(var(--row-tint), var(--row-tint))",
+  },
+  // Cast because the custom property is not one the style types know.
+} as SxProps<Theme>;
 
 interface IProps {
   project: Project;
@@ -44,12 +57,15 @@ interface IProps {
   onSelectBoard: (board: LogicBoard) => void;
   onRenameBoard: (board: LogicBoard) => void;
   onDeleteBoard: (board: LogicBoard) => void;
+  onExportBoard: (board: LogicBoard) => void;
   onAddPackage: () => void;
   onEditPackage: (pkg: PackageComponent) => void;
   onDeletePackage: (pkg: PackageComponent) => void;
+  onExportPackage: (pkg: PackageComponent) => void;
   onAddComponent: () => void;
   onEditComponent: (definition: ComponentDefinition) => void;
   onDeleteComponent: (definition: ComponentDefinition) => void;
+  onExportComponent: (definition: ComponentDefinition) => void;
   onExtractBoard: (definition: ComponentDefinition) => void;
   onExtractPackage: (definition: ComponentDefinition) => void;
 }
@@ -76,21 +92,38 @@ class ProjectPanel extends React.Component<IProps, IState> {
     this.setState({expanded});
   }
 
+  /**
+   * The row's way of writing its thing out to a file, straight away.
+   *
+   * The toolbar's export asks which of a kind is meant; a row already knows, so it skips the asking.
+   */
+  private renderExport(label: string, run: () => void) {
+    return (
+      <IconButton className="project-row-export" size="small" aria-label={label} title="Export"
+                  onClick={e => {e.stopPropagation(); run()}}>
+        <FileDownload fontSize="inherit"/>
+      </IconButton>
+    );
+  }
+
   renderPackage(pkg: PackageComponent) {
     return (
       <Box key={pkg.uuid} className="project-row" sx={ROW_SX}>
         <PackageIcon className="project-row-icon"/>
         <span className="project-row-name">{pkg.name || "untitled package"}</span>
-        <Button className="project-row-action" size="small"
-                aria-label={`Edit ${pkg.name}`}
-                onClick={() => this.props.onEditPackage(pkg)}>
-          Edit
-        </Button>
-        <IconButton className="project-row-delete" size="small"
-                    aria-label={`Delete ${pkg.name}`}
-                    onClick={() => this.props.onDeletePackage(pkg)}>
-          <Delete fontSize="inherit"/>
-        </IconButton>
+        <span className="project-row-actions">
+          <IconButton className="project-row-edit" size="small" title="Edit"
+                      aria-label={`Edit ${pkg.name}`}
+                      onClick={() => this.props.onEditPackage(pkg)}>
+            <Edit fontSize="inherit"/>
+          </IconButton>
+          {this.renderExport(`Export ${pkg.name}`, () => this.props.onExportPackage(pkg))}
+          <IconButton className="project-row-delete" size="small"
+                      aria-label={`Delete ${pkg.name}`}
+                      onClick={() => this.props.onDeletePackage(pkg)}>
+            <Delete fontSize="inherit"/>
+          </IconButton>
+        </span>
       </Box>
     );
   }
@@ -110,12 +143,14 @@ class ProjectPanel extends React.Component<IProps, IState> {
       <Box className="project-held-row" sx={ROW_SX}>
         <Icon className="project-row-icon" title={kind}/>
         <span className="project-row-name" title={shown}>{shown}</span>
-        <IconButton className="project-held-extract" size="small"
-                    aria-label={`Extract ${kind.toLowerCase()} from ${definition.name}`}
-                    title={`Extract ${kind.toLowerCase()}`}
-                    onClick={() => extract(definition)}>
-          <Unarchive fontSize="inherit"/>
-        </IconButton>
+        <span className="project-row-actions">
+          <IconButton className="project-held-extract" size="small"
+                      aria-label={`Extract ${kind.toLowerCase()} from ${definition.name}`}
+                      title={`Extract ${kind.toLowerCase()}`}
+                      onClick={() => extract(definition)}>
+            <Unarchive fontSize="inherit"/>
+          </IconButton>
+        </span>
       </Box>
     );
   }
@@ -147,16 +182,26 @@ class ProjectPanel extends React.Component<IProps, IState> {
             <Box component="span" className="project-badge"
                  sx={{color: "warning.main", borderColor: "warning.main"}}
                  title="The board or package this was built from has changed since">BEHIND</Box>}
-          <Button className="project-row-action" size="small"
-                  aria-label={`Edit ${definition.name}`}
-                  onClick={e => {e.stopPropagation(); this.props.onEditComponent(definition)}}>
-            Edit
-          </Button>
-          <IconButton className="project-row-delete" size="small"
-                      aria-label={`Delete ${definition.name}`}
-                      onClick={e => {e.stopPropagation(); this.props.onDeleteComponent(definition)}}>
-            <Delete fontSize="inherit"/>
-          </IconButton>
+          <span className="project-row-actions">
+            <IconButton className="project-row-edit" size="small" title="Edit"
+                        aria-label={`Edit ${definition.name}`}
+                        onClick={e => {
+                          e.stopPropagation();
+                          this.props.onEditComponent(definition);
+                        }}>
+              <Edit fontSize="inherit"/>
+            </IconButton>
+            {this.renderExport(`Export ${definition.name}`,
+                               () => this.props.onExportComponent(definition))}
+            <IconButton className="project-row-delete" size="small"
+                        aria-label={`Delete ${definition.name}`}
+                        onClick={e => {
+                          e.stopPropagation();
+                          this.props.onDeleteComponent(definition);
+                        }}>
+              <Delete fontSize="inherit"/>
+            </IconButton>
+          </span>
         </Box>
         {open &&
           <div className="project-held">
@@ -186,17 +231,20 @@ class ProjectPanel extends React.Component<IProps, IState> {
         {board.id === project.mainBoard.id &&
           <Box component="span" className="project-badge"
                sx={{color: "primary.main", borderColor: "primary.main"}}>MAIN</Box>}
-        <Button className="project-row-action" size="small"
-                aria-label={`Rename ${board.name}`}
-                onClick={e => {e.stopPropagation(); this.props.onRenameBoard(board)}}>
-          Rename
-        </Button>
-        {project.canRemove(board) &&
-          <IconButton className="project-row-delete" size="small"
-                      aria-label={`Delete ${board.name}`}
-                      onClick={e => {e.stopPropagation(); this.props.onDeleteBoard(board)}}>
-            <Delete fontSize="inherit"/>
-          </IconButton>}
+        <span className="project-row-actions">
+          <Button className="project-row-action" size="small"
+                  aria-label={`Rename ${board.name}`}
+                  onClick={e => {e.stopPropagation(); this.props.onRenameBoard(board)}}>
+            Rename
+          </Button>
+          {this.renderExport(`Export ${board.name}`, () => this.props.onExportBoard(board))}
+          {project.canRemove(board) &&
+            <IconButton className="project-row-delete" size="small"
+                        aria-label={`Delete ${board.name}`}
+                        onClick={e => {e.stopPropagation(); this.props.onDeleteBoard(board)}}>
+              <Delete fontSize="inherit"/>
+            </IconButton>}
+        </span>
       </Box>
     );
   }

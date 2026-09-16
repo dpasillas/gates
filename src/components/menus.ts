@@ -16,8 +16,12 @@ interface MenuCommands {
   save: () => void;
   saveAs: () => void;
   exportBoard: () => void;
+  exportComponent: () => void;
+  exportPackage: () => void;
   exportProject: () => void;
   importBoard: () => void;
+  importComponent: () => void;
+  importPackage: () => void;
   importProject: () => void;
   /** Absent while there is no selection to delete. */
   deleteSelection?: () => void;
@@ -46,8 +50,8 @@ function fileMenu(commands: MenuCommands): MenuItemSpec[] {
       label: "Export",
       items: [
         {label: "Board...", run: commands.exportBoard},
-        {label: "Component..."},
-        {label: "Package..."},
+        {label: "Component...", run: commands.exportComponent},
+        {label: "Package...", run: commands.exportPackage},
         {label: "Entire Project...", run: commands.exportProject},
       ],
     },
@@ -57,6 +61,8 @@ function fileMenu(commands: MenuCommands): MenuItemSpec[] {
       label: "Import",
       items: [
         {label: "Board...", run: commands.importBoard},
+        {label: "Component...", run: commands.importComponent},
+        {label: "Package...", run: commands.importPackage},
         {label: "Project...", run: commands.importProject},
       ],
     },
