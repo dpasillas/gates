@@ -206,5 +206,6 @@ export {
   BOARDS_DIRECTORY,
   COMPONENTS_DIRECTORY,
   PACKAGES_DIRECTORY,
+  PROJECT_BUNDLE_FORMAT,
 };
 export type {ProjectBundle, ProjectData, ProjectEntry};

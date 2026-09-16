@@ -431,7 +431,7 @@ describe('renaming a board', () => {
   function panel(project: Project) {
     const renamed: LogicBoard[] = [];
     render(<ProjectPanel project={project}
-                         onRename={() => {}} onAddBoard={() => {}} onImportBoard={() => {}}
+                         onRename={() => {}} onAddBoard={() => {}} onImport={() => {}}
                          onSelectBoard={() => {}} onRenameBoard={board => renamed.push(board)}
                          onDeleteBoard={() => {}}
                          onAddPackage={() => {}} onEditPackage={() => {}}
@@ -492,7 +492,7 @@ describe('what a component row opens to show', () => {
     const boards: ComponentDefinition[] = [];
     const packages: ComponentDefinition[] = [];
     render(<ProjectPanel project={project}
-                         onRename={() => {}} onAddBoard={() => {}} onImportBoard={() => {}}
+                         onRename={() => {}} onAddBoard={() => {}} onImport={() => {}}
                          onSelectBoard={() => {}} onRenameBoard={() => {}}
                          onDeleteBoard={() => {}}
                          onAddPackage={() => {}} onEditPackage={() => {}}
@@ -590,7 +590,7 @@ describe('the components a project holds', () => {
   function panel(project: Project) {
     const edited: ComponentDefinition[] = [];
     render(<ProjectPanel project={project}
-                         onRename={() => {}} onAddBoard={() => {}} onImportBoard={() => {}}
+                         onRename={() => {}} onAddBoard={() => {}} onImport={() => {}}
                          onSelectBoard={() => {}} onRenameBoard={() => {}} onDeleteBoard={() => {}}
                          onAddPackage={() => {}} onEditPackage={() => {}}
                          onDeletePackage={() => {}}

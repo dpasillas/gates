@@ -279,5 +279,6 @@ function parseBoardFile(text: string): BoardData {
   };
 }
 
-export {addComponents, loadBoard, parseBoardFile, serializeBoard, serializeComponents};
+export {addComponents, loadBoard, parseBoardFile, serializeBoard, serializeComponents,
+        BOARD_FORMAT};
 export type {BoardData, ComponentSet};

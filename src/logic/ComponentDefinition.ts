@@ -136,6 +136,8 @@ function boardHash(board: LogicBoard): string {
  */
 function defineComponent(params: {
   name?: string,
+  /** The identity being redefined, when this is an edit of a component the project holds. */
+  uuid?: string,
   board: LogicBoard,
   packaging: PackageComponent,
   binding?: Map<string, PortBinding>,
@@ -149,7 +151,8 @@ function defineComponent(params: {
 }): ComponentDefinition {
   const packaging = copyOf(params.packaging);
 
-  return new ComponentDefinition({
+  const made = new ComponentDefinition({
+    uuid: params.uuid,
     name: params.name ?? (params.packaging.name || params.board.name),
     packaging,
     contents: params.held?.contents
@@ -163,6 +166,46 @@ function defineComponent(params: {
       packageHash: params.packaging.interfaceHash,
     },
   });
+  if (containsItself(made, id => params.board.library?.(id))) {
+    throw new Error(`${params.board.name} has this component on it, so building from it would `
+        + `make the component contain itself.`);
+  }
+
+  return made;
+}
+
+/**
+ * Whether a component's contents reach a placement of it, however deep.
+ *
+ * Such a component resolves to itself for ever, so one is never allowed to exist: not built, not
+ * read from a file. The lookup says what the names inside it mean, which depends on where it is
+ * being judged — a project's components, or the ones a file brought along.
+ */
+function containsItself(definition: ComponentDefinition,
+                        lookup: (id: string) => ComponentDefinition | undefined): boolean {
+  const seen = new Set<string>();
+  const pending = definition.contents.components
+      .map(entry => entry.component)
+      .filter((named): named is string => Boolean(named));
+
+  while (pending.length > 0) {
+    const at = pending.pop()!;
+    if (at === definition.uuid) {
+      return true;
+    }
+    if (seen.has(at)) {
+      continue;
+    }
+
+    seen.add(at);
+    for (const entry of lookup(at)?.contents.components ?? []) {
+      if (entry.component) {
+        pending.push(entry.component);
+      }
+    }
+  }
+
+  return false;
 }
 
 /**
@@ -236,5 +279,13 @@ function linkage(definition: ComponentDefinition,
   return moved ? "stale" : "current";
 }
 
-export {ComponentDefinition, bindByName, boardHash, defineComponent, linkage, usesComponent};
+export {
+  ComponentDefinition,
+  bindByName,
+  boardHash,
+  containsItself,
+  defineComponent,
+  linkage,
+  usesComponent,
+};
 export type {ComponentLibrary, DefinitionSource, Linkage, PortBinding};

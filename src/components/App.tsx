@@ -27,7 +27,10 @@ import {extractBoard, extractPackage} from "../logic/componentExtract";
 import {Toolbar} from "./Toolbar";
 import {exportBoard, importBoard} from "../storage/boardStore";
 import {exportComponent, importComponent} from "../storage/componentStore";
+import {importExported} from "../storage/exportedFile";
 import {exportPackage, importPackage} from "../storage/packageStore";
+import type {ImportedBoard} from "../storage/boardStore";
+import type {ImportedComponent} from "../storage/componentStore";
 import {
   exportProject,
   importProject,
@@ -466,21 +469,53 @@ class App extends React.Component<IProps , IState>{
   private handleImportBoard() {
     this.attempt(async () => {
       const imported = await importBoard();
+
+      return imported && this.placeImportedBoard(imported);
+    });
+  }
+
+  /** Puts a board that was read in into the project, and says what arrived. */
+  private placeImportedBoard({board, components}: ImportedBoard): string {
+    // An exported board carries the components it uses, since it left the project that had them.
+    // Ones this project already holds under the same identity are the same component, and are
+    // left alone rather than replaced by the copy that travelled.
+    const gained = components.filter(made => !this.project.componentFor(made.uuid));
+    gained.forEach(made => this.project.addComponent(made));
+    this.watch([this.project.addBoard(board.name, board)]);
+
+    return gained.length > 0
+        ? `Added ${board.name} and ${gained.length} component${gained.length > 1 ? "s" : ""}`
+        : `Added ${board.name}`;
+  }
+
+  /**
+   * Brings in whatever the chosen file holds.
+   *
+   * The panel's one Import button: the file says what it is, so the user is not asked to.
+   */
+  private handleImport() {
+    this.attempt(async () => {
+      const imported = await importExported(this.project);
       if (!imported) {
         return undefined;
       }
 
-      // An exported board carries the components it uses, since it left the project that had them.
-      // Ones this project already holds under the same identity are the same component, and are
-      // left alone rather than replaced by the copy that travelled.
-      const {board, components} = imported;
-      const gained = components.filter(made => !this.project.componentFor(made.uuid));
-      gained.forEach(made => this.project.addComponent(made));
-      this.watch([this.project.addBoard(board.name, board)]);
-
-      return gained.length > 0
-          ? `Added ${board.name} and ${gained.length} component${gained.length > 1 ? "s" : ""}`
-          : `Added ${board.name}`;
+      switch (imported.kind) {
+        case "board":
+          return this.placeImportedBoard(imported);
+        case "component":
+          return this.placeImportedComponent(imported);
+        case "package":
+          this.project.addPackage(imported.pkg);
+          this.setState({});
+          return `Added ${imported.pkg.name}`;
+        case "project":
+          if (!this.mayDiscard()) {
+            return undefined;
+          }
+          this.adopt(imported.project);
+          return `Opened ${imported.project.name}`;
+      }
     });
   }
 
@@ -529,20 +564,21 @@ class App extends React.Component<IProps , IState>{
   private handleImportComponent() {
     this.attempt(async () => {
       const imported = await importComponent(this.project);
-      if (!imported) {
-        return undefined;
-      }
 
-      // As with a board: what it carried is only added where the project has nothing by that
-      // identity, while the component itself was asked for and always arrives.
-      const {definition, components} = imported;
-      components.filter(made => !this.project.componentFor(made.uuid))
-          .forEach(made => this.project.addComponent(made));
-      this.project.addComponent(definition);
-      this.setState({});
-
-      return `Added ${definition.name}`;
+      return imported && this.placeImportedComponent(imported);
     });
+  }
+
+  /** Puts a component that was read in into the project, and says what arrived. */
+  private placeImportedComponent({definition, components}: ImportedComponent): string {
+    // As with a board: what it carried is only added where the project has nothing by that
+    // identity, while the component itself was asked for and always arrives.
+    components.filter(made => !this.project.componentFor(made.uuid))
+        .forEach(made => this.project.addComponent(made));
+    this.project.addComponent(definition);
+    this.setState({});
+
+    return `Added ${definition.name}`;
   }
 
   private handleImportPackage() {
@@ -796,7 +832,7 @@ class App extends React.Component<IProps , IState>{
       <ProjectPanel project={this.project}
                     onRename={this.handleRenameProject.bind(this)}
                     onAddBoard={this.handleAddBoard.bind(this)}
-                    onImportBoard={this.handleImportBoard.bind(this)}
+                    onImport={this.handleImport.bind(this)}
                     onSelectBoard={this.handleSelectBoard.bind(this)}
                     onRenameBoard={this.handleRenameBoard.bind(this)}
                     onDeleteBoard={this.handleDeleteBoard.bind(this)}

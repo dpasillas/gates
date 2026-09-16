@@ -53,7 +53,8 @@ interface IProps {
   project: Project;
   onRename: () => void;
   onAddBoard: () => void;
-  onImportBoard: () => void;
+  /** Brings in whatever was exported: a board, a component, a package or a whole project. */
+  onImport: () => void;
   onSelectBoard: (board: LogicBoard) => void;
   onRenameBoard: (board: LogicBoard) => void;
   onDeleteBoard: (board: LogicBoard) => void;
@@ -273,7 +274,7 @@ class ProjectPanel extends React.Component<IProps, IState> {
                   onClick={this.props.onAddPackage}>+ Package</Button>
           <Button size="small" variant="outlined"
                   onClick={this.props.onAddComponent}>+ Component</Button>
-          <Button size="small" variant="outlined" onClick={this.props.onImportBoard}>Import...</Button>
+          <Button size="small" variant="outlined" onClick={this.props.onImport}>Import...</Button>
         </div>
 
         <div className="project-rows">

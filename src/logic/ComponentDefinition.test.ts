@@ -4,7 +4,7 @@ import {LogicState} from './LogicState';
 import {PackageComponent} from './PackageComponent';
 import {PinType} from './LogicPin';
 import {SubComponent} from './SubComponent';
-import {bindByName, defineComponent, linkage} from './ComponentDefinition';
+import {bindByName, containsItself, defineComponent, linkage} from './ComponentDefinition';
 import {makeComponent} from './componentFactory';
 import {setPort} from './nets';
 import {packageForBoard} from './packageFromBoard';
@@ -218,5 +218,54 @@ describe('placing one', () => {
 
     expect(onto.hosted.size).toBe(2);
     expect(first.inner[0]).not.toBe(second.inner[0]);
+  });
+});
+
+describe('a component that would contain itself', () => {
+  /** `and2` in a project, placed back on the board it was built from. */
+  function placedOnItsOwnBoard() {
+    const board = andBoard();
+    board.name = 'core';
+    const made = defineComponent({name: 'and2', board, packaging: packageForBoard(board, 'and2')});
+    board.library = id => id === made.uuid ? made : undefined;
+    board.addComponent(new SubComponent({scope: board.scope, board, definition: made}));
+
+    return {board, made};
+  }
+
+  test('is refused when built afresh from a board that has it on it', () => {
+    const {board, made} = placedOnItsOwnBoard();
+
+    expect(() => defineComponent({uuid: made.uuid, board, packaging: made.packaging}))
+        .toThrow(/contain itself/);
+  });
+
+  test('is refused however deep the placement is', () => {
+    const {board, made} = placedOnItsOwnBoard();
+    const middle = new LogicBoard();
+    middle.library = board.library;
+    const wrapper = defineComponent({name: 'wrapper', board, packaging: packageForBoard(board, 'w')});
+    middle.addComponent(new SubComponent({scope: middle.scope, board: middle, definition: wrapper}));
+    middle.library = id => id === wrapper.uuid ? wrapper : board.library?.(id);
+
+    expect(() => defineComponent({uuid: made.uuid, board: middle, packaging: made.packaging}))
+        .toThrow(/contain itself/);
+  });
+
+  test('is allowed to keep the copy it already holds, which has no placement of it', () => {
+    const {board, made} = placedOnItsOwnBoard();
+
+    const kept = defineComponent({
+      uuid: made.uuid, board, packaging: made.packaging,
+      held: {contents: made.contents, boardHash: made.source.boardHash},
+    });
+
+    expect(kept.uuid).toBe(made.uuid);
+  });
+
+  test('is not what placing one on its own board makes, since the copy is taken first', () => {
+    const {made} = placedOnItsOwnBoard();
+
+    expect(containsItself(made, () => made)).toBe(false);
   });
 });
