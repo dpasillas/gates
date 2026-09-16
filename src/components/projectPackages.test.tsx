@@ -45,7 +45,7 @@ function panel(pkg = reg8()) {
   render(<ProjectPanel project={project}
                        onRename={() => {}}
                        onAddBoard={() => {}}
-                       onImportBoard={() => {}}
+                       onImport={() => {}}
                        onSelectBoard={() => {}} onRenameBoard={() => {}}
                        onDeleteBoard={() => {}}
                        onAddPackage={() => {added++}}
@@ -71,7 +71,7 @@ describe('the packages a project holds', () => {
 
   test('say so when there are none, rather than showing an empty heading', () => {
     render(<ProjectPanel project={new Project()}
-                         onRename={() => {}} onAddBoard={() => {}} onImportBoard={() => {}}
+                         onRename={() => {}} onAddBoard={() => {}} onImport={() => {}}
                          onSelectBoard={() => {}} onRenameBoard={() => {}} onDeleteBoard={() => {}}
                          onAddPackage={() => {}} onEditPackage={() => {}}
                          onDeletePackage={() => {}}

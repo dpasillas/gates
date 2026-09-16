@@ -123,11 +123,13 @@ interface ImportedBoard {
  */
 async function importBoard(): Promise<ImportedBoard | undefined> {
   const picked = await uploadFile(IMPORT_ACCEPT);
-  if (!picked) {
-    return undefined;
-  }
 
-  const data = parseBoardFile(carriedText(picked.bytes));
+  return picked && readBoard(carriedText(picked.bytes));
+}
+
+/** The board a file holds, and the components it brought with it. */
+function readBoard(text: string): ImportedBoard {
+  const data = parseBoardFile(text);
   // Built before the board that names them: an exported board carries its own components, so until
   // these exist there is nothing for it to look them up in.
   const components = (data.library ?? []).map(entry => componentFrom(entry));
@@ -138,5 +140,5 @@ async function importBoard(): Promise<ImportedBoard | undefined> {
   return {board, components};
 }
 
-export {boardText, carriedText, exportBoard, importBoard, IMPORT_ACCEPT};
+export {boardText, carriedText, exportBoard, importBoard, readBoard, IMPORT_ACCEPT};
 export type {ImportedBoard};

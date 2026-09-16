@@ -4,6 +4,7 @@ import {downloadBytes, uploadFile} from "./files";
 import {carriedText, IMPORT_ACCEPT} from "./boardStore";
 import {componentFrom, parseComponentFile, serializeComponentDefinition}
     from "../logic/componentFile";
+import {containsItself} from "../logic/ComponentDefinition";
 import type {ComponentDefinition} from "../logic/ComponentDefinition";
 import type {ComponentFileData} from "../logic/componentFile";
 import type {Project} from "../logic/Project";
@@ -107,6 +108,14 @@ function readComponent(text: string, project: Project): ImportedComponent {
   const definition = componentFrom(taken
       ? {...data, id: uuidv4(), name: `${data.name} copy`}
       : data);
+
+  // Judged against what the file brought and what the project has, since the placements inside
+  // will be read against both once it is in.
+  const lookup = (id: string) =>
+      components.find(made => made.uuid === id) ?? project.componentFor(id);
+  if (containsItself(definition, lookup)) {
+    throw new Error(`${definition.name} contains itself, and cannot be brought in.`);
+  }
 
   return {definition, components};
 }

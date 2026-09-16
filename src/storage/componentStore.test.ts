@@ -114,3 +114,26 @@ describe('a component read back', () => {
     expect(definition.name).toBe('and2 copy');
   });
 });
+
+describe('a component file that contains itself', () => {
+  test('is refused rather than brought in', () => {
+    const {project, outer} = nested();
+    const text = componentText(outer, project);
+    // Hand-made: the one it carries is rewritten to place the outer one, closing the loop.
+    const data = JSON.parse(text);
+    data.library[0].contents.components.push({component: outer.uuid});
+
+    expect(() => readComponent(JSON.stringify(data), new Project())).toThrow(/contains itself/);
+  });
+
+  test('is judged against the project too, which may hold the other half of the loop', () => {
+    const {project, inner, outer} = nested();
+    const text = componentText(inner, project);
+    const data = JSON.parse(text);
+    data.contents.components.push({component: outer.uuid});
+    const other = new Project();
+    other.addComponent(outer);
+
+    expect(() => readComponent(JSON.stringify(data), other)).toThrow(/contains itself/);
+  });
+});

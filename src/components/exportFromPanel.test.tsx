@@ -73,7 +73,7 @@ describe('the export button on a project panel row', () => {
     const components: ComponentDefinition[] = [];
 
     render(<ProjectPanel project={project}
-                         onRename={() => {}} onAddBoard={() => {}} onImportBoard={() => {}}
+                         onRename={() => {}} onAddBoard={() => {}} onImport={() => {}}
                          onSelectBoard={() => {}} onRenameBoard={() => {}}
                          onDeleteBoard={() => {}}
                          onAddPackage={() => {}} onEditPackage={() => {}}

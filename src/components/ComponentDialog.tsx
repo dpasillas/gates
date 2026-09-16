@@ -284,6 +284,7 @@ class ComponentDialog extends React.Component<IProps, IState> {
     const existing = this.props.existing;
 
     const made = defineComponent({
+      uuid: existing?.uuid,
       name: this.state.name,
       board: this.board(),
       packaging,
@@ -293,9 +294,6 @@ class ComponentDialog extends React.Component<IProps, IState> {
           ? {contents: existing.contents, boardHash: existing.source.boardHash}
           : undefined,
     });
-    if (existing) {
-      made.uuid = existing.uuid;
-    }
     this.props.onSave(made);
   }
 
