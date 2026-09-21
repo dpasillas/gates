@@ -67,22 +67,54 @@ function itemContents(item: MenuItemSpec) {
   );
 }
 
+/**
+ * What of the given kind is under the pointer, looking through whatever is on top.
+ *
+ * An open menu lays an invisible sheet over the page to catch the click that dismisses it, so
+ * nothing under the sheet ever hears the pointer arrive. The sheet hears it move, though, and this
+ * is how it finds out what it is covering.
+ */
+function under(event: React.MouseEvent, selector: string): HTMLElement | undefined {
+  const stack = document.elementsFromPoint?.(event.clientX, event.clientY) ?? [];
+
+  return stack.map(element => element.closest<HTMLElement>(selector))
+      .find((found): found is HTMLElement => Boolean(found));
+}
+
 /** An item that opens another menu beside it. */
-function SubMenu({item, onDone}: {item: MenuItemSpec, onDone: () => void}) {
+function SubMenu({item, onDone, onRoam}: {
+  item: MenuItemSpec,
+  onDone: () => void,
+  /** The pointer moving over this menu's sheet, for the bar to follow it to another menu. */
+  onRoam: (event: React.MouseEvent) => void,
+}) {
   const [anchor, setAnchor] = React.useState<HTMLElement | null>(null);
+
+  // Moving onto another line of the menu this one opened from closes it, as leaving it would if
+  // the sheet were not in the way.
+  const roam = (event: React.MouseEvent) => {
+    const line = under(event, "[role=menuitem]");
+    if (line && line !== anchor && !line.closest(".menu-submenu")) {
+      setAnchor(null);
+    }
+    onRoam(event);
+  };
 
   return (
     <>
       <MenuItem className="menu-item"
                 disabled={!isEnabled(item)}
+                onMouseEnter={e => setAnchor(e.currentTarget)}
                 onClick={e => setAnchor(e.currentTarget)}>
         {itemContents(item)}
         <ChevronRight className="menu-chevron" fontSize="small"/>
       </MenuItem>
-      <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}
+      <Menu className="menu-submenu"
+            anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}
+            BackdropProps={{invisible: true, onMouseMove: roam}}
             anchorOrigin={{vertical: "top", horizontal: "right"}}
             transformOrigin={{vertical: "top", horizontal: "left"}}>
-        {menuItems(item.items ?? [], () => {setAnchor(null); onDone()})}
+        {menuItems(item.items ?? [], () => {setAnchor(null); onDone()}, onRoam)}
       </Menu>
     </>
   );
@@ -94,10 +126,11 @@ function SubMenu({item, onDone}: {item: MenuItemSpec, onDone: () => void}) {
  * Flat rather than a rule and an item wrapped together, because these are the children of a list
  * and anything but a list item or a rule among them is neither valid markup nor navigable.
  */
-function menuItems(items: MenuItemSpec[], onDone: () => void): React.ReactNode[] {
+function menuItems(items: MenuItemSpec[], onDone: () => void,
+                   onRoam: (event: React.MouseEvent) => void): React.ReactNode[] {
   return items.flatMap((item, i) => {
     const rendered = item.items
-      ? <SubMenu key={`item-${i}`} item={item} onDone={onDone}/>
+      ? <SubMenu key={`item-${i}`} item={item} onDone={onDone} onRoam={onRoam}/>
       : (
         <MenuItem key={`item-${i}`} className="menu-item"
                   disabled={!isEnabled(item)}
@@ -127,14 +160,27 @@ class MenuBar extends React.Component<IProps, {open: string | null, anchor: HTML
     this.setState({open: null, anchor: null});
   }
 
+  /** Opens whichever other menu the pointer has moved onto, while one is open. */
+  private roam(event: React.MouseEvent) {
+    const button = under(event, ".menu-button");
+    const label = button?.dataset.menu;
+    if (button && label && label !== this.state.open) {
+      this.setState({open: label, anchor: button});
+    }
+  }
+
   render() {
+    const roam = this.roam.bind(this);
+
     return (
       <Box className="menu-bar"
-           sx={{bgcolor: "background.paper", borderBottom: 1, borderColor: "divider"}}>
+           sx={{bgcolor: "background.paper", color: "text.primary",
+                borderBottom: 1, borderColor: "divider"}}>
         {this.props.menus.map(menu => (
           <Box key={menu.label} component="span">
             <Button className="menu-button" color="inherit" size="small"
                     aria-haspopup="menu"
+                    data-menu={menu.label}
                     aria-expanded={this.state.open === menu.label}
                     onClick={e => this.setState({open: menu.label, anchor: e.currentTarget})}>
               {menu.label}
@@ -142,9 +188,10 @@ class MenuBar extends React.Component<IProps, {open: string | null, anchor: HTML
             <Menu anchorEl={this.state.anchor}
                   open={this.state.open === menu.label}
                   onClose={this.close.bind(this)}
+                  BackdropProps={{invisible: true, onMouseMove: roam}}
                   anchorOrigin={{vertical: "bottom", horizontal: "left"}}
                   transformOrigin={{vertical: "top", horizontal: "left"}}>
-              {menuItems(menu.items, this.close.bind(this))}
+              {menuItems(menu.items, this.close.bind(this), roam)}
             </Menu>
           </Box>
         ))}
